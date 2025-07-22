@@ -136,12 +136,12 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         app.transferFrom(msg.sender, address(this), amount);
 
         // pay out any referral rewards if a referral code was set
-        _registerReferral(_referralCode, _to);
+        bytes8 _registeredReferralCode = _registerReferral(_referralCode, _to);
 
         // stake on behalf of the referrer
         (tokenId, taxPaid) = staking.createPosition(_to, amount, declaredValue, 0);
 
-        emit ReferralStaked(_to, amount, declaredValue, _referralCode);
+        emit ReferralStaked(_to, amount, declaredValue, _registeredReferralCode);
     }
 
     /// @inheritdoc IAppReferrals
@@ -151,9 +151,9 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         returns (uint256 minted)
     {
         app.transferFrom(msg.sender, address(this), amount);
-        _registerReferral(_referralCode, _to);
+        bytes8 _registeredReferralCode = _registerReferral(_referralCode, _to);
         minted = staking4626.deposit(amount, _to);
-        emit ReferralStakedIntoLST(_to, amount, _referralCode);
+        emit ReferralStakedIntoLST(_to, amount, _registeredReferralCode);
     }
 
     /// @inheritdoc IAppReferrals
@@ -169,26 +169,26 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         IERC20 token = bond.quoteToken;
 
         // register referral if not already registered for tracking purposes only
-        _registerReferral(_referralCode, _to);
+        bytes8 _registeredReferralCode = _registerReferral(_referralCode, _to);
 
         // buy bond on behalf of the referrer
         token.transferFrom(msg.sender, address(this), _amount);
         token.approve(address(bondDepository), _amount);
         (payout_, tokenId_) = bondDepository.deposit(_id, _amount, _maxPrice, _minPayout, _to);
 
-        emit ReferralBondBought(_to, payout_, _referralCode);
+        emit ReferralBondBought(_to, payout_, _registeredReferralCode);
     }
 
     /// @dev Registers a referral for the given user
     /// @param _referralCode The referral code to use
     /// @param _user The user to register the referral for
-    function _registerReferral(bytes8 _referralCode, address _user) internal {
-        // if the user is already tracked by someone, we skip
-        if (trackedReferrals[_user] != address(0)) return;
+    function _registerReferral(bytes8 _referralCode, address _user) internal returns (bytes8 _registeredReferralCode) {
+        // if the user is already tracked by someone, we skip and return the referrer's code
+        if (trackedReferrals[_user] != address(0)) return referrerCodes[trackedReferrals[_user]];
 
         // track the referral
         address _referrer = referralCodes[_referralCode];
-        if (_referrer == address(0)) return;
+        if (_referrer == address(0)) return bytes8(0);
         trackedReferrals[_user] = _referrer;
 
         if (!_referrals[_referrer].contains(_user)) {
@@ -196,6 +196,7 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         }
 
         emit ReferralRegistered(_user, _referrer, _referralCode);
+        return _referralCode;
     }
 
     /// @dev Registers a referral code for the given referrer

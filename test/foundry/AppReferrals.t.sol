@@ -194,6 +194,57 @@ contract AppReferralsTest is BaseTest {
         assertEq(referrals.trackedReferrals(CHARLIE), ALICE);
     }
 
+    function test_ReferralTracking_OriginalReferrerAlwaysAccounted() public {
+        // Alice registers a referral code
+        vm.startPrank(ALICE);
+        bytes8 aliceCode = bytes8(bytes20(ALICE));
+        referrals.registerReferralCode(aliceCode);
+        vm.stopPrank();
+
+        // Bob registers a referral code
+        vm.startPrank(BOB);
+        bytes8 bobCode = bytes8(bytes20(BOB));
+        referrals.registerReferralCode(bobCode);
+        vm.stopPrank();
+
+        // Bob uses Alice's code to refer Charlie
+        vm.startPrank(BOB);
+        uint256 stakeAmount = 1000e18;
+        deal(address(app), BOB, stakeAmount);
+        app.approve(address(referrals), stakeAmount);
+        vm.expectEmit(true, true, false, true);
+        emit ReferralRegistered(CHARLIE, ALICE, aliceCode);
+        vm.expectEmit(true, true, false, true);
+        emit ReferralStaked(CHARLIE, stakeAmount, stakeAmount, aliceCode);
+        referrals.stakeWithReferral(stakeAmount, stakeAmount, aliceCode, CHARLIE);
+        vm.stopPrank();
+
+        // Dave tries to refer Charlie again using Bob's code
+        address DAVE = makeAddr("dave");
+        vm.startPrank(DAVE);
+        uint256 anotherStakeAmount = 500e18;
+        deal(address(app), DAVE, anotherStakeAmount);
+        app.approve(address(referrals), anotherStakeAmount);
+        // Should not register new referral since Charlie is already tracked
+        // Only ReferralStaked should be emitted, with Alice's code
+        vm.expectEmit(true, true, false, true);
+        emit ReferralStaked(CHARLIE, anotherStakeAmount, anotherStakeAmount, aliceCode);
+        (uint256 tokenId, uint256 taxPaid) =
+            referrals.stakeWithReferral(anotherStakeAmount, anotherStakeAmount, bobCode, CHARLIE);
+        vm.stopPrank();
+
+        // Verify Charlie is still tracked by Alice, not Bob
+        address[] memory aliceReferrals = referrals.getReferrals(ALICE);
+        address[] memory bobReferrals = referrals.getReferrals(BOB);
+        assertEq(aliceReferrals.length, 1);
+        assertEq(aliceReferrals[0], CHARLIE);
+        assertEq(bobReferrals.length, 0);
+        assertEq(referrals.trackedReferrals(CHARLIE), ALICE);
+        // The referral code returned by a second attempt should be Alice's code
+        bytes8 returnedCode = referrals.referrerCodes(ALICE);
+        assertEq(returnedCode, aliceCode);
+    }
+
     function test_MerkleRewards() public {
         // Setup: Alice refers Bob and Charlie
         bytes8 aliceCode = bytes8(bytes20(ALICE));

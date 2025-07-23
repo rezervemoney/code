@@ -173,7 +173,8 @@ contract AppBondDepository is
             startTime: block.timestamp,
             lastClaimTime: block.timestamp,
             claimedAmount: 0,
-            isStaked: false
+            isStaked: false,
+            vestingPeriod: bond.vestingPeriod
         });
 
         emit BondCreated(_id, _amount, currentPrice_);
@@ -227,6 +228,20 @@ contract AppBondDepository is
         emit UpdateBondPrice(_id, _initialPrice, _finalPrice);
     }
 
+    /// @inheritdoc IAppBondDepository
+    function completeBondVesting(uint256 _tokenId) external onlyBondManager {
+        BondPosition storage position = _positions[_tokenId];
+        require(position.claimedAmount < position.amount, "Nothing to claim");
+
+        uint256 timeElapsed = block.timestamp - position.startTime;
+        require(timeElapsed < position.vestingPeriod, "Vesting completed");
+
+        // Update vesting period so that all tokens are vested
+        position.vestingPeriod = timeElapsed + 1;
+
+        emit CompleteBondVesting(_tokenId);
+    }
+
     /* ======== VIEW FUNCTIONS ======== */
 
     /// @notice Calculates the current price of a bond based on time elapsed
@@ -250,11 +265,11 @@ contract AppBondDepository is
         if (position.claimedAmount >= position.amount) return 0;
 
         uint256 timeElapsed = block.timestamp - position.startTime;
-        if (timeElapsed >= _bonds[position.bondId].vestingPeriod) {
+        if (timeElapsed >= position.vestingPeriod) {
             return position.amount - position.claimedAmount;
         }
 
-        uint256 vestedAmount = (position.amount * timeElapsed) / _bonds[position.bondId].vestingPeriod;
+        uint256 vestedAmount = (position.amount * timeElapsed) / position.vestingPeriod;
         return vestedAmount - position.claimedAmount;
     }
 

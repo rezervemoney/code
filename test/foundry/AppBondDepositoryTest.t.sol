@@ -913,4 +913,251 @@ contract AppBondDepositoryTest is BaseTest {
 
         vm.stopPrank();
     }
+
+    function test_CompleteBondVesting() public {
+        vm.startPrank(owner);
+
+        // Create bond with a long vesting period
+        uint256 bondId = bondDepository.create(
+            mockQuoteToken,
+            BOND_AMOUNT,
+            INITIAL_PRICE,
+            FINAL_PRICE,
+            0, // min price
+            BOND_DURATION,
+            VESTING_PERIOD, // 12 days vesting period
+            STAKING_LOCK_PERIOD,
+            false
+        );
+
+        vm.stopPrank();
+
+        // Switch to depositor
+        vm.startPrank(user1);
+
+        // Deposit to bond
+        mockQuoteToken.mint(user1, BOND_AMOUNT);
+        mockQuoteToken.approve(address(bondDepository), BOND_AMOUNT);
+        (uint256 payout, uint256 tokenId) = bondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
+
+        // Verify initial position state
+        IAppBondDepository.BondPosition memory position = bondDepository.positions(tokenId);
+        assertEq(position.claimedAmount, 0, "Initial claimed amount should be 0");
+        assertEq(position.amount, payout, "Position amount should match payout");
+
+        // Fast forward to middle of vesting period (6 days)
+        vm.warp(block.timestamp + VESTING_PERIOD / 2);
+
+        // Verify that only partial amount is claimable before completing vesting
+        uint256 claimableBefore = bondDepository.claimableAmount(tokenId);
+        assertTrue(claimableBefore < payout, "Should not be able to claim full amount before vesting completion");
+        assertTrue(claimableBefore > 0, "Should be able to claim some amount during vesting");
+
+        // Complete bond vesting as bond manager
+        vm.stopPrank();
+        vm.startPrank(owner);
+        bondDepository.completeBondVesting(tokenId);
+        vm.warp(block.timestamp + 1);
+
+        // Verify that all tokens are now claimable
+        uint256 claimableAfter = bondDepository.claimableAmount(tokenId);
+        assertEq(claimableAfter, payout, "Should be able to claim full amount after completing vesting");
+
+        // Claim all tokens
+        vm.stopPrank();
+        vm.startPrank(user1);
+        uint256 balanceBefore = app.balanceOf(user1);
+        bondDepository.claim(tokenId);
+
+        // Verify all tokens received
+        assertEq(app.balanceOf(user1), balanceBefore + payout, "Should receive full payout amount");
+
+        // Verify position state after claiming
+        position = bondDepository.positions(tokenId);
+        assertEq(position.claimedAmount, payout, "Claimed amount should equal total amount");
+
+        vm.stopPrank();
+    }
+
+    function test_CompleteBondVesting_AlreadyFullyClaimed() public {
+        vm.startPrank(owner);
+
+        // Create bond
+        uint256 bondId = bondDepository.create(
+            mockQuoteToken,
+            BOND_AMOUNT,
+            INITIAL_PRICE,
+            FINAL_PRICE,
+            0, // min price
+            BOND_DURATION,
+            VESTING_PERIOD,
+            STAKING_LOCK_PERIOD,
+            false
+        );
+
+        vm.stopPrank();
+
+        // Switch to depositor
+        vm.startPrank(user1);
+
+        // Deposit to bond
+        mockQuoteToken.mint(user1, BOND_AMOUNT);
+        mockQuoteToken.approve(address(bondDepository), BOND_AMOUNT);
+        (uint256 payout, uint256 tokenId) = bondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
+
+        // Fast forward past vesting period naturally
+        vm.warp(block.timestamp + VESTING_PERIOD + 1);
+
+        // Claim all tokens naturally
+        bondDepository.claim(tokenId);
+
+        // Try to complete vesting on already fully claimed position
+        vm.stopPrank();
+        vm.startPrank(owner);
+
+        // This should revert because position is already fully claimed
+        vm.expectRevert("Nothing to claim");
+        bondDepository.completeBondVesting(tokenId);
+
+        vm.stopPrank();
+    }
+
+    function test_CompleteBondVesting_VestingAlreadyCompleted() public {
+        vm.startPrank(owner);
+
+        // Create bond
+        uint256 bondId = bondDepository.create(
+            mockQuoteToken,
+            BOND_AMOUNT,
+            INITIAL_PRICE,
+            FINAL_PRICE,
+            0, // min price
+            BOND_DURATION,
+            VESTING_PERIOD,
+            STAKING_LOCK_PERIOD,
+            false
+        );
+
+        vm.stopPrank();
+
+        // Switch to depositor
+        vm.startPrank(user1);
+
+        // Deposit to bond
+        mockQuoteToken.mint(user1, BOND_AMOUNT);
+        mockQuoteToken.approve(address(bondDepository), BOND_AMOUNT);
+        (uint256 payout, uint256 tokenId) = bondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
+
+        // Fast forward past vesting period naturally
+        vm.warp(block.timestamp + VESTING_PERIOD + 1);
+
+        // Try to complete vesting when it's already naturally completed
+        vm.stopPrank();
+        vm.startPrank(owner);
+
+        // This should revert because vesting is already completed
+        vm.expectRevert("Vesting completed");
+        bondDepository.completeBondVesting(tokenId);
+
+        vm.stopPrank();
+    }
+
+    function test_CompleteBondVesting_OnlyBondManager() public {
+        vm.startPrank(owner);
+
+        // Create bond
+        uint256 bondId = bondDepository.create(
+            mockQuoteToken,
+            BOND_AMOUNT,
+            INITIAL_PRICE,
+            FINAL_PRICE,
+            0, // min price
+            BOND_DURATION,
+            VESTING_PERIOD,
+            STAKING_LOCK_PERIOD,
+            false
+        );
+
+        vm.stopPrank();
+
+        // Switch to depositor
+        vm.startPrank(user1);
+
+        // Deposit to bond
+        mockQuoteToken.mint(user1, BOND_AMOUNT);
+        mockQuoteToken.approve(address(bondDepository), BOND_AMOUNT);
+        (uint256 payout, uint256 tokenId) = bondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
+
+        // Try to complete vesting as non-bond manager (should fail)
+        vm.expectRevert(); // Should revert due to access control
+        bondDepository.completeBondVesting(tokenId);
+
+        vm.stopPrank();
+    }
+
+    function test_CompleteBondVesting_MultiplePartialClaims() public {
+        vm.startPrank(owner);
+
+        // Create bond
+        uint256 bondId = bondDepository.create(
+            mockQuoteToken,
+            BOND_AMOUNT,
+            INITIAL_PRICE,
+            FINAL_PRICE,
+            0, // min price
+            BOND_DURATION,
+            VESTING_PERIOD,
+            STAKING_LOCK_PERIOD,
+            false
+        );
+
+        vm.stopPrank();
+
+        // Switch to depositor
+        vm.startPrank(user1);
+
+        // Deposit to bond
+        mockQuoteToken.mint(user1, BOND_AMOUNT);
+        mockQuoteToken.approve(address(bondDepository), BOND_AMOUNT);
+        (uint256 payout, uint256 tokenId) = bondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
+
+        // Fast forward to 1/3 of vesting period
+        vm.warp(block.timestamp + VESTING_PERIOD / 3);
+
+        // Claim partial amount
+        uint256 firstClaimable = bondDepository.claimableAmount(tokenId);
+        uint256 balanceBefore = app.balanceOf(user1);
+        bondDepository.claim(tokenId);
+        assertEq(app.balanceOf(user1), balanceBefore + firstClaimable, "First claim should work");
+
+        // Fast forward to 2/3 of vesting period
+        vm.warp(block.timestamp + VESTING_PERIOD / 3);
+
+        // Claim another partial amount
+        uint256 secondClaimable = bondDepository.claimableAmount(tokenId);
+        balanceBefore = app.balanceOf(user1);
+        bondDepository.claim(tokenId);
+        assertEq(app.balanceOf(user1), balanceBefore + secondClaimable, "Second claim should work");
+
+        // Complete bond vesting
+        vm.stopPrank();
+        vm.startPrank(owner);
+        bondDepository.completeBondVesting(tokenId);
+        vm.warp(block.timestamp + 1);
+
+        // Claim remaining amount
+        vm.stopPrank();
+        vm.startPrank(user1);
+        uint256 remainingClaimable = bondDepository.claimableAmount(tokenId);
+
+        balanceBefore = app.balanceOf(user1);
+        bondDepository.claim(tokenId);
+        assertEq(app.balanceOf(user1), balanceBefore + remainingClaimable, "Final claim should work");
+
+        // Verify total claimed equals total payout
+        IAppBondDepository.BondPosition memory position = bondDepository.positions(tokenId);
+        assertEq(position.claimedAmount, payout, "Total claimed should equal total payout");
+
+        vm.stopPrank();
+    }
 }

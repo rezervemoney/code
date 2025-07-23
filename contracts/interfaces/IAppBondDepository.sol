@@ -56,6 +56,10 @@ interface IAppBondDepository is IERC721Enumerable {
     /// @param finalPrice The new final price of the bond
     event UpdateBondPrice(uint256 indexed id, uint256 initialPrice, uint256 finalPrice);
 
+    /// @notice Emitted when a bond position vesting is completed
+    /// @param id The unique identifier of the bond position
+    event CompleteBondVesting(uint256 indexed id);
+
     /* ======== STRUCTS ======== */
     /// @notice Represents a bond offering
     /// @param enabled Whether the bond is currently enabled
@@ -102,6 +106,7 @@ interface IAppBondDepository is IERC721Enumerable {
         uint256 startTime; // when the bond was purchased
         uint256 lastClaimTime; // last time tokens were claimed
         uint256 claimedAmount; // amount of tokens already claimed
+        uint256 vestingPeriod; // vesting period of the bond
         bool isStaked; // whether the position is staked
     }
 
@@ -141,6 +146,10 @@ interface IAppBondDepository is IERC721Enumerable {
     /// @param _initialPrice The new initial price of the bond
     /// @param _finalPrice The new final price of the bond
     function updateBondPrice(uint256 _id, uint256 _initialPrice, uint256 _finalPrice) external;
+
+    /// @notice Completes the vesting period of a bond position
+    /// @param _tokenId The ID of the bond position NFT
+    function completeBondVesting(uint256 _tokenId) external;
 
     /// @notice Deposits quote tokens to purchase a bond
     /// @param _id The ID of the bond to purchase

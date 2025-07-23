@@ -54,7 +54,7 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         address _treasury,
         address _staking4626,
         address _authority
-    ) external reinitializer(2) {
+    ) external reinitializer(3) {
         __AppAccessControlled_init(_authority);
         __ReentrancyGuard_init();
 

@@ -23,6 +23,7 @@ abstract contract AppUIHelperBase {
         uint256 allowance;
         uint256 treasuryBalance;
         uint256 treasuryValueApp;
+        uint256 totalSupply;
         uint8 decimals;
         uint256 oraclePrice;
         uint256 oraclePriceInApp;

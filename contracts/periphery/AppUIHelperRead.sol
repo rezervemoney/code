@@ -5,6 +5,20 @@ pragma abicoder v2;
 import "./AppUIHelperBase.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+interface IAppBondDepositoryOld {
+    struct BondPositionOld {
+        uint256 bondId;
+        uint256 amount; // amount of RZR tokens
+        uint256 quoteAmount; // amount of quote tokens paid
+        uint256 startTime; // when the bond was purchased
+        uint256 lastClaimTime; // last time tokens were claimed
+        uint256 claimedAmount; // amount of tokens already claimed
+        bool isStaked; // whether the position is staked
+    }
+
+    function positions(uint256 tokenId) external view returns (BondPositionOld memory);
+}
+
 /// @title RZR UI Helper
 /// @author RZR Protocol
 contract AppUIHelperRead is AppUIHelperBase {
@@ -76,7 +90,7 @@ contract AppUIHelperRead is AppUIHelperBase {
         view
         returns (TokenInfo[] memory tokenInfos)
     {
-        tokenInfos = new TokenInfo[](bondTokens.length + 2); // +1 for RZR token, +1 for staking token
+        tokenInfos = new TokenInfo[](bondTokens.length + 3); // +1 for RZR token, +1 for staking token, +1 for lstRZR token
 
         // Add RZR token info
         tokenInfos[0] = TokenInfo({
@@ -87,6 +101,7 @@ contract AppUIHelperRead is AppUIHelperBase {
             allowance: appToken.allowance(user, address(staking)),
             treasuryBalance: appToken.balanceOf(address(treasury)),
             treasuryValueApp: appToken.balanceOf(address(treasury)),
+            totalSupply: appToken.totalSupply(),
             decimals: 18,
             oraclePrice: appOracle.getTokenPrice(),
             oraclePriceInApp: 1e18
@@ -99,11 +114,27 @@ contract AppUIHelperRead is AppUIHelperBase {
             symbol: "sRZR",
             balance: stakingToken.balanceOf(user),
             allowance: stakingToken.allowance(user, address(staking)),
+            totalSupply: stakingToken.totalSupply(),
             treasuryBalance: 0,
             treasuryValueApp: 0,
             decimals: 18,
-            oraclePrice: 0,
-            oraclePriceInApp: 0
+            oraclePrice: appOracle.getTokenPrice(),
+            oraclePriceInApp: 1e18
+        });
+
+        // Add lstRZR token info
+        tokenInfos[2] = TokenInfo({
+            token: address(staking4626),
+            name: "Liquid Staked RZR",
+            symbol: "lstRZR",
+            balance: staking4626.balanceOf(user),
+            allowance: 0,
+            totalSupply: staking4626.totalSupply(),
+            treasuryBalance: staking4626.balanceOf(address(treasury)),
+            treasuryValueApp: staking4626.balanceOf(address(treasury)),
+            decimals: 18,
+            oraclePrice: appOracle.getPrice(address(staking4626)),
+            oraclePriceInApp: appOracle.getPriceInToken(address(staking4626))
         });
 
         // Add bond token info
@@ -113,6 +144,7 @@ contract AppUIHelperRead is AppUIHelperBase {
                 balance: token.balanceOf(user),
                 allowance: token.allowance(user, address(bondDepository)),
                 decimals: token.decimals(),
+                totalSupply: token.totalSupply(),
                 name: token.name(),
                 symbol: token.symbol(),
                 treasuryBalance: token.balanceOf(address(treasury)),
@@ -158,7 +190,8 @@ contract AppUIHelperRead is AppUIHelperBase {
 
         for (uint256 i = 0; i < bondBalance; i++) {
             uint256 tokenId = bondDepository.tokenOfOwnerByIndex(user, i);
-            IAppBondDepository.BondPosition memory position = bondDepository.positions(tokenId);
+            IAppBondDepositoryOld.BondPositionOld memory position =
+                IAppBondDepositoryOld(address(bondDepository)).positions(tokenId);
 
             bondPositions[i] = BondPositionInfo({
                 owner: user,

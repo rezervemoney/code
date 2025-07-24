@@ -140,7 +140,7 @@ contract AppUIHelperRead is AppUIHelperBase {
         // Add bond token info
         for (uint256 i = 0; i < bondTokens.length; i++) {
             IERC20Metadata token = IERC20Metadata(bondTokens[i]);
-            tokenInfos[i + 2] = TokenInfo({
+            tokenInfos[i + 3] = TokenInfo({
                 balance: token.balanceOf(user),
                 allowance: token.allowance(user, address(bondDepository)),
                 decimals: token.decimals(),

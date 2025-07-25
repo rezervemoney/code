@@ -16,7 +16,23 @@ interface IAppBondDepositoryOld {
         bool isStaked; // whether the position is staked
     }
 
+    struct BondOld {
+        bool enabled;
+        uint256 capacity; // capacity remaining
+        IERC20 quoteToken; // token to accept as payment
+        uint256 totalDebt; // total debt from bond
+        uint256 maxPayout; // max tokens in/out
+        uint256 sold; // RZR tokens out
+        uint256 purchased; // quote tokens in
+        uint256 startTime; // when the bond starts
+        uint256 endTime; // when the bond ends
+        uint256 initialPrice; // starting price in quote token
+        uint256 finalPrice; // ending price in quote token
+    }
+
     function positions(uint256 tokenId) external view returns (BondPositionOld memory);
+
+    function bonds(uint256 bondId) external view returns (BondOld memory);
 }
 
 /// @title RZR UI Helper
@@ -218,7 +234,8 @@ contract AppUIHelperRead is AppUIHelperBase {
 
         for (uint256 i = startIndex; i < endIndex; i++) {
             // if (bondDepository.ownerOf(i) == address(0)) continue;
-            IAppBondDepository.BondPosition memory position = bondDepository.positions(i);
+            IAppBondDepositoryOld.BondPositionOld memory position =
+                IAppBondDepositoryOld(address(bondDepository)).positions(i);
             bondPositions[i - startIndex] = BondPositionInfo({
                 owner: bondDepository.ownerOf(i),
                 id: i,
@@ -288,13 +305,13 @@ contract AppUIHelperRead is AppUIHelperBase {
     function getBondVariables(uint256[] memory bondIds)
         external
         view
-        returns (IAppBondDepository.Bond[] memory bonds, uint256[] memory currentPrices)
+        returns (IAppBondDepositoryOld.BondOld[] memory bonds, uint256[] memory currentPrices)
     {
-        bonds = new IAppBondDepository.Bond[](bondIds.length);
+        bonds = new IAppBondDepositoryOld.BondOld[](bondIds.length);
         currentPrices = new uint256[](bondIds.length);
 
         for (uint256 i = 0; i < bondIds.length; i++) {
-            IAppBondDepository.Bond memory bond = bondDepository.bonds(bondIds[i]);
+            IAppBondDepositoryOld.BondOld memory bond = IAppBondDepositoryOld(address(bondDepository)).bonds(bondIds[i]);
             bonds[i] = bond;
             currentPrices[i] = bondDepository.currentPrice(bondIds[i]);
         }

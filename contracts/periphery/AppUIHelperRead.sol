@@ -5,36 +5,6 @@ pragma abicoder v2;
 import "./AppUIHelperBase.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-interface IAppBondDepositoryOld {
-    struct BondPositionOld {
-        uint256 bondId;
-        uint256 amount; // amount of RZR tokens
-        uint256 quoteAmount; // amount of quote tokens paid
-        uint256 startTime; // when the bond was purchased
-        uint256 lastClaimTime; // last time tokens were claimed
-        uint256 claimedAmount; // amount of tokens already claimed
-        bool isStaked; // whether the position is staked
-    }
-
-    struct BondOld {
-        bool enabled;
-        uint256 capacity; // capacity remaining
-        IERC20 quoteToken; // token to accept as payment
-        uint256 totalDebt; // total debt from bond
-        uint256 maxPayout; // max tokens in/out
-        uint256 sold; // RZR tokens out
-        uint256 purchased; // quote tokens in
-        uint256 startTime; // when the bond starts
-        uint256 endTime; // when the bond ends
-        uint256 initialPrice; // starting price in quote token
-        uint256 finalPrice; // ending price in quote token
-    }
-
-    function positions(uint256 tokenId) external view returns (BondPositionOld memory);
-
-    function bonds(uint256 bondId) external view returns (BondOld memory);
-}
-
 /// @title RZR UI Helper
 /// @author RZR Protocol
 contract AppUIHelperRead is AppUIHelperBase {
@@ -206,8 +176,7 @@ contract AppUIHelperRead is AppUIHelperBase {
 
         for (uint256 i = 0; i < bondBalance; i++) {
             uint256 tokenId = bondDepository.tokenOfOwnerByIndex(user, i);
-            IAppBondDepositoryOld.BondPositionOld memory position =
-                IAppBondDepositoryOld(address(bondDepository)).positions(tokenId);
+            IAppBondDepository.BondPosition memory position = bondDepository.positions(tokenId);
 
             bondPositions[i] = BondPositionInfo({
                 owner: user,
@@ -218,6 +187,7 @@ contract AppUIHelperRead is AppUIHelperBase {
                 startTime: position.startTime,
                 lastClaimTime: position.lastClaimTime,
                 claimedAmount: position.claimedAmount,
+                vestingPeriod: position.vestingPeriod,
                 claimableAmount: bondDepository.claimableAmount(tokenId),
                 isStaked: position.isStaked
             });
@@ -234,8 +204,7 @@ contract AppUIHelperRead is AppUIHelperBase {
 
         for (uint256 i = startIndex; i < endIndex; i++) {
             // if (bondDepository.ownerOf(i) == address(0)) continue;
-            IAppBondDepositoryOld.BondPositionOld memory position =
-                IAppBondDepositoryOld(address(bondDepository)).positions(i);
+            IAppBondDepository.BondPosition memory position = bondDepository.positions(i);
             bondPositions[i - startIndex] = BondPositionInfo({
                 owner: bondDepository.ownerOf(i),
                 id: i,
@@ -245,6 +214,7 @@ contract AppUIHelperRead is AppUIHelperBase {
                 startTime: position.startTime,
                 lastClaimTime: position.lastClaimTime,
                 claimedAmount: position.claimedAmount,
+                vestingPeriod: position.vestingPeriod,
                 claimableAmount: bondDepository.claimableAmount(i),
                 isStaked: position.isStaked
             });
@@ -305,13 +275,13 @@ contract AppUIHelperRead is AppUIHelperBase {
     function getBondVariables(uint256[] memory bondIds)
         external
         view
-        returns (IAppBondDepositoryOld.BondOld[] memory bonds, uint256[] memory currentPrices)
+        returns (IAppBondDepository.Bond[] memory bonds, uint256[] memory currentPrices)
     {
-        bonds = new IAppBondDepositoryOld.BondOld[](bondIds.length);
+        bonds = new IAppBondDepository.Bond[](bondIds.length);
         currentPrices = new uint256[](bondIds.length);
 
         for (uint256 i = 0; i < bondIds.length; i++) {
-            IAppBondDepositoryOld.BondOld memory bond = IAppBondDepositoryOld(address(bondDepository)).bonds(bondIds[i]);
+            IAppBondDepository.Bond memory bond = bondDepository.bonds(bondIds[i]);
             bonds[i] = bond;
             currentPrices[i] = bondDepository.currentPrice(bondIds[i]);
         }

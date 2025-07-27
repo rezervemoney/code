@@ -52,6 +52,7 @@ abstract contract AppUIHelperBase {
         uint256 quoteAmount; // amount of quote tokens paid
         uint256 startTime; // when the bond was purchased
         uint256 lastClaimTime; // last time tokens were claimed
+        uint256 vestingPeriod; // vesting period of the bond
         uint256 claimedAmount; // amount of tokens already claimed
         uint256 claimableAmount; // amount of tokens that can be claimed
         bool isStaked; // whether the position is staked

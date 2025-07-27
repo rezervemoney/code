@@ -54,7 +54,7 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         address _treasury,
         address _staking4626,
         address _authority
-    ) external reinitializer(3) {
+    ) external reinitializer(4) {
         __AppAccessControlled_init(_authority);
         __ReentrancyGuard_init();
 
@@ -66,7 +66,7 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         app.approve(address(staking), type(uint256).max);
         app.approve(address(staking4626), type(uint256).max);
 
-        enableWhitelisting = true;
+        enableWhitelisting = false;
     }
 
     /// @inheritdoc IAppReferrals

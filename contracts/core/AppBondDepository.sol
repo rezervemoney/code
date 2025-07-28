@@ -53,7 +53,7 @@ contract AppBondDepository is
     function initialize(address _app, address _staking, address _treasury, address _authority, address _loyaltyList)
         public
         override
-        reinitializer(3)
+        reinitializer(4)
     {
         __ERC721_init("RZR Bond Position", "RZR-BOND");
         __ReentrancyGuard_init();
@@ -219,13 +219,20 @@ contract AppBondDepository is
     }
 
     /// @inheritdoc IAppBondDepository
-    function updateBondPrice(uint256 _id, uint256 _initialPrice, uint256 _finalPrice) external onlyExecutor {
+    function updateBondPrice(uint256 _id, uint256 _initialPrice, uint256 _finalPrice) external onlyBondManager {
         uint256 minPrice = _bonds[_id].minPrice;
         require(_initialPrice > minPrice, "Initial price too low");
         require(_finalPrice > minPrice, "Final price too low");
         _bonds[_id].initialPrice = _initialPrice;
         _bonds[_id].finalPrice = _finalPrice;
         emit UpdateBondPrice(_id, _initialPrice, _finalPrice);
+    }
+
+    /// @inheritdoc IAppBondDepository
+    function updateBondEndDate(uint256 _id, uint256 _endTime) external onlyBondManager {
+        require(_endTime > block.timestamp, "End time in the past");
+        _bonds[_id].endTime = _endTime;
+        emit UpdateBondEndDate(_id, _endTime);
     }
 
     /// @inheritdoc IAppBondDepository

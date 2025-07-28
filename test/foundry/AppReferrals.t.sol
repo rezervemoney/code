@@ -229,8 +229,7 @@ contract AppReferralsTest is BaseTest {
         // Only ReferralStaked should be emitted, with Alice's code
         vm.expectEmit(true, true, false, true);
         emit ReferralStaked(CHARLIE, anotherStakeAmount, anotherStakeAmount, aliceCode);
-        (uint256 tokenId, uint256 taxPaid) =
-            referrals.stakeWithReferral(anotherStakeAmount, anotherStakeAmount, bobCode, CHARLIE);
+        referrals.stakeWithReferral(anotherStakeAmount, anotherStakeAmount, bobCode, CHARLIE);
         vm.stopPrank();
 
         // Verify Charlie is still tracked by Alice, not Bob

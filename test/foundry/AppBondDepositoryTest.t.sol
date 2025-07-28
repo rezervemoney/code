@@ -1003,7 +1003,7 @@ contract AppBondDepositoryTest is BaseTest {
         // Deposit to bond
         mockQuoteToken.mint(user1, BOND_AMOUNT);
         mockQuoteToken.approve(address(bondDepository), BOND_AMOUNT);
-        (uint256 payout, uint256 tokenId) = bondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
+        (, uint256 tokenId) = bondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
 
         // Fast forward past vesting period naturally
         vm.warp(block.timestamp + VESTING_PERIOD + 1);
@@ -1046,7 +1046,7 @@ contract AppBondDepositoryTest is BaseTest {
         // Deposit to bond
         mockQuoteToken.mint(user1, BOND_AMOUNT);
         mockQuoteToken.approve(address(bondDepository), BOND_AMOUNT);
-        (uint256 payout, uint256 tokenId) = bondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
+        (, uint256 tokenId) = bondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
 
         // Fast forward past vesting period naturally
         vm.warp(block.timestamp + VESTING_PERIOD + 1);
@@ -1086,7 +1086,7 @@ contract AppBondDepositoryTest is BaseTest {
         // Deposit to bond
         mockQuoteToken.mint(user1, BOND_AMOUNT);
         mockQuoteToken.approve(address(bondDepository), BOND_AMOUNT);
-        (uint256 payout, uint256 tokenId) = bondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
+        (, uint256 tokenId) = bondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
 
         // Try to complete vesting as non-bond manager (should fail)
         vm.expectRevert(); // Should revert due to access control

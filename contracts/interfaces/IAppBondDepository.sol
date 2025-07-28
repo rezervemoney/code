@@ -60,6 +60,11 @@ interface IAppBondDepository is IERC721Enumerable {
     /// @param id The unique identifier of the bond position
     event CompleteBondVesting(uint256 indexed id);
 
+    /// @notice Emitted when a bond end time is updated
+    /// @param id The unique identifier of the bond
+    /// @param endTime The new end time of the bond
+    event UpdateBondEndDate(uint256 indexed id, uint256 endTime);
+
     /* ======== STRUCTS ======== */
     /// @notice Represents a bond offering
     /// @param enabled Whether the bond is currently enabled
@@ -150,6 +155,11 @@ interface IAppBondDepository is IERC721Enumerable {
     /// @notice Completes the vesting period of a bond position
     /// @param _tokenId The ID of the bond position NFT
     function completeBondVesting(uint256 _tokenId) external;
+
+    /// @notice Updates the end time of a bond
+    /// @param _id The ID of the bond to update
+    /// @param _endTime The new end time of the bond
+    function updateBondEndDate(uint256 _id, uint256 _endTime) external;
 
     /// @notice Deposits quote tokens to purchase a bond
     /// @param _id The ID of the bond to purchase

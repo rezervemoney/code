@@ -240,7 +240,8 @@ contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAcce
     }
 
     /// @dev Given a desired net stake (`netAssets`), returns the gross amount of tokens that must be supplied
-    /// to the vault such that, after paying Harberger tax, exactly `netAssets` remain staked.
+    /// to the vault such that, after paying streaming tax, exactly `netAssets` remain staked.
+    /// This maintains the same total tax burden as the old harberger tax system.
     function _grossAssetsFromNet(uint256 netAssets) internal view returns (uint256) {
         // factorDenominator = 1e8 (since we multiply two basis-points values of 1e4 each)
         uint256 factorDenominator = 1e8;
@@ -256,17 +257,13 @@ contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAcce
         return Math.mulDiv(netAssets, factorDenominator, factorNumerator, Math.Rounding.Ceil);
     }
 
-    /// @dev Returns the net amount of assets that will remain staked after the harberger tax is paid.
-    /// This mirrors the logic in `AppStaking.createPosition` and `increaseAmount`.
+    /// @dev Returns the net amount of assets that will remain staked after the streaming tax is calculated.
+    /// With streaming tax, no upfront tax is paid - tax is collected over time.
+    /// This function returns the full amount since no tax is deducted upfront.
     function _netStakeAfterTax(uint256 assets) internal view returns (uint256) {
-        // Calculate the buy-out (declared) value first
-        uint256 declaredValue = _declaredValue(assets);
-
-        // Determine tax using the staking contract parameters (in basis points)
-        uint256 tax = declaredValue * staking.harbergerTaxRate() / 10000;
-
-        // Net assets that actually increase the position amount
-        return assets - tax;
+        // With streaming tax, no upfront tax is paid
+        // The full amount is staked and tax is collected over time
+        return assets;
     }
 
     /// @dev Computes the declared value given an `amount` of RZR being staked.

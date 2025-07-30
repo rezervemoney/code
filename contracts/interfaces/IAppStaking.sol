@@ -25,6 +25,20 @@ interface IAppStaking is IERC721Enumerable {
         uint256 rewardsUnlockAt;
     }
 
+    /// @notice Represents streaming tax data for a position
+    /// @param lastTaxCollectionTime Timestamp of last tax collection for streaming
+    /// @param streamingTaxRate Annual streaming tax rate for this position
+    /// @param lastAppliedTaxRate The last tax rate that was applied to this position
+    /// @param hasPaidUpfrontTax Whether this position has paid upfront harberger tax
+    /// @param upfrontTaxCredit Remaining upfront tax credit for this position
+    struct StreamingTaxData {
+        uint256 lastTaxCollectionTime;
+        uint256 streamingTaxRate;
+        uint256 lastAppliedTaxRate;
+        bool hasPaidUpfrontTax;
+        uint256 upfrontTaxCredit;
+    }
+
     // Events
     /// @notice Emitted when a new staking position is created
     /// @param tokenId The ID of the created position NFT
@@ -118,6 +132,17 @@ interface IAppStaking is IERC721Enumerable {
     /// @param newValue The new epoch duration
     event EpochDurationUpdated(uint256 oldValue, uint256 newValue);
 
+    /// @notice Emitted when upfront tax credit is set for a position
+    /// @param tokenId The position ID
+    /// @param creditAmount The amount of upfront tax credit set
+    event UpfrontTaxCreditSet(uint256 indexed tokenId, uint256 creditAmount);
+
+    /// @notice Emitted when upfront tax credit is consumed
+    /// @param tokenId The position ID
+    /// @param creditConsumed The amount of credit consumed
+    /// @param remainingCredit The remaining credit amount
+    event UpfrontTaxCreditConsumed(uint256 indexed tokenId, uint256 creditConsumed, uint256 remainingCredit);
+
     /// @notice Emitted when a position is split
     /// @param originalTokenId The ID of the original position NFT
     /// @param newTokenId The ID of the new position NFT
@@ -147,6 +172,19 @@ interface IAppStaking is IERC721Enumerable {
         uint256 newAmount,
         uint256 newDeclaredValue
     );
+
+    /// @notice Emitted when streaming tax is collected from a position
+    /// @param tokenId The ID of the position NFT
+    /// @param owner The address of the position owner
+    /// @param taxAmount The amount of tax collected
+    /// @param timeElapsed The time elapsed since last collection
+    event StreamingTaxCollected(uint256 indexed tokenId, address indexed owner, uint256 taxAmount, uint256 timeElapsed);
+
+    /// @notice Emitted when streaming tax rate is updated for a position
+    /// @param tokenId The ID of the position NFT
+    /// @param oldRate The old streaming tax rate
+    /// @param newRate The new streaming tax rate
+    event StreamingTaxRateUpdated(uint256 indexed tokenId, uint256 oldRate, uint256 newRate);
 
     /// @notice Initializes the staking contract
     /// @param _appToken The address of the dre token
@@ -223,6 +261,31 @@ interface IAppStaking is IERC721Enumerable {
     /// @param tokenId The ID of the position NFT
     /// @return The position details
     function positions(uint256 tokenId) external view returns (Position memory);
+
+    /// @notice Gets the streaming tax data for a staking position
+    /// @param tokenId The ID of the position NFT
+    /// @return The streaming tax data
+    function streamingTaxData(uint256 tokenId) external view returns (StreamingTaxData memory);
+
+    /// @notice Sets upfront tax credit for a position (governor only)
+    /// @param tokenId The position ID
+    /// @param creditAmount The amount of upfront tax credit to set
+    function setUpfrontTaxCredit(uint256 tokenId, uint256 creditAmount) external;
+
+    /// @notice Sets upfront tax credit for a position with specific tax rate (governor only)
+    /// @param tokenId The position ID
+    /// @param taxRate The tax rate to use for calculation (in basis points)
+    function setUpfrontTaxCreditWithRate(uint256 tokenId, uint256 taxRate) external;
+
+    /// @notice Sets upfront tax credits for multiple positions in batch (governor only)
+    /// @param tokenIds Array of position IDs
+    /// @param creditAmounts Array of credit amounts corresponding to each position
+    function setUpfrontTaxCreditsBatch(uint256[] calldata tokenIds, uint256[] calldata creditAmounts) external;
+
+    /// @notice Gets the remaining upfront tax credit for a position
+    /// @param tokenId The position ID
+    /// @return The remaining upfront tax credit
+    function getUpfrontTaxCredit(uint256 tokenId) external view returns (uint256);
 
     /// @notice Gets the current reward rate
     /// @return The current reward rate
@@ -304,4 +367,25 @@ interface IAppStaking is IERC721Enumerable {
     function increaseDeclaredValue(uint256 tokenId, uint256 additionalDeclaredValue)
         external
         returns (uint256 taxPaid);
+
+    /// @notice Collects streaming tax from a position
+    /// @param tokenId The ID of the position NFT
+    /// @return taxAmount The amount of tax collected
+    function collectStreamingTax(uint256 tokenId) external returns (uint256 taxAmount);
+
+    /// @notice Calculates the streaming tax owed for a position
+    /// @param tokenId The ID of the position NFT
+    /// @return taxAmount The amount of tax owed
+    /// @return timeElapsed The time elapsed since last collection
+    function calculateStreamingTax(uint256 tokenId) external view returns (uint256 taxAmount, uint256 timeElapsed);
+
+    /// @notice Updates the streaming tax rate for a position
+    /// @param tokenId The ID of the position NFT
+    /// @param newStreamingTaxRate The new streaming tax rate
+    function updateStreamingTaxRate(uint256 tokenId, uint256 newStreamingTaxRate) external;
+
+    /// @notice Collects streaming tax from all positions of a user
+    /// @param user The address of the user
+    /// @return totalTaxCollected The total amount of tax collected
+    function collectAllStreamingTaxes(address user) external returns (uint256 totalTaxCollected);
 }

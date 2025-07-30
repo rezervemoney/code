@@ -7,12 +7,18 @@ contract AppStakingTest is BaseTest {
     uint256 public constant STAKE_AMOUNT = 1000e18;
     uint256 public constant DECLARED_VALUE = 1000e18;
     uint256 public constant REWARD_AMOUNT = 100e18;
+    uint256 public constant HIGH_DEMAND_THRESHOLD_BPS = 8000;
+    uint256 public constant LOW_DEMAND_THRESHOLD_BPS = 2000;
+    uint256 public constant MAX_DEPOSIT_FEE_BPS = 1000;
 
     function setUp() public {
         setUpBaseTest();
 
         vm.startPrank(owner);
         authority.addPolicy(owner);
+        staking.setHighDemandThresholdBps(HIGH_DEMAND_THRESHOLD_BPS);
+        staking.setLowDemandThresholdBps(LOW_DEMAND_THRESHOLD_BPS);
+        staking.setMaxDepositFeeBps(MAX_DEPOSIT_FEE_BPS);
     }
 
     function test_Initialize() public view {
@@ -206,7 +212,7 @@ contract AppStakingTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testFail_CreatePositionWithZeroValue() public {
+    function testRevert_CreatePositionWithZeroValue() public {
         vm.startPrank(owner);
         app.mint(owner, STAKE_AMOUNT);
         app.approve(address(staking), STAKE_AMOUNT);
@@ -214,7 +220,7 @@ contract AppStakingTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testFail_StartUnstakingNotOwner() public {
+    function testRevert_StartUnstakingNotOwner() public {
         vm.startPrank(owner);
 
         // Create position
@@ -230,7 +236,7 @@ contract AppStakingTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testFail_CompleteUnstakingBeforeCooldown() public {
+    function testRevert_CompleteUnstakingBeforeCooldown() public {
         vm.startPrank(owner);
 
         // Create position
@@ -247,7 +253,7 @@ contract AppStakingTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testFail_ClaimRewardsBeforeCooldown() public {
+    function testRevert_ClaimRewardsBeforeCooldown() public {
         vm.startPrank(owner);
 
         // Create position
@@ -266,7 +272,7 @@ contract AppStakingTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testFail_BuyOwnPosition() public {
+    function testRevert_BuyOwnPosition() public {
         vm.startPrank(owner);
 
         // Create position
@@ -793,7 +799,7 @@ contract AppStakingTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testFail_SplitPositionNotOwner() public {
+    function testRevert_SplitPositionNotOwner() public {
         vm.startPrank(owner);
 
         // Create position
@@ -809,7 +815,7 @@ contract AppStakingTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testFail_SplitPositionInCooldown() public {
+    function testRevert_SplitPositionInCooldown() public {
         vm.startPrank(owner);
 
         // Create position
@@ -826,7 +832,7 @@ contract AppStakingTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testFail_SplitPositionInvalidRatio() public {
+    function testRevert_SplitPositionInvalidRatio() public {
         vm.startPrank(owner);
 
         // Create position
@@ -939,7 +945,7 @@ contract AppStakingTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testFail_IncreaseDeclaredValue_NotOwner() public {
+    function testRevert_IncreaseDeclaredValue_NotOwner() public {
         vm.startPrank(owner);
 
         // Create position
@@ -955,7 +961,7 @@ contract AppStakingTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testFail_IncreaseDeclaredValue_Zero() public {
+    function testRevert_IncreaseDeclaredValue_Zero() public {
         vm.startPrank(owner);
 
         // Create position
@@ -1004,7 +1010,7 @@ contract AppStakingTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testFail_BuyPositionInCooldown() public {
+    function testRevert_BuyPositionInCooldown() public {
         vm.startPrank(owner);
 
         // Create position
@@ -1385,11 +1391,7 @@ contract AppStakingTest is BaseTest {
     // ============ INPUT VALIDATION TESTS ============
 
     function test_CreatePositionWithValidInputs() public {
-        vm.startPrank(owner);
-
-        // Mint RZR tokens to owner
-        app.mint(owner, STAKE_AMOUNT);
-        app.approve(address(staking), STAKE_AMOUNT);
+            app.approve(address(staking), STAKE_AMOUNT);
 
         // Create position with valid inputs
         (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
@@ -1525,4 +1527,73 @@ contract AppStakingTest is BaseTest {
 
         vm.stopPrank();
     }
+
+    function test_DynamicFeeParameters() public {
+        assertEq(staking.lowDemandThresholdBps(), LOW_DEMAND_THRESHOLD_BPS, "Low demand threshold not set correctly");
+        assertEq(staking.highDemandThresholdBps(), HIGH_DEMAND_THRESHOLD_BPS, "High demand threshold not set correctly");
+        assertEq(staking.maxDepositFeeBps(), MAX_DEPOSIT_FEE_BPS, "Max deposit fee not set correctly");
+    }
+
+    function test_Market_HighDemand() public {
+        vm.startPrank(owner);
+
+        // Mint RZR tokens to owner
+        app.mint(owner, STAKE_AMOUNT);
+        app.mint(user1, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
+
+        // Tax that user will pay. Initial tax is 0%
+        uint256 tax = (staking.getDepositFeeBps() * STAKE_AMOUNT) / staking.BASIS_POINTS();
+
+        // Create position
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        // Verify position details
+        IAppStaking.Position memory position = staking.positions(tokenId);
+
+        assertEq(position.declaredValue, DECLARED_VALUE);
+        assertEq(position.cooldownEnd, 0);
+        assertEq(position.amount, STAKE_AMOUNT);
+        assertEq(staking.totalStaked(), STAKE_AMOUNT);
+        vm.stopPrank();
+
+        tax = (staking.getDepositFeeBps() * STAKE_AMOUNT) / staking.BASIS_POINTS(); // Tax will be 5%
+
+        vm.startPrank(user1);
+        app.approve(address(staking), STAKE_AMOUNT);
+        (tokenId,) = staking.createPosition(user1, STAKE_AMOUNT, DECLARED_VALUE, 0);
+        vm.stopPrank();
+
+        position = staking.positions(tokenId);
+        assertEq(position.amount, STAKE_AMOUNT - tax);
+        assertEq(position.declaredValue, DECLARED_VALUE);
+        assertEq(position.cooldownEnd, 0);
+    }
+
+    function test_Market_LowDemand() public {
+        vm.startPrank(owner);
+
+        // Mint RZR tokens to owner
+        app.mint(owner, STAKE_AMOUNT);
+        app.mint(user1, STAKE_AMOUNT*5);
+
+        app.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+        vm.stopPrank();
+
+        vm.startPrank(user1);
+        app.approve(address(staking), STAKE_AMOUNT);
+        uint256 tax = (staking.getDepositFeeBps() * STAKE_AMOUNT) / staking.BASIS_POINTS(); // Tax will be 0%
+        (tokenId,) = staking.createPosition(user1, STAKE_AMOUNT, DECLARED_VALUE, 0);
+        vm.stopPrank();
+
+        IAppStaking.Position memory position = staking.positions(tokenId);
+
+        assertEq(position.amount, STAKE_AMOUNT - tax);
+        assertEq(position.declaredValue, DECLARED_VALUE);
+        assertEq(position.cooldownEnd, 0);
+        
+        vm.stopPrank();
+    }
+
 }

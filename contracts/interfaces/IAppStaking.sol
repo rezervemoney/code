@@ -130,6 +130,21 @@ interface IAppStaking is IERC721Enumerable {
     /// @param newValue The new epoch duration
     event EpochDurationUpdated(uint256 oldValue, uint256 newValue);
 
+    /// @notice Emitted when low demand threshold is updated
+    /// @param oldValue The old low demand threshold in basis points
+    /// @param newValue The new low demand threshold in basis points
+    event LowDemandThresholdBpsUpdated(uint256 oldValue, uint256 newValue);
+
+    /// @notice Emitted when high demand threshold is updated
+    /// @param oldValue The old high demand threshold in basis points
+    /// @param newValue The new high demand threshold in basis points
+    event HighDemandThresholdBpsUpdated(uint256 oldValue, uint256 newValue);
+
+    /// @notice Emitted when max deposit fee is updated
+    /// @param oldValue The old max deposit fee in basis points
+    /// @param newValue The new max deposit fee in basis points
+    event MaxDepositFeeBpsUpdated(uint256 oldValue, uint256 newValue);
+
     /// @notice Emitted when upfront tax credit is set for a position
     /// @param tokenId The position ID
     /// @param creditAmount The amount of upfront tax credit set

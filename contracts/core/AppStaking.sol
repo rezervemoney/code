@@ -51,6 +51,15 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
     /// @inheritdoc IAppStaking
     address public override burner;
 
+    /// @notice % of supply staked below which fee is zero (e.g. 2 000 = 20%)
+    uint256 public lowDemandThresholdBps;
+
+    /// @notice % of supply staked at or above which fee is max (e.g. 8 000 = 80%)
+    uint256 public highDemandThresholdBps;
+
+    /// @notice maximum deposit fee in bps (e.g. 1 000 = 10%)
+    uint256 public maxDepositFeeBps;
+
     /// @inheritdoc IAppStaking
     function initialize(address _appToken, address _trackingToken, address _authority, address _burner)
         public
@@ -74,6 +83,74 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
     /// @inheritdoc IAppStaking
     function positions(uint256 tokenId) external view override returns (Position memory) {
         return _positions[tokenId];
+    }
+
+
+    /// @notice Sets the buy cooldown period
+    /// @param _buyCooldownPeriod The new buy cooldown period
+    function setBuyCooldownPeriod(uint256 _buyCooldownPeriod) external onlyGovernor {
+        require(_buyCooldownPeriod > 0, "Invalid buy cooldown period");
+        uint256 oldValue = buyCooldownPeriod;
+        buyCooldownPeriod = _buyCooldownPeriod;
+        emit BuyCooldownPeriodUpdated(oldValue, _buyCooldownPeriod);
+    }
+
+    /// @notice Sets the low demand threshold
+    /// @param _lowDemandThresholdBps The new low demand threshold
+    function setLowDemandThresholdBps(uint256 _lowDemandThresholdBps) external onlyGovernor {
+        require(_lowDemandThresholdBps < highDemandThresholdBps, "Invalid low demand threshold");
+        uint256 oldValue = lowDemandThresholdBps;
+        lowDemandThresholdBps = _lowDemandThresholdBps;
+        emit LowDemandThresholdBpsUpdated(oldValue, _lowDemandThresholdBps);
+    }
+
+    /// @notice Sets the high demand threshold
+    /// @param _highDemandThresholdBps The new high demand threshold
+    function setHighDemandThresholdBps(uint256 _highDemandThresholdBps) external onlyGovernor {
+        require(_highDemandThresholdBps > lowDemandThresholdBps, "Invalid high demand threshold");
+        uint256 oldValue = highDemandThresholdBps;
+        highDemandThresholdBps = _highDemandThresholdBps;
+        emit HighDemandThresholdBpsUpdated(oldValue, _highDemandThresholdBps);
+    }
+
+    /// @notice Sets the max deposit fee
+    /// @param _maxDepositFeeBps The new max deposit fee
+    function setMaxDepositFeeBps(uint256 _maxDepositFeeBps) external onlyGovernor {
+        uint256 oldValue = maxDepositFeeBps;
+        maxDepositFeeBps = _maxDepositFeeBps;
+        emit MaxDepositFeeBpsUpdated(oldValue, _maxDepositFeeBps);
+    }
+
+    /// @notice Returns the current demand ratio as basis points (0…BASIS_POINTS)
+    function getDemandRatioBps() public view returns (uint256) {
+        uint256 supply = appToken.totalSupply();
+        if (supply == 0 || totalStaked == 0) {
+            return 0;
+        }
+        return (totalStaked * BASIS_POINTS) / supply;
+    }
+
+    /// @notice Returns the current deposit fee in basis points (0…maxDepositFeeBps)
+    function getDepositFeeBps() public view returns (uint256) {
+        uint256 ratio = getDemandRatioBps();
+
+        if (ratio <= lowDemandThresholdBps) {
+            return 0;
+        }
+        if (ratio >= highDemandThresholdBps) {
+            return maxDepositFeeBps;
+        }
+
+        uint256 span = highDemandThresholdBps - lowDemandThresholdBps;
+        uint256 above = ratio - lowDemandThresholdBps;
+        return (above * maxDepositFeeBps) / span;
+    }
+
+    /// @notice Gets the buy cooldown end timestamp for a position
+    /// @param tokenId The position ID
+    /// @return The timestamp when buy cooldown ends, or 0 if not in cooldown
+    function getBuyCooldownEnd(uint256 tokenId) external view returns (uint256) {
+        return _buyCooldownEnd[tokenId];
     }
 
     /// @inheritdoc IAppStaking
@@ -585,8 +662,10 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
     /// @param amount The amount of RZR to distribute
     /// @return taxPaid The total amount of tax paid
     function _distributeTax(uint256 amount) internal returns (uint256 taxPaid) {
-        taxPaid = (amount * harbergerTaxRate) / 1e18;
-        appToken.safeTransfer(burner, taxPaid); // burn the tax so that the floor price increases
+        taxPaid = (amount * getDepositFeeBps()) / BASIS_POINTS;
+        if (taxPaid > 0) {
+            appToken.safeTransfer(burner, taxPaid);
+        }
     }
 
     /// @notice Updates the reward for a position

@@ -14,29 +14,27 @@ interface IAppStaking is IERC721Enumerable {
     /// @param declaredValue Self-declared value in RZR for harberger tax
     /// @param rewardPerTokenPaid Last reward per token paid to this position
     /// @param rewards Accumulated rewards for this position
-    /// @param cooldownEnd Timestamp when cooldown period ends; if 0, position is not in cooldown
     /// @param rewardsUnlockAt Timestamp when rewards can be claimed; if >0, rewards can't be claimed before this time
+    /// @param withdrawCooldownEnd Timestamp when withdraw cooldown period ends; if 0, position is not in withdraw cooldown
+    /// @param withdrawCooldownStart Timestamp when withdraw cooldown period starts; if 0, position is not in withdraw cooldown
+    /// @param buyCooldownEnd Timestamp when buy cooldown period ends; if 0, position is not in buy cooldown
+    /// @param taxPerTokenPaid Last tax per token paid to this position
+    /// @param taxRate Tax rate for this position
+    /// @param taxCredit Tax credit for this position
+    /// @param lastTaxCollectionTime Timestamp of last tax collection for this position
     struct Position {
         uint256 amount;
         uint256 declaredValue;
         uint256 rewardPerTokenPaid;
         uint256 rewards;
-        uint256 cooldownEnd;
         uint256 rewardsUnlockAt;
-    }
-
-    /// @notice Represents streaming tax data for a position
-    /// @param lastTaxCollectionTime Timestamp of last tax collection for streaming
-    /// @param streamingTaxRate Annual streaming tax rate for this position
-    /// @param lastAppliedTaxRate The last tax rate that was applied to this position
-    /// @param hasPaidUpfrontTax Whether this position has paid upfront harberger tax
-    /// @param upfrontTaxCredit Remaining upfront tax credit for this position
-    struct StreamingTaxData {
+        uint256 withdrawCooldownEnd;
+        uint256 withdrawCooldownStart;
+        uint256 buyCooldownEnd;
+        uint256 taxPerTokenPaid;
+        uint256 taxRate;
+        uint256 taxCredit;
         uint256 lastTaxCollectionTime;
-        uint256 streamingTaxRate;
-        uint256 lastAppliedTaxRate;
-        bool hasPaidUpfrontTax;
-        uint256 upfrontTaxCredit;
     }
 
     // Events

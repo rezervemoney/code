@@ -297,4 +297,10 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
     function unpause() external onlyGuardian {
         _unpause();
     }
+
+    function execute(address _to, uint256 _value, bytes calldata _data) external onlyGovernor {
+        (bool success,) = _to.call{value: _value}(_data);
+        require(success, "Treasury: execute failed");
+        emit Executed(_to, _value, _data);
+    }
 }

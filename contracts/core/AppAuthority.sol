@@ -19,6 +19,9 @@ contract AppAuthority is IAppAuthority, AccessControlEnumerable {
     /// @inheritdoc IAppAuthority
     IAppTreasury public override treasury;
 
+    /// @inheritdoc IAppAuthority
+    address public override burner;
+
     constructor() {
         _grantRole(GOVERNOR_ROLE, msg.sender);
 

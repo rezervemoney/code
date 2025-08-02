@@ -113,9 +113,6 @@ contract TotalReservesOracle is AppAccessControlled, ITotalReservesOracle {
         onlyGovernor
     {
         ChainReserves storage chainReserves = crosschainReserves[eid];
-        uint256 oldRzrReserves = chainReserves.rzrReserves;
-        uint256 oldUsdReserves = chainReserves.usdReserves;
-
         chainReserves.rzrReserves = _rzrReserves;
         chainReserves.usdReserves = _usdReserves;
         chainReserves.lastUpdatedAt = block.timestamp;

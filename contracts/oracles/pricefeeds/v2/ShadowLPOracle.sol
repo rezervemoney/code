@@ -34,7 +34,11 @@ contract ShadowLPOracle is IOracleV2 {
     /// @param _baseToken The base token
     constructor(IShadowLP _amm, address _baseToken) {
         baseToken = IERC20Metadata(_baseToken);
-        quoteToken = IERC20Metadata(amm.token0() == _baseToken ? amm.token1() : amm.token0());
+        quoteToken = IERC20Metadata(
+            IShadowLP(address(asset)).token0() == _baseToken
+                ? IShadowLP(address(asset)).token1()
+                : IShadowLP(address(asset)).token0()
+        );
 
         decimalOffset = 10 ** (18 - quoteToken.decimals());
 
@@ -49,7 +53,7 @@ contract ShadowLPOracle is IOracleV2 {
         returns (uint256 rzrAssets, uint256 usdAssets, uint256 lastUpdatedAt)
     {
         rzrAssets = 0;
-        usdAssets = amm.current(address(baseToken), amount) * decimalOffset;
+        usdAssets = IShadowLP(address(asset)).current(address(baseToken), amount) * decimalOffset;
         lastUpdatedAt = block.timestamp;
     }
 }

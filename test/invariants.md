@@ -25,8 +25,8 @@ Here are a list of invariants the tests go through. Some of these tests are test
 
 - **Staking Invariants**:
 
-  - Harberger tax rate must be less than or equal to 100% (BASIS_POINTS)
-  - Resell fee rate must be less than or equal to 100% (BASIS_POINTS)
+  - Harberger tax rate must be less than or equal to 100% (1e18)
+  - Resell fee rate must be less than or equal to 100% (1e18)
   - Withdraw cooldown period must be greater than 0
   - Reward cooldown period must be greater than 0
   - Total staked amount must equal sum of all position amounts

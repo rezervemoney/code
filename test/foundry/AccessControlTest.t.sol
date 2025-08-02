@@ -49,13 +49,13 @@ contract AccessControlTest is BaseTest {
     //////////////////////////////////////////////////////////////*/
     function test_GovernorCanUpdateOracle() external {
         vm.prank(governor);
-        appOracle.updateOracle(address(mockQuoteToken3), address(mockOracle3));
+        appOracle.updateOracle(address(mockQuoteToken3), address(mockOracle3), 3600);
     }
 
     function test_NonGovernorCannotUpdateOracle() external {
         vm.prank(user1);
         vm.expectRevert("UNAUTHORIZED");
-        appOracle.updateOracle(address(mockQuoteToken3), address(mockOracle3));
+        appOracle.updateOracle(address(mockQuoteToken3), address(mockOracle3), 3600);
     }
 
     function test_GovernorCanEnableDisableToken() external {

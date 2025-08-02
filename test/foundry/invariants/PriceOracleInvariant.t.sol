@@ -38,7 +38,7 @@ contract PriceOracleInvariant is BaseTest {
         // are not looking to test (e.g. replacing price oracles with ones that
         // return zero).
         bytes4[] memory selectors = new bytes4[](1);
-        selectors[0] = bytes4(keccak256("updateOracle(address,address)"));
+        selectors[0] = bytes4(keccak256("updateOracle(address,address,uint256)"));
         excludeSelector(StdInvariant.FuzzSelector({addr: address(appOracle), selectors: selectors}));
 
         // Exclude direct calls to `setTokenPrice(uint256)` so that floor price
@@ -62,12 +62,12 @@ contract PriceOracleInvariant is BaseTest {
     function invariant_TokenPricesArePositive() public view {
         // RZR floor price
         assertGt(appOracle.getTokenPrice(), 0);
-        assertGt(appOracle.getPrice(address(app)), 0);
+        assertGt(appOracle.getPriceUsd(address(app)), 0);
 
         // Mock tokens that were initialised in BaseTest
-        assertGt(appOracle.getPrice(address(mockQuoteToken)), 0);
-        assertGt(appOracle.getPrice(address(mockQuoteToken2)), 0);
-        assertGt(appOracle.getPrice(address(mockQuoteToken3)), 0);
+        assertGt(appOracle.getPriceUsd(address(mockQuoteToken)), 0);
+        assertGt(appOracle.getPriceUsd(address(mockQuoteToken2)), 0);
+        assertGt(appOracle.getPriceUsd(address(mockQuoteToken3)), 0);
     }
 
     /// @notice The floor price must never decrease and each update must be less

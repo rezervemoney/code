@@ -19,8 +19,10 @@ contract AppAuthority is IAppAuthority, AccessControlEnumerable {
     /// @inheritdoc IAppAuthority
     IAppTreasury public override treasury;
 
+    address public burner;
+
     /// @inheritdoc IAppAuthority
-    address public override burner;
+    address public bridge;
 
     constructor() {
         _grantRole(GOVERNOR_ROLE, msg.sender);
@@ -51,6 +53,13 @@ contract AppAuthority is IAppAuthority, AccessControlEnumerable {
         address oldTreasury = address(treasury);
         treasury = IAppTreasury(_newTreasury);
         emit TreasuryUpdated(_newTreasury, oldTreasury);
+    }
+
+    /// @inheritdoc IAppAuthority
+    function setBridge(address _newBridge) external onlyGovernor {
+        address oldBridge = bridge;
+        bridge = _newBridge;
+        emit BridgeUpdated(_newBridge, oldBridge);
     }
 
     /// @inheritdoc IAppAuthority

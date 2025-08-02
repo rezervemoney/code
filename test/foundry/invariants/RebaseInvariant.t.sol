@@ -77,7 +77,7 @@ contract RebaseInvariant is BaseTest {
     /// @dev Tokens minted or burned during a supply change must respect excess reserves logic and affect BR proportionally.
     function invariant_SupplyChangesRespectBacking() external {
         uint256 currentSupply = treasury.totalSupply();
-        uint256 currentReserves = treasury.totalReserves();
+        uint256 currentReserves = treasury.totalReservesUsd();
         uint256 currentBR = treasury.backingRatioE18();
 
         if (currentSupply != lastSupply) {
@@ -109,7 +109,7 @@ contract RebaseInvariant is BaseTest {
                                       Internal
     //////////////////////////////////////////////////////////////////////////*/
     function _snapshotState() internal {
-        lastReserves = treasury.totalReserves();
+        lastReserves = treasury.totalReservesUsd();
         lastSupply = treasury.totalSupply();
         lastBackingRatioE18 = treasury.backingRatioE18();
     }

@@ -27,43 +27,10 @@ contract AppStakingTaxCreditTest is BaseTest {
         staking.setUpfrontTaxCredit(tokenId, CREDIT_AMOUNT);
 
         // Verify credit was set
-        IAppStaking.StreamingTaxData memory streamingData = staking.streamingTaxData(tokenId);
-        assertTrue(streamingData.hasPaidUpfrontTax);
-        assertEq(streamingData.upfrontTaxCredit, CREDIT_AMOUNT);
+        IAppStaking.Position memory position = staking.positions(tokenId);
+        assertTrue(position.taxCredit > 0);
+        assertEq(position.taxCredit, CREDIT_AMOUNT);
         assertEq(staking.getUpfrontTaxCredit(tokenId), CREDIT_AMOUNT);
-
-        vm.stopPrank();
-    }
-
-    function test_SetUpfrontTaxCreditsBatch() public {
-        vm.startPrank(owner);
-
-        // Create multiple positions
-        app.mint(owner, STAKE_AMOUNT * 3);
-        app.approve(address(staking), STAKE_AMOUNT * 3);
-        
-        (uint256 tokenId1,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
-        (uint256 tokenId2,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE * 2, 0);
-        (uint256 tokenId3,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE * 3, 0);
-
-        // Set credits in batch
-        uint256[] memory tokenIds = new uint256[](3);
-        uint256[] memory creditAmounts = new uint256[](3);
-        
-        tokenIds[0] = tokenId1;
-        tokenIds[1] = tokenId2;
-        tokenIds[2] = tokenId3;
-        
-        creditAmounts[0] = CREDIT_AMOUNT;
-        creditAmounts[1] = CREDIT_AMOUNT * 2;
-        creditAmounts[2] = CREDIT_AMOUNT * 3;
-
-        staking.setUpfrontTaxCreditsBatch(tokenIds, creditAmounts);
-
-        // Verify all credits were set
-        assertEq(staking.getUpfrontTaxCredit(tokenId1), CREDIT_AMOUNT);
-        assertEq(staking.getUpfrontTaxCredit(tokenId2), CREDIT_AMOUNT * 2);
-        assertEq(staking.getUpfrontTaxCredit(tokenId3), CREDIT_AMOUNT * 3);
 
         vm.stopPrank();
     }
@@ -86,8 +53,8 @@ contract AppStakingTaxCreditTest is BaseTest {
         vm.warp(block.timestamp + 30 days);
 
         // Calculate expected streaming tax
-        (uint256 expectedTaxAmount, ) = staking.calculateStreamingTax(tokenId);
-        
+        uint256 expectedTaxAmount = staking.calculateStreamingTax(tokenId);
+
         // Collect streaming tax
         uint256 taxCollected = staking.collectStreamingTax(tokenId);
 
@@ -96,13 +63,11 @@ contract AppStakingTaxCreditTest is BaseTest {
 
         // Verify credit was consumed first
         uint256 remainingCredit = staking.getUpfrontTaxCredit(tokenId);
-        uint256 expectedRemainingCredit = CREDIT_AMOUNT > expectedTaxAmount ? 
-            CREDIT_AMOUNT - expectedTaxAmount : 0;
+        uint256 expectedRemainingCredit = CREDIT_AMOUNT > expectedTaxAmount ? CREDIT_AMOUNT - expectedTaxAmount : 0;
         assertEq(remainingCredit, expectedRemainingCredit);
 
         // Verify position amount was only reduced by the amount not covered by credit
-        uint256 actualTaxPaid = expectedTaxAmount > CREDIT_AMOUNT ? 
-            expectedTaxAmount - CREDIT_AMOUNT : 0;
+        uint256 actualTaxPaid = expectedTaxAmount > CREDIT_AMOUNT ? expectedTaxAmount - CREDIT_AMOUNT : 0;
         uint256 expectedPositionAmount = initialAmount - actualTaxPaid;
         assertEq(staking.positions(tokenId).amount, expectedPositionAmount);
 
@@ -168,8 +133,8 @@ contract AppStakingTaxCreditTest is BaseTest {
         vm.warp(block.timestamp + 30 days);
 
         // Calculate expected streaming tax
-        (uint256 expectedTaxAmount, ) = staking.calculateStreamingTax(tokenId);
-        
+        uint256 expectedTaxAmount = staking.calculateStreamingTax(tokenId);
+
         // Collect streaming tax
         uint256 taxCollected = staking.collectStreamingTax(tokenId);
 
@@ -215,10 +180,10 @@ contract AppStakingTaxCreditTest is BaseTest {
         assertEq(newCredit, CREDIT_AMOUNT / 2);
 
         // Verify both positions have the upfront tax flag
-        IAppStaking.StreamingTaxData memory originalData = staking.streamingTaxData(tokenId);
-        IAppStaking.StreamingTaxData memory newData = staking.streamingTaxData(newTokenId);
-        assertTrue(originalData.hasPaidUpfrontTax);
-        assertTrue(newData.hasPaidUpfrontTax);
+        IAppStaking.Position memory originalPosition = staking.positions(tokenId);
+        IAppStaking.Position memory newPosition = staking.positions(newTokenId);
+        assertTrue(originalPosition.taxCredit > 0);
+        assertTrue(newPosition.taxCredit > 0);
 
         vm.stopPrank();
     }
@@ -229,7 +194,7 @@ contract AppStakingTaxCreditTest is BaseTest {
         // Create two positions
         app.mint(owner, STAKE_AMOUNT * 2);
         app.approve(address(staking), STAKE_AMOUNT * 2);
-        
+
         (uint256 tokenId1,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
         (uint256 tokenId2,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE * 2, 0);
 
@@ -245,18 +210,18 @@ contract AppStakingTaxCreditTest is BaseTest {
         assertEq(mergedCredit, CREDIT_AMOUNT + CREDIT_AMOUNT * 2);
 
         // Verify merged position has the upfront tax flag
-        IAppStaking.StreamingTaxData memory mergedData = staking.streamingTaxData(mergedTokenId);
-        assertTrue(mergedData.hasPaidUpfrontTax);
+        IAppStaking.Position memory mergedPosition = staking.positions(mergedTokenId);
+        assertTrue(mergedPosition.taxCredit > 0);
 
         vm.stopPrank();
     }
 
     function testFail_SetCreditForNonExistentPosition() public {
         vm.startPrank(owner);
-        
+
         // Try to set credit for non-existent position
         staking.setUpfrontTaxCredit(999, CREDIT_AMOUNT);
-        
+
         vm.stopPrank();
     }
 
@@ -318,48 +283,12 @@ contract AppStakingTaxCreditTest is BaseTest {
 
         // Calculate expected credit (5% of declared value)
         uint256 expectedCredit = (DECLARED_VALUE * 500) / 10000; // 5% = 50e18
-        
+
         // Set credit
         staking.setUpfrontTaxCredit(tokenId, expectedCredit);
 
         // Verify credit was set correctly
         assertEq(staking.getUpfrontTaxCredit(tokenId), expectedCredit);
-
-        vm.stopPrank();
-    }
-
-    function test_SetUpfrontTaxCreditWithRate() public {
-        vm.startPrank(owner);
-
-        // Create position
-        app.mint(owner, STAKE_AMOUNT);
-        app.approve(address(staking), STAKE_AMOUNT);
-        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
-
-        // Set credit using a specific tax rate (3% instead of current 5%)
-        uint256 customTaxRate = 300; // 3%
-        staking.setUpfrontTaxCreditWithRate(tokenId, customTaxRate);
-
-        // Calculate expected credit (3% of declared value)
-        uint256 expectedCredit = (DECLARED_VALUE * customTaxRate) / 10000; // 3% = 30e18
-        
-        // Verify credit was set correctly
-        assertEq(staking.getUpfrontTaxCredit(tokenId), expectedCredit);
-
-        vm.stopPrank();
-    }
-
-    function test_SetUpfrontTaxCreditWithRateValidation() public {
-        vm.startPrank(owner);
-
-        // Create position
-        app.mint(owner, STAKE_AMOUNT);
-        app.approve(address(staking), STAKE_AMOUNT);
-        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
-
-        // Try to set credit with invalid tax rate (over 100%)
-        vm.expectRevert("Invalid tax rate");
-        staking.setUpfrontTaxCreditWithRate(tokenId, 10001); // 100.01%
 
         vm.stopPrank();
     }
@@ -379,13 +308,16 @@ contract AppStakingTaxCreditTest is BaseTest {
         vm.warp(block.timestamp + 30 days);
 
         // Calculate expected streaming tax
-        (uint256 expectedTaxAmount, ) = staking.calculateStreamingTax(tokenId);
+        uint256 expectedTaxAmount = staking.calculateStreamingTax(tokenId);
 
         // Expect UpfrontTaxCreditConsumed event
         vm.expectEmit(true, false, false, true);
-        emit IAppStaking.UpfrontTaxCreditConsumed(tokenId, Math.min(expectedTaxAmount, CREDIT_AMOUNT), 
-            CREDIT_AMOUNT > expectedTaxAmount ? CREDIT_AMOUNT - expectedTaxAmount : 0);
-        
+        emit IAppStaking.UpfrontTaxCreditConsumed(
+            tokenId,
+            Math.min(expectedTaxAmount, CREDIT_AMOUNT),
+            CREDIT_AMOUNT > expectedTaxAmount ? CREDIT_AMOUNT - expectedTaxAmount : 0
+        );
+
         staking.collectStreamingTax(tokenId);
 
         vm.stopPrank();
@@ -402,9 +334,9 @@ contract AppStakingTaxCreditTest is BaseTest {
         // Expect UpfrontTaxCreditSet event
         vm.expectEmit(true, false, false, true);
         emit IAppStaking.UpfrontTaxCreditSet(tokenId, CREDIT_AMOUNT);
-        
+
         staking.setUpfrontTaxCredit(tokenId, CREDIT_AMOUNT);
 
         vm.stopPrank();
     }
-} 
+}

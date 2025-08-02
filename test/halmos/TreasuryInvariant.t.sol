@@ -46,7 +46,7 @@ contract TreasuryInvariant is BaseTest, SymTest {
         }
 
         // ─────────────────  Invariant assertion  ──────────────────
-        uint256 reserves = treasury.totalReserves();
+        uint256 reserves = treasury.totalReservesUsd();
         uint256 supply = treasury.totalSupply(); // already excludes unbackedSupply
         assertGe(reserves, supply);
     }

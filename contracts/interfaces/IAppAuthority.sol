@@ -18,6 +18,11 @@ interface IAppAuthority {
     /// @param oldOperationsTreasury The address of the old operations treasury
     event OperationsTreasuryUpdated(address indexed newOperationsTreasury, address indexed oldOperationsTreasury);
 
+    /// @notice Emitted when the bridge address is updated
+    /// @param newBridge The address of the new bridge
+    /// @param oldBridge The address of the old bridge
+    event BridgeUpdated(address indexed newBridge, address indexed oldBridge);
+
     /// @notice Adds a new governor to the system
     /// @param _newGovernor The address of the new governor to add
     function addGovernor(address _newGovernor) external;
@@ -78,6 +83,10 @@ interface IAppAuthority {
     /// @param _newTreasury The address of the new treasury
     function setTreasury(address _newTreasury) external;
 
+    /// @notice Sets the bridge address
+    /// @param _newBridge The address of the new bridge
+    function setBridge(address _newBridge) external;
+
     /// @notice Removes an existing reserve depositor from the system
     /// @param _oldReserveDepositor The address of the reserve depositor to remove
     function removeReserveDepositor(address _oldReserveDepositor) external;
@@ -129,6 +138,10 @@ interface IAppAuthority {
     /// @notice Returns the treasury contract instance
     /// @return IAppTreasury The treasury contract instance
     function treasury() external view returns (IAppTreasury);
+
+    /// @notice Returns the bridge address
+    /// @return address The address of the bridge
+    function bridge() external view returns (address);
 
     /// @notice Returns an array of all candidates for a given role
     /// @param role The role to get candidates for (e.g., GOVERNOR_ROLE, GUARDIAN_ROLE, etc.)

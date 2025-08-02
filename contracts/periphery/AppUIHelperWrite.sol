@@ -70,7 +70,7 @@ contract AppUIHelperWrite is AppUIHelperBase {
             uint256 tokenId = staking.tokenOfOwnerByIndex(user, i);
             if (tokenId == 0) continue;
             // IAppStaking.Position memory position = staking.positions(tokenId);
-            // if (position.cooldownEnd > block.timestamp) continue;
+            // if (position.withdrawCooldownEnd > block.timestamp) continue;
             amount += staking.claimRewards(tokenId);
         }
     }

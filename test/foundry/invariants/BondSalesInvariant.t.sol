@@ -118,7 +118,7 @@ contract BondSalesInvariant is BaseTest {
     /// @notice Reserves must always cover supply (fully backed) and minted RZR for bonds can never exceed collateral value.
     function invariant_FullyBacked() external view {
         // Fully backed requirement
-        assertGe(treasury.totalReserves(), treasury.totalSupply());
+        assertGe(treasury.totalReservesUsd(), treasury.totalSupply());
     }
 
     /// @notice Backing ratio must never decrease and must stay >= 1.

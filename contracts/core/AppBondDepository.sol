@@ -348,10 +348,12 @@ contract AppBondDepository is
         payout = (_amount * 1e18) / _price;
 
         uint256 fee = _amount * treasury.reserveFee() / BASIS_POINTS;
-        uint256 expectedPayout = treasury.tokenValueE18(address(_token), _amount - fee);
+        (uint256 rzrValue, uint256 expectedPayout) = treasury.tokenValueE18(address(_token), _amount - fee);
+
+        require(rzrValue == 0, "RZR value is not 0");
 
         if (expectedPayout > payout) {
-            profit = expectedPayout - payout;
+            profit = expectedPayout - payout; // profit is the difference between the expected payout and the actual payout
         }
     }
 }

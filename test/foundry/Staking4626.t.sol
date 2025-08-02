@@ -276,7 +276,9 @@ contract Staking4626Test is BaseTest {
     function test_PreviewDepositZeroTax() public {
         // Set tax rate to 0%
         vm.startPrank(owner);
-        staking.setHarbergerTaxRate(0);
+        IAppStaking.Variables memory defaultVariables = staking.variables();
+        defaultVariables.harbergerTaxRate = 0;
+        staking.setVariables(defaultVariables);
         vm.stopPrank();
 
         uint256 assets = 100 ether;
@@ -291,7 +293,9 @@ contract Staking4626Test is BaseTest {
     function test_PreviewDepositTenPercentTax() public {
         // Set tax rate to 10%
         vm.startPrank(owner);
-        staking.setHarbergerTaxRate(1000);
+        IAppStaking.Variables memory defaultVariables = staking.variables();
+        defaultVariables.harbergerTaxRate = 1000;
+        staking.setVariables(defaultVariables);
         vm.stopPrank();
 
         uint256 assets = 100 ether;
@@ -306,7 +310,9 @@ contract Staking4626Test is BaseTest {
     function test_PreviewMintZeroTax() public {
         // Set tax rate to 0%
         vm.startPrank(owner);
-        staking.setHarbergerTaxRate(0);
+        IAppStaking.Variables memory defaultVariables = staking.variables();
+        defaultVariables.harbergerTaxRate = 0;
+        staking.setVariables(defaultVariables);
         vm.stopPrank();
 
         uint256 shares = 100 ether;
@@ -320,7 +326,9 @@ contract Staking4626Test is BaseTest {
     function test_PreviewMintTenPercentTax() public {
         // Set tax rate to 10%
         vm.startPrank(owner);
-        staking.setHarbergerTaxRate(1000);
+        IAppStaking.Variables memory defaultVariables = staking.variables();
+        defaultVariables.harbergerTaxRate = 1000;
+        staking.setVariables(defaultVariables);
         vm.stopPrank();
 
         uint256 shares = 100 ether;
@@ -340,7 +348,9 @@ contract Staking4626Test is BaseTest {
     function test_PreviewDepositMintConsistency() public {
         // Set tax rate to 5%
         vm.startPrank(owner);
-        staking.setHarbergerTaxRate(500);
+        IAppStaking.Variables memory defaultVariables = staking.variables();
+        defaultVariables.harbergerTaxRate = 500;
+        staking.setVariables(defaultVariables);
         vm.stopPrank();
 
         uint256 assets = 100 ether;
@@ -405,7 +415,7 @@ contract Staking4626Test is BaseTest {
         staking.startUnstaking(newTokenId);
 
         // Fast forward cooldown period and complete unstaking
-        uint256 cooldown = staking.withdrawCooldownPeriod();
+        uint256 cooldown = staking.variables().withdrawCooldownPeriod;
         vm.warp(block.timestamp + cooldown + 1);
         uint256 userBalanceBefore = app.balanceOf(user1);
         staking.completeUnstaking(newTokenId);
@@ -443,7 +453,7 @@ contract Staking4626Test is BaseTest {
         // The NFT should already be in unstaking process (vault started it before transfer)
         // Check that the position is in cooldown
         IAppStaking.Position memory position = staking.positions(newTokenId);
-        assertGt(position.cooldownEnd, 0, "NFT should be in cooldown");
+        assertGt(position.withdrawCooldownEnd, 0, "NFT should be in cooldown");
     }
 
     /// @notice Test that multiple withdraws create separate unstaking NFTs

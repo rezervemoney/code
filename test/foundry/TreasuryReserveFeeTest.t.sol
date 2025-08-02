@@ -61,7 +61,7 @@ contract TreasuryReserveFeeTest is BaseTest {
 
         // Verify reserves
         assertEq(
-            treasury.totalReserves(),
+            treasury.totalReservesUsd(),
             expectedDepositAfterFee,
             "Total reserves should be equal to deposit amount minus fee"
         );
@@ -94,7 +94,7 @@ contract TreasuryReserveFeeTest is BaseTest {
 
         // Verify total reserves
         assertEq(
-            treasury.totalReserves(),
+            treasury.totalReservesUsd(),
             firstExpectedDepositAfterFee + secondExpectedDepositAfterFee,
             "Total reserves should be sum of both deposits minus fees"
         );
@@ -130,7 +130,7 @@ contract TreasuryReserveFeeTest is BaseTest {
 
         // Verify reserves
         assertEq(
-            treasury.totalReserves(),
+            treasury.totalReservesUsd(),
             expectedDepositAfterFee,
             "Total reserves should be equal to deposit amount minus fee"
         );

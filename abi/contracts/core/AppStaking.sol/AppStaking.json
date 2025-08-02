@@ -1315,7 +1315,7 @@
           },
           {
             "internalType": "uint256",
-            "name": "cooldownEnd",
+            "name": "withdrawCooldownEnd",
             "type": "uint256"
           },
           {

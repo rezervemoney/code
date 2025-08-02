@@ -16,7 +16,7 @@ contract AppTreasuryTest is BaseTest {
 
     function test_Initialize() public view {
         assertEq(address(treasury.app()), address(app));
-        assertEq(treasury.totalReserves(), 0);
+        assertEq(treasury.totalReservesUsd(), 0);
     }
 
     function test_EnableToken() public {
@@ -62,7 +62,7 @@ contract AppTreasuryTest is BaseTest {
         assertEq(dreMinted, depositAmount - profit, "RZR minted should be equal to deposit amount minus profit");
 
         // Verify reserves were updated
-        assertEq(treasury.totalReserves(), depositAmount, "Total reserves should be equal to deposit amount");
+        assertEq(treasury.totalReservesUsd(), depositAmount, "Total reserves should be equal to deposit amount");
 
         vm.stopPrank();
     }
@@ -91,7 +91,7 @@ contract AppTreasuryTest is BaseTest {
         treasury.syncReserves();
 
         // Verify reserves were updated
-        assertEq(treasury.totalReserves(), depositAmount - withdrawAmount);
+        assertEq(treasury.totalReservesUsd(), depositAmount - withdrawAmount);
 
         // Verify tokens were returned
         assertEq(mockQuoteToken.balanceOf(owner), withdrawAmount);
@@ -114,7 +114,7 @@ contract AppTreasuryTest is BaseTest {
 
         treasury.syncReserves();
 
-        assertEq(treasury.totalReserves(), 1000e18, "Total reserves should be equal to deposit amount");
+        assertEq(treasury.totalReservesUsd(), 1000e18, "Total reserves should be equal to deposit amount");
         assertEq(treasury.actualReserves(), 1000e18, "Actual reserves should be equal to deposit amount");
         assertEq(treasury.actualSupply(), 900e18, "Actual supply should be equal to deposit amount");
         assertEq(treasury.excessReserves(), 100e18, "Excess reserves should be equal to profit");
@@ -124,7 +124,7 @@ contract AppTreasuryTest is BaseTest {
         treasury.manage(address(mockQuoteToken), manageAmount, owner);
 
         // Verify reserves were updated
-        assertEq(treasury.totalReserves(), depositAmount - manageAmount);
+        assertEq(treasury.totalReservesUsd(), depositAmount - manageAmount);
 
         // Verify tokens were returned
         assertEq(mockQuoteToken.balanceOf(owner), manageAmount);
@@ -168,7 +168,7 @@ contract AppTreasuryTest is BaseTest {
         treasury.syncReserves();
 
         // Verify reserves were calculated correctly
-        assertEq(treasury.totalReserves(), depositAmount);
+        assertEq(treasury.totalReservesUsd(), depositAmount);
 
         vm.stopPrank();
     }

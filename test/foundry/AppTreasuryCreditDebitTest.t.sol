@@ -29,7 +29,7 @@ contract AppTreasuryCreditDebitTest is BaseTest {
         assertEq(treasury.creditReserves(), 100e18);
 
         // Verify actual reserves calculation
-        uint256 expectedActualReserves = treasury.totalReserves() - 100e18;
+        uint256 expectedActualReserves = treasury.totalReservesUsd() - 100e18;
         assertEq(treasury.actualReserves(), expectedActualReserves);
     }
 
@@ -59,7 +59,7 @@ contract AppTreasuryCreditDebitTest is BaseTest {
         treasury.setUnbackedSupply(200e18);
 
         // Calculate expected backing ratio
-        uint256 totalReserves = treasury.totalReserves();
+        uint256 totalReserves = treasury.totalReservesUsd();
         uint256 totalSupply = app.totalSupply() - 200e18;
         uint256 expectedRatio = (totalReserves * 1e18) / totalSupply;
 
@@ -78,7 +78,7 @@ contract AppTreasuryCreditDebitTest is BaseTest {
         treasury.setCreditReserves(100e18);
 
         // Calculate expected excess reserves
-        uint256 totalReserves = treasury.totalReserves();
+        uint256 totalReserves = treasury.totalReservesUsd();
         uint256 totalSupply = treasury.totalSupply();
         uint256 expectedExcess = totalReserves > totalSupply ? totalReserves - totalSupply : 0;
 
@@ -91,7 +91,7 @@ contract AppTreasuryCreditDebitTest is BaseTest {
         mockQuoteToken.mint(address(treasury), 1000e18);
         treasury.syncReserves();
 
-        assertEq(treasury.totalReserves(), 1000e18, "!totalReserves()");
+        assertEq(treasury.totalReservesUsd(), 1000e18, "!totalReserves()");
         assertEq(treasury.totalSupply(), 500e18, "!totalSupply()");
         assertEq(treasury.actualReserves(), 1000e18, "!actualReserves()");
         assertEq(treasury.actualSupply(), 500e18, "!actualSupply()");
@@ -103,7 +103,7 @@ contract AppTreasuryCreditDebitTest is BaseTest {
 
         // Verify values are set correctly
         assertEq(treasury.unbackedSupply(), 250e18, "!unbackedSupply()");
-        assertEq(treasury.totalReserves(), 1000e18, "!totalReserves() - 2");
+        assertEq(treasury.totalReservesUsd(), 1000e18, "!totalReserves() - 2");
         assertEq(treasury.totalSupply(), 250e18, "!totalSupply() - 2");
         assertEq(treasury.actualSupply(), 500e18, "!actualSupply() - 2");
         assertEq(treasury.excessReserves(), 750e18, "!excessReserves() - 2");
@@ -115,13 +115,15 @@ contract AppTreasuryCreditDebitTest is BaseTest {
         mockQuoteToken.mint(address(treasury), 1000e18);
         treasury.syncReserves();
 
-        assertEq(treasury.totalReserves(), 1000e18, "!totalReserves()");
+        assertEq(treasury.totalReservesUsd(), 1000e18, "!totalReserves()");
         assertEq(treasury.actualReserves(), 1000e18, "!actualReserves()");
         assertEq(treasury.totalSupply(), 500e18, "!totalSupply()");
         assertEq(treasury.actualSupply(), 500e18, "!actualSupply()");
         assertEq(treasury.excessReserves(), 500e18, "!excessReserves()");
         assertEq(treasury.backingRatioE18(), 2e18, "!backingRatioE18()");
-        assertEq(treasury.calculateReserves(), treasury.totalReserves(), "!calculateReserves()");
+        (uint256 usdReserves, uint256 rzrReserves) = treasury.calculateReserves();
+        assertEq(usdReserves, treasury.totalReservesUsd(), "!calculateReserves()");
+        assertEq(rzrReserves, treasury.totalReservesRzr(), "!calculateReserves()");
 
         // Get projected epoch rate
         (uint256 aprBefore, uint256 epochRateBefore,,,) = rebaseController.projectedEpochRate();
@@ -133,7 +135,7 @@ contract AppTreasuryCreditDebitTest is BaseTest {
         treasury.setUnbackedSupply(10000e18);
 
         // Verify values are set correctly
-        assertEq(treasury.totalReserves(), 1000e18, "!totalReserves()");
+        assertEq(treasury.totalReservesUsd(), 1000e18, "!totalReserves()");
         assertEq(treasury.actualReserves(), 1000e18, "!actualReserves()");
         assertEq(treasury.totalSupply(), 500e18, "!totalSupply()");
         assertEq(treasury.actualSupply(), 10500e18, "!actualSupply()");
@@ -192,7 +194,7 @@ contract AppTreasuryCreditDebitTest is BaseTest {
     //     treasury.setCreditDebitSupply(creditSupply, debitSupply);
 
     //     // Verify actual reserves calculation
-    //     uint256 expectedActualReserves = treasury.totalReserves() - creditReserves + debitReserves;
+    //     uint256 expectedActualReserves = treasury.totalReservesUsd() - creditReserves + debitReserves;
     //     assertEq(treasury.actualReserves(), expectedActualReserves);
 
     //     // Verify actual supply calculation
@@ -238,7 +240,7 @@ contract AppTreasuryCreditDebitTest is BaseTest {
         treasury.deposit(depositAmount, address(mockQuoteToken), 0);
         treasury.syncReserves();
 
-        assertEq(treasury.totalReserves(), depositAmount, "!totalReserves() - 0");
+        assertEq(treasury.totalReservesUsd(), depositAmount, "!totalReserves() - 0");
         assertEq(treasury.actualReserves(), depositAmount, "!actualReserves() - 0");
         assertEq(treasury.totalSupply(), app.totalSupply(), "!totalSupply() - 0");
         assertEq(treasury.actualSupply(), app.totalSupply(), "!actualSupply() - 0");
@@ -252,7 +254,7 @@ contract AppTreasuryCreditDebitTest is BaseTest {
         // Calculate excess reserves
         uint256 excess = treasury.excessReserves();
 
-        assertEq(treasury.totalReserves(), depositAmount + 100e18, "!totalReserves()");
+        assertEq(treasury.totalReservesUsd(), depositAmount + 100e18, "!totalReserves()");
         assertEq(treasury.actualReserves(), depositAmount, "!actualReserves()");
         assertEq(treasury.totalSupply(), app.totalSupply(), "!totalSupply()");
         assertEq(treasury.actualSupply(), app.totalSupply(), "!actualSupply()");
@@ -262,12 +264,13 @@ contract AppTreasuryCreditDebitTest is BaseTest {
 
         // Manage some tokens
         uint256 manageAmount = excess / 2;
-        uint256 value = treasury.manage(address(mockQuoteToken), manageAmount, owner);
+        (uint256 rzrValue, uint256 usdValue) = treasury.manage(address(mockQuoteToken), manageAmount, owner);
         treasury.syncReserves();
-        assertEq(value, manageAmount, "!value");
+        assertEq(rzrValue, 0, "!rzrValue");
+        assertEq(usdValue, manageAmount, "!usdValue");
 
         // Verify reserves were updated correctly
-        assertEq(treasury.totalReserves(), depositAmount - manageAmount + 100e18, "!totalReserves() - 2");
+        assertEq(treasury.totalReservesUsd(), depositAmount - manageAmount + 100e18, "!totalReserves() - 2");
         assertEq(treasury.actualReserves(), depositAmount - manageAmount, "!actualReserves() - 2");
         assertEq(treasury.totalSupply(), app.totalSupply(), "!totalSupply() - 2");
         assertEq(treasury.actualSupply(), app.totalSupply(), "!actualSupply() - 2");

@@ -85,7 +85,7 @@ contract UnbackedFreeze is AppAccessControlled {
     function _currentBadDebt() internal view returns (uint256) {
         // actualSupply includes unbacked supply; totalReserves already includes credit reserves.
         uint256 supply = treasury.actualSupply();
-        uint256 reserves = treasury.totalReserves();
+        uint256 reserves = treasury.totalReservesUsd();
         return supply > reserves ? supply - reserves : 0;
     }
 

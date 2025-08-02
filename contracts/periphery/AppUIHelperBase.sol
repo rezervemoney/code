@@ -35,8 +35,7 @@ abstract contract AppUIHelperBase {
         uint256 amount;
         uint256 declaredValue;
         uint256 rewards;
-        uint256 cooldownEnd;
-        uint256 rewardsUnlockAt;
+        uint256 withdrawCooldownEnd;
         uint256 withdrawCooldownStart;
         bool isActive;
         bool inCooldown; // whether the position is in cooldown

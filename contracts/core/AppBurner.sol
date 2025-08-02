@@ -47,7 +47,8 @@ contract AppBurner is AppAccessControlled {
 
         // ensure that the treasury has enough RZR to cover the new floor price
         uint256 newTotalSupply = totalSupply - balance;
-        uint256 currentRZR = treasury.calculateReserves();
+        (uint256 usdReserves, uint256 rzrReserves) = treasury.calculateReserves();
+        uint256 currentRZR = usdReserves + rzrReserves * newFloorPrice / 1e18;
         require(currentRZR >= newTotalSupply, "treasury backing would fail");
     }
 

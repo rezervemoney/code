@@ -595,9 +595,9 @@ contract AppBondDepositoryTest is BaseTest {
         treasury.setReserveDebt(address(mockQuoteToken3), 100000000e18);
 
         // Set initial oracle prices
-        mockOracle.setPrice(1e18); // 1:1 price
-        mockOracle2.setPrice(2e18); // 2:1 price
-        mockOracle3.setPrice(0.5e18); // 0.5:1 price
+        mockOracle.setPrice(0, 1e18); // 1:1 price
+        mockOracle2.setPrice(0, 2e18); // 2:1 price
+        mockOracle3.setPrice(0, 0.5e18); // 0.5:1 price
 
         // Mint initial reserves to treasury
         uint256 initialReserve1 = 1000e18;
@@ -610,7 +610,7 @@ contract AppBondDepositoryTest is BaseTest {
         treasury.syncReserves();
 
         // Calculate initial treasury value
-        uint256 initialValue = treasury.totalReserves();
+        uint256 initialValue = treasury.totalReservesUsd();
         uint256 expectedInitialValue = (
             (initialReserve1 * 1e18) // 1000 * 1 = 1000
                 + (initialReserve2 * 2e18) // 500 * 2 = 1000
@@ -619,13 +619,13 @@ contract AppBondDepositoryTest is BaseTest {
         assertApproxEqRel(initialValue, expectedInitialValue, 0.0001e18, "Initial treasury value incorrect");
 
         // Simulate price increases
-        mockOracle.setPrice(1.5e18); // 50% increase
-        mockOracle2.setPrice(3e18); // 50% increase
-        mockOracle3.setPrice(0.75e18); // 50% increase
+        mockOracle.setPrice(0, 1.5e18); // 50% increase
+        mockOracle2.setPrice(0, 3e18); // 50% increase
+        mockOracle3.setPrice(0, 0.75e18); // 50% increase
         treasury.syncReserves();
 
         // Calculate new treasury value
-        uint256 newValue = treasury.totalReserves();
+        uint256 newValue = treasury.totalReservesUsd();
         uint256 expectedNewValue = (initialReserve1 * 1.5e18) // 1000 * 1.5 = 1500
             + (initialReserve2 * 3e18) // 500 * 3 = 1500
             + (initialReserve3 * 0.75e18); // 2000 * 0.75 = 1500
@@ -636,14 +636,14 @@ contract AppBondDepositoryTest is BaseTest {
         assertApproxEqRel(inflationRate, 1.5e18, 0.0001e18, "Inflation rate incorrect");
 
         // Simulate price decreases
-        mockOracle.setPrice(0.75e18); // 50% decrease from initial
-        mockOracle2.setPrice(1.5e18); // 25% decrease from initial
-        mockOracle3.setPrice(0.25e18); // 50% decrease from initial
+        mockOracle.setPrice(0, 0.75e18); // 50% decrease from initial
+        mockOracle2.setPrice(0, 1.5e18); // 25% decrease from initial
+        mockOracle3.setPrice(0, 0.25e18); // 50% decrease from initial
 
         treasury.syncReserves();
 
         // Calculate final treasury value
-        uint256 finalValue = treasury.totalReserves();
+        uint256 finalValue = treasury.totalReservesUsd();
         uint256 expectedFinalValue = (initialReserve1 * 0.75e18) // 1000 * 0.75 = 750
             + (initialReserve2 * 1.5e18) // 500 * 1.5 = 750
             + (initialReserve3 * 0.25e18); // 2000 * 0.25 = 500
@@ -698,8 +698,8 @@ contract AppBondDepositoryTest is BaseTest {
         MockERC20 usdc = new MockERC20("USD Coin", "USDC");
         usdc.setDecimals(6);
 
-        MockOracle usdcOracle = new MockOracle(1e18);
-        appOracle.updateOracle(address(usdc), address(usdcOracle));
+        MockOracleV2 usdcOracle = new MockOracleV2(0, 1e18, address(usdc));
+        appOracle.updateOracle(address(usdc), address(usdcOracle), 3600);
         treasury.enable(address(usdc));
 
         // Calculate bond parameters
@@ -811,7 +811,7 @@ contract AppBondDepositoryTest is BaseTest {
 
         // Record treasury stats before deposit
         uint256 initialExcessReserves = treasury.excessReserves();
-        uint256 initialTotalReserves = treasury.totalReserves();
+        uint256 initialTotalReserves = treasury.totalReservesUsd();
         uint256 initialTotalSupply = app.totalSupply();
 
         // Deposit
@@ -823,7 +823,7 @@ contract AppBondDepositoryTest is BaseTest {
 
         // Validate treasury state
         assertEq(
-            treasury.totalReserves(), initialTotalReserves + expectedReservesIncrease, "Incorrect reserve increase"
+            treasury.totalReservesUsd(), initialTotalReserves + expectedReservesIncrease, "Incorrect reserve increase"
         );
         assertEq(app.totalSupply(), initialTotalSupply + payout, "Incorrect total supply increase");
         assertApproxEqRel(
@@ -891,6 +891,8 @@ contract AppBondDepositoryTest is BaseTest {
 
         // Fast-forward to just before bond end so current price ≈ finalPrice (< oracle)
         vm.warp(block.timestamp + BOND_DURATION - 1);
+
+        mockOracle.touchTimestamp();
 
         uint256 currentPrice = bondDepository.currentPrice(bondId);
         assertTrue(currentPrice < 1e18, "Price should be below oracle for discount scenario");

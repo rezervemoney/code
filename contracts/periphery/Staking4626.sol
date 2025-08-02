@@ -245,7 +245,7 @@ contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAcce
     function _grossAssetsFromNet(uint256 netAssets) internal view returns (uint256) {
         // factorDenominator = 1e8 (since we multiply two basis-points values of 1e4 each)
         uint256 factorDenominator = 1e8;
-        uint256 taxRateBps = staking.harbergerTaxRate(); // out of 1e4
+        uint256 taxRateBps = staking.variables().harbergerTaxRate; // out of 1e4
         uint256 subFactor = (10_000 + buyoutPremiumBps) * taxRateBps; // still in 1e8 scale
 
         // Prevent division by zero if subFactor >= 1e8 (not expected given current params)
@@ -260,7 +260,7 @@ contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAcce
     /// @dev Returns the net amount of assets that will remain staked after the streaming tax is calculated.
     /// With streaming tax, no upfront tax is paid - tax is collected over time.
     /// This function returns the full amount since no tax is deducted upfront.
-    function _netStakeAfterTax(uint256 assets) internal view returns (uint256) {
+    function _netStakeAfterTax(uint256 assets) internal pure returns (uint256) {
         // With streaming tax, no upfront tax is paid
         // The full amount is staked and tax is collected over time
         return assets;

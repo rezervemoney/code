@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import "../../interfaces/IAggregatorV3.sol";
-import "../../interfaces/IOracle.sol";
-import "../../core/AppAccessControlled.sol";
+import "../../../interfaces/IAggregatorV3.sol";
+import "../../../interfaces/IOracle.sol";
+import "../../../core/AppAccessControlled.sol";
 
 /**
  * @title RZRTWAPOracle

@@ -9,7 +9,7 @@ import "../../contracts/core/sRZR.sol";
 import "../../contracts/core/AppTreasury.sol";
 import "../../contracts/core/AppStaking.sol";
 import "../../contracts/mocks/MockERC20.sol";
-import "../../contracts/mocks/MockOracle.sol";
+import "../../contracts/mocks/MockOracleV2.sol";
 import "../../contracts/mocks/MockEndpoint.sol";
 import "../../contracts/core/AppAuthority.sol";
 import "../../contracts/core/AppBondDepository.sol";
@@ -30,9 +30,9 @@ contract BaseTest is Test {
 
     AppOracle public appOracle;
 
-    MockOracle public mockOracle;
-    MockOracle public mockOracle2;
-    MockOracle public mockOracle3;
+    MockOracleV2 public mockOracle;
+    MockOracleV2 public mockOracle2;
+    MockOracleV2 public mockOracle3;
 
     LoyaltyList public loyaltyList;
 
@@ -58,9 +58,9 @@ contract BaseTest is Test {
         mockQuoteToken3 = new MockERC20("Mock Token 3", "MTK3");
 
         // Deploy mock oracle
-        mockOracle = new MockOracle(1e18); // 1:1 price
-        mockOracle2 = new MockOracle(2e18); // 2:1 price
-        mockOracle3 = new MockOracle(0.5e18); // 0.5:1 price
+        mockOracle = new MockOracleV2(0, 1e18, address(mockQuoteToken)); // 1:1 price
+        mockOracle2 = new MockOracleV2(0, 2e18, address(mockQuoteToken2)); // 2:1 price
+        mockOracle3 = new MockOracleV2(0, 0.5e18, address(mockQuoteToken3)); // 0.5:1 price
 
         // Deploy RZR token
         MockEndpoint lz = new MockEndpoint();
@@ -71,9 +71,9 @@ contract BaseTest is Test {
 
         appOracle = new AppOracle();
         appOracle.initialize(address(authority), address(app));
-        appOracle.updateOracle(address(mockQuoteToken), address(mockOracle));
-        appOracle.updateOracle(address(mockQuoteToken2), address(mockOracle2));
-        appOracle.updateOracle(address(mockQuoteToken3), address(mockOracle3));
+        appOracle.updateOracle(address(mockQuoteToken), address(mockOracle), 3600);
+        appOracle.updateOracle(address(mockQuoteToken2), address(mockOracle2), 3600);
+        appOracle.updateOracle(address(mockQuoteToken3), address(mockOracle3), 3600);
 
         // Deploy Burner
         burner = new AppBurner();

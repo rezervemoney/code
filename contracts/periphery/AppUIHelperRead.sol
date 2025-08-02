@@ -57,18 +57,21 @@ contract AppUIHelperRead is AppUIHelperBase {
         )
     {
         // Get protocol-wide stats
-        tvl = treasury.calculateReserves();
+        // (uint256 usdReserves, uint256 rzrReserves) = treasury.calculateReserves();
+
         totalSupply = appToken.totalSupply();
         totalStaked = staking.totalStaked();
         totalRewards = staking.rewardPerToken();
         currentAPR = calculateAPRRaw(totalStaked);
         currentSpotPrice = shadowLP.getPrice();
         projectedEpochRate = getProjectedEpochRate();
-        tokenInfos = getTokenInfos(user, bondTokens);
-        stakingPositions = getStakingPositions(user);
-        bondPositions = getBondPositions(user);
+        // tokenInfos = getTokenInfos(user, bondTokens);
+        // stakingPositions = getStakingPositions(user);
+        // bondPositions = getBondPositions(user);
         unbackedSupply = treasury.unbackedSupply();
         referralCode = referrals.referrerCodes(user);
+
+        // tvl = usdReserves + rzrReserves * currentSpotPrice / 1e18;
     }
 
     function getTokenInfos(address user, address[] memory bondTokens)
@@ -89,8 +92,8 @@ contract AppUIHelperRead is AppUIHelperBase {
             treasuryValueApp: appToken.balanceOf(address(treasury)),
             totalSupply: appToken.totalSupply(),
             decimals: 18,
-            oraclePrice: appOracle.getTokenPrice(),
-            oraclePriceInApp: 1e18
+            oraclePrice: 0, // appOracle.getTokenPrice(),
+            oraclePriceInApp: 0 // 1e18
         });
 
         // Add staking token info
@@ -104,8 +107,8 @@ contract AppUIHelperRead is AppUIHelperBase {
             treasuryBalance: 0,
             treasuryValueApp: 0,
             decimals: 18,
-            oraclePrice: appOracle.getTokenPrice(),
-            oraclePriceInApp: 1e18
+            oraclePrice: 0, // appOracle.getTokenPrice(),
+            oraclePriceInApp: 0 // 1e18
         });
 
         // Add lstRZR token info
@@ -119,8 +122,8 @@ contract AppUIHelperRead is AppUIHelperBase {
             treasuryBalance: staking4626.balanceOf(address(treasury)),
             treasuryValueApp: staking4626.balanceOf(address(treasury)),
             decimals: 18,
-            oraclePrice: appOracle.getPrice(address(staking4626)),
-            oraclePriceInApp: appOracle.getPriceInToken(address(staking4626))
+            oraclePrice: 0, // appOracle.getPrice(address(staking4626), 1e18),
+            oraclePriceInApp: 0 // appOracle.getPriceInToken(address(staking4626), 1e18)
         });
 
         // Add bond token info
@@ -134,10 +137,10 @@ contract AppUIHelperRead is AppUIHelperBase {
                 name: token.name(),
                 symbol: token.symbol(),
                 treasuryBalance: token.balanceOf(address(treasury)),
-                treasuryValueApp: treasury.tokenValueE18(address(token), token.balanceOf(address(treasury))),
+                treasuryValueApp: 0, // treasury.tokenValueE18(address(token), token.balanceOf(address(treasury)))[1],
                 token: address(token),
-                oraclePriceInApp: appOracle.getPriceInToken(address(token)),
-                oraclePrice: appOracle.getPrice(address(token))
+                oraclePriceInApp: 0, // appOracle.getPriceInToken(address(token), token.balanceOf(address(treasury))),
+                oraclePrice: 0 // appOracle.getPrice(address(token), token.balanceOf(address(treasury)))
             });
         }
     }
@@ -151,7 +154,10 @@ contract AppUIHelperRead is AppUIHelperBase {
             if (tokenId == 0) continue;
             IAppStaking.Position memory position = staking.positions(tokenId);
 
-            (bool inWithdrawCooldown, uint256 withdrawCooldownStart) = staking.isInWithdrawCooldown(tokenId);
+            bool inBuyCooldown = position.buyCooldownEnd > 0 && block.timestamp < position.buyCooldownEnd;
+            bool inWithdrawCooldown =
+                position.withdrawCooldownStart > 0 && block.timestamp < position.withdrawCooldownStart;
+            uint256 withdrawCooldownStart = position.withdrawCooldownStart;
 
             stakingPositions[i] = StakingPositionInfo({
                 owner: user,
@@ -159,10 +165,9 @@ contract AppUIHelperRead is AppUIHelperBase {
                 amount: position.amount,
                 declaredValue: position.declaredValue,
                 rewards: staking.earned(tokenId),
-                cooldownEnd: position.cooldownEnd,
-                rewardsUnlockAt: position.rewardsUnlockAt,
-                isActive: position.cooldownEnd == 0,
-                inCooldown: staking.isInBuyCooldown(tokenId),
+                withdrawCooldownEnd: position.withdrawCooldownEnd,
+                isActive: position.withdrawCooldownEnd == 0,
+                inCooldown: inBuyCooldown,
                 inWithdrawCooldown: inWithdrawCooldown,
                 withdrawCooldownStart: withdrawCooldownStart,
                 isFrom4626: staking4626.unstakingTokenId(tokenId)
@@ -251,7 +256,10 @@ contract AppUIHelperRead is AppUIHelperBase {
 
             if (position.amount == 0) continue;
 
-            (bool inWithdrawCooldown, uint256 withdrawCooldownStart) = staking.isInWithdrawCooldown(i);
+            bool inWithdrawCooldown =
+                position.withdrawCooldownStart > 0 && block.timestamp < position.withdrawCooldownStart;
+            uint256 withdrawCooldownStart = position.withdrawCooldownStart;
+            bool inBuyCooldown = position.buyCooldownEnd > 0 && block.timestamp < position.buyCooldownEnd;
 
             positions[i - startingIndex] = StakingPositionInfo({
                 id: i,
@@ -259,10 +267,9 @@ contract AppUIHelperRead is AppUIHelperBase {
                 amount: position.amount,
                 declaredValue: position.declaredValue,
                 rewards: staking.earned(i),
-                cooldownEnd: position.cooldownEnd,
-                rewardsUnlockAt: position.rewardsUnlockAt,
-                isActive: position.cooldownEnd == 0,
-                inCooldown: staking.isInBuyCooldown(i),
+                withdrawCooldownEnd: position.withdrawCooldownEnd,
+                isActive: position.withdrawCooldownEnd == 0,
+                inCooldown: inBuyCooldown,
                 inWithdrawCooldown: inWithdrawCooldown,
                 withdrawCooldownStart: withdrawCooldownStart,
                 isFrom4626: staking4626.unstakingTokenId(i)

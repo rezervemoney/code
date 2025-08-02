@@ -103,6 +103,7 @@ contract RebaseControllerTest is BaseTest {
         // Fast forward to next epoch
         uint256 epochLength = rebaseController.EPOCH();
         vm.warp(block.timestamp + epochLength);
+        mockOracle.touchTimestamp();
 
         // Get projected values
         (, uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 toBurner) =
@@ -133,6 +134,7 @@ contract RebaseControllerTest is BaseTest {
         // Fast forward to next epoch
         uint256 epochLength = rebaseController.EPOCH();
         vm.warp(block.timestamp + epochLength);
+        mockOracle.touchTimestamp();
 
         // Execute epoch should succeed but not mint rewards
         (, uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 toBurner) =

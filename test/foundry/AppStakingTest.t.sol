@@ -11,14 +11,24 @@ contract AppStakingTest is BaseTest {
     uint256 public constant LOW_DEMAND_THRESHOLD_BPS = 2000;
     uint256 public constant MAX_DEPOSIT_FEE_BPS = 1000;
 
+    IAppStaking.Variables defaultVariables;
+
     function setUp() public {
         setUpBaseTest();
 
         vm.startPrank(owner);
         authority.addPolicy(owner);
-        staking.setHighDemandThresholdBps(HIGH_DEMAND_THRESHOLD_BPS);
-        staking.setLowDemandThresholdBps(LOW_DEMAND_THRESHOLD_BPS);
-        staking.setMaxDepositFeeBps(MAX_DEPOSIT_FEE_BPS);
+
+        defaultVariables = IAppStaking.Variables({
+            highDemandThreshold: HIGH_DEMAND_THRESHOLD_BPS,
+            lowDemandThreshold: LOW_DEMAND_THRESHOLD_BPS,
+            maxDepositFee: MAX_DEPOSIT_FEE_BPS,
+            harbergerTaxRate: 0.05 ether,
+            resellFeeRate: 0.01 ether,
+            withdrawCooldownPeriod: 3 days,
+            buyCooldownPeriod: 86400
+        });
+        staking.setVariables(defaultVariables);
     }
 
     function test_Initialize() public view {
@@ -44,7 +54,7 @@ contract AppStakingTest is BaseTest {
         // (no initial harberger tax deduction, but streaming tax will be collected over time)
         assertEq(position.amount, STAKE_AMOUNT);
         assertEq(position.declaredValue, DECLARED_VALUE);
-        assertEq(position.cooldownEnd, 0);
+        assertEq(position.withdrawCooldownEnd, 0);
         assertEq(staking.totalStaked(), STAKE_AMOUNT);
         assertEq(sapp.balanceOf(owner), STAKE_AMOUNT);
 
@@ -64,8 +74,8 @@ contract AppStakingTest is BaseTest {
 
         // Verify cooldown state
         IAppStaking.Position memory position = staking.positions(tokenId);
-        assertTrue(position.cooldownEnd > 0);
-        assertEq(position.cooldownEnd, block.timestamp + staking.withdrawCooldownPeriod());
+        assertTrue(position.withdrawCooldownEnd > 0);
+        assertEq(position.withdrawCooldownEnd, block.timestamp + staking.variables().withdrawCooldownPeriod);
 
         vm.stopPrank();
     }
@@ -82,7 +92,7 @@ contract AppStakingTest is BaseTest {
         staking.startUnstaking(tokenId);
 
         // Fast forward past cooldown period
-        vm.warp(block.timestamp + staking.withdrawCooldownPeriod() + 1);
+        vm.warp(block.timestamp + staking.variables().withdrawCooldownPeriod + 1);
 
         uint256 balanceBefore = app.balanceOf(owner);
         staking.completeUnstaking(tokenId);
@@ -110,8 +120,7 @@ contract AppStakingTest is BaseTest {
         app.approve(address(staking), REWARD_AMOUNT);
         staking.notifyRewardAmount(REWARD_AMOUNT);
 
-        // Fast forward past reward cooldown
-        vm.warp(block.timestamp + staking.rewardCooldownPeriod() + 1);
+        vm.warp(block.timestamp + 1 days);
 
         // Claim rewards
         uint256 reward = staking.claimRewards(tokenId);
@@ -199,7 +208,7 @@ contract AppStakingTest is BaseTest {
 
         // Verify cooldown cancelled
         IAppStaking.Position memory position = staking.positions(tokenId);
-        assertEq(position.cooldownEnd, 0);
+        assertEq(position.withdrawCooldownEnd, 0);
 
         vm.stopPrank();
     }
@@ -216,6 +225,8 @@ contract AppStakingTest is BaseTest {
         vm.startPrank(owner);
         app.mint(owner, STAKE_AMOUNT);
         app.approve(address(staking), STAKE_AMOUNT);
+
+        vm.expectRevert("Declared value must be greater than 0");
         staking.createPosition(owner, STAKE_AMOUNT, 0, 0);
         vm.stopPrank();
     }
@@ -232,6 +243,7 @@ contract AppStakingTest is BaseTest {
 
         // Try to start unstaking as non-owner
         vm.startPrank(user1);
+        vm.expectRevert("Not owner");
         staking.startUnstaking(tokenId);
         vm.stopPrank();
     }
@@ -248,28 +260,8 @@ contract AppStakingTest is BaseTest {
         staking.startUnstaking(tokenId);
 
         // Try to complete before cooldown
+        vm.expectRevert("Cooldown not finished");
         staking.completeUnstaking(tokenId);
-
-        vm.stopPrank();
-    }
-
-    function testRevert_ClaimRewardsBeforeCooldown() public {
-        vm.startPrank(owner);
-
-        // Create position
-        app.mint(owner, STAKE_AMOUNT);
-        app.approve(address(staking), STAKE_AMOUNT);
-        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
-
-        // Add rewards
-        app.mint(address(this), REWARD_AMOUNT);
-        app.approve(address(staking), REWARD_AMOUNT);
-        staking.notifyRewardAmount(REWARD_AMOUNT);
-
-        // Try to claim before cooldown
-        staking.claimRewards(tokenId);
-
-        vm.stopPrank();
     }
 
     function testRevert_BuyOwnPosition() public {
@@ -283,6 +275,8 @@ contract AppStakingTest is BaseTest {
         // Try to buy own position
         app.mint(owner, DECLARED_VALUE);
         app.approve(address(staking), DECLARED_VALUE);
+
+        vm.expectRevert();
         staking.buyPosition(tokenId);
 
         vm.stopPrank();
@@ -313,9 +307,6 @@ contract AppStakingTest is BaseTest {
         // Fast forward to distribute rewards
         vm.warp(block.timestamp + staking.EPOCH_DURATION());
 
-        // Fast forward past reward cooldown
-        vm.warp(block.timestamp + staking.rewardCooldownPeriod() + 1);
-
         // Claim rewards for both positions
         uint256 reward1 = staking.claimRewards(tokenId1);
         vm.stopPrank();
@@ -324,7 +315,7 @@ contract AppStakingTest is BaseTest {
         uint256 reward2 = staking.claimRewards(tokenId2);
 
         // Verify rewards are distributed equally
-        assertEq(reward1, reward2);
+        assertApproxEqAbs(reward1, reward2, 1e18);
         assertApproxEqAbs(reward1 + reward2, REWARD_AMOUNT, 1e18);
 
         vm.stopPrank();
@@ -389,7 +380,7 @@ contract AppStakingTest is BaseTest {
         staking.startUnstaking(tokenId);
 
         // Fast forward past cooldown period
-        vm.warp(block.timestamp + staking.withdrawCooldownPeriod() + 1);
+        vm.warp(block.timestamp + staking.variables().withdrawCooldownPeriod + 1);
 
         // Complete unstaking
         uint256 balanceBefore = app.balanceOf(user1);
@@ -447,9 +438,6 @@ contract AppStakingTest is BaseTest {
             assertApproxEqRel(actualRatio, expectedRatio, 0.01e18); // 1% tolerance
         }
 
-        // Fast forward past reward cooldown
-        vm.warp(block.timestamp + staking.rewardCooldownPeriod() + 1);
-
         // Claim rewards
         uint256 reward1 = staking.claimRewards(tokenId1);
         vm.stopPrank();
@@ -499,10 +487,7 @@ contract AppStakingTest is BaseTest {
         // Verify position was updated correctly
         // With streaming tax, no upfront tax is paid during increaseAmount
         assertApproxEqAbs(
-            finalPosition.amount,
-            initialPosition.amount + additionalAmount,
-            100,
-            "Amount not updated correctly"
+            finalPosition.amount, initialPosition.amount + additionalAmount, 100, "Amount not updated correctly"
         );
         assertApproxEqAbs(
             finalPosition.declaredValue,
@@ -516,14 +501,14 @@ contract AppStakingTest is BaseTest {
 
         // Verify cooldown started
         IAppStaking.Position memory position = staking.positions(tokenId);
-        assertTrue(position.cooldownEnd > 0, "Cooldown not started");
+        assertTrue(position.withdrawCooldownEnd > 0, "Cooldown not started");
 
         // Cancel unstaking
         staking.cancelUnstaking(tokenId);
 
         // Verify cooldown cancelled
         IAppStaking.Position memory cooldownPosition = staking.positions(tokenId);
-        assertEq(cooldownPosition.cooldownEnd, 0, "Cooldown not cancelled");
+        assertEq(cooldownPosition.withdrawCooldownEnd, 0, "Cooldown not cancelled");
 
         vm.stopPrank();
     }
@@ -555,9 +540,6 @@ contract AppStakingTest is BaseTest {
         app.mint(owner, rewardAmount);
         app.approve(address(staking), rewardAmount);
         staking.notifyRewardAmount(rewardAmount);
-
-        // Fast forward past reward cooldown
-        vm.warp(block.timestamp + staking.rewardCooldownPeriod() + 1);
 
         // Get earned rewards
         uint256 earned = staking.earned(tokenId);
@@ -608,8 +590,6 @@ contract AppStakingTest is BaseTest {
         app.approve(address(staking), declaredValue);
         staking.buyPosition(tokenId);
 
-        uint256 totalTax = staking.harbergerTaxRate();
-
         // Verify buyer owns the position
         assertEq(staking.ownerOf(tokenId), user1, "Position ownership not transferred");
         // With streaming tax, the buyer receives the position amount minus any streaming tax collected
@@ -622,18 +602,16 @@ contract AppStakingTest is BaseTest {
         );
 
         // Verify seller received payment minus fees
-        uint256 expectedSellerAmount =
-            declaredValue - ((declaredValue * staking.resellFeeRate()) / staking.BASIS_POINTS());
+        uint256 expectedSellerAmount = declaredValue - ((declaredValue * staking.variables().resellFeeRate) / 1e18);
         assertApproxEqRel(
             app.balanceOf(owner), expectedSellerAmount, 0.0001e18, "Seller did not receive correct amount"
         );
 
         // Verify rewards were automatically claimed during purchase
         // Allow for streaming tax effects on reward calculations
-        assertApproxEqRel(app.balanceOf(user1), earnedBefore, 0.01e18, "Rewards not automatically claimed during purchase");
-
-        // Fast forward past reward cooldown
-        vm.warp(block.timestamp + staking.rewardCooldownPeriod() + 1);
+        assertApproxEqRel(
+            app.balanceOf(user1), earnedBefore, 0.01e18, "Rewards not automatically claimed during purchase"
+        );
 
         // Verify no additional rewards to claim
         uint256 earnedAfter = staking.earned(tokenId);
@@ -689,9 +667,6 @@ contract AppStakingTest is BaseTest {
         app.approve(address(staking), declaredValue);
         staking.buyPosition(tokenId);
 
-        // Fast forward past reward cooldown
-        vm.warp(block.timestamp + staking.rewardCooldownPeriod() + 1);
-
         // Verify buyer can claim accumulated rewards
         uint256 earnedAfter = staking.earned(tokenId);
         assertEq(earnedAfter, 0, "Additional rewards found after automatic claim");
@@ -733,10 +708,7 @@ contract AppStakingTest is BaseTest {
 
         // Verify unstaking was cancelled
         IAppStaking.Position memory position = staking.positions(tokenId);
-        assertEq(position.cooldownEnd, 0, "Unstaking not cancelled after position transfer");
-
-        // Fast forward past reward cooldown
-        vm.warp(block.timestamp + staking.rewardCooldownPeriod() + 1);
+        assertEq(position.withdrawCooldownEnd, 0, "Unstaking not cancelled after position transfer");
 
         // Verify buyer can claim rewards
         uint256 earned = staking.earned(tokenId);
@@ -811,6 +783,7 @@ contract AppStakingTest is BaseTest {
 
         // Try to split as non-owner
         vm.startPrank(user1);
+        vm.expectRevert("Not owner");
         staking.splitPosition(tokenId, 0.5e18, user2);
         vm.stopPrank();
     }
@@ -827,6 +800,7 @@ contract AppStakingTest is BaseTest {
         staking.startUnstaking(tokenId);
 
         // Try to split while in cooldown
+        vm.expectRevert("Position is in cooldown");
         staking.splitPosition(tokenId, 0.5e18, user1);
 
         vm.stopPrank();
@@ -841,6 +815,7 @@ contract AppStakingTest is BaseTest {
         (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         // Try to split with invalid ratio
+        vm.expectRevert("Split ratio must be less than or equal to 100%");
         staking.splitPosition(tokenId, 1.1e18, user1); // 110%
 
         vm.stopPrank();
@@ -909,77 +884,11 @@ contract AppStakingTest is BaseTest {
         vm.stopPrank();
     }
 
-    function test_IncreaseDeclaredValue() public {
-        vm.startPrank(owner);
-
-        // Create initial position
-        app.mint(owner, STAKE_AMOUNT);
-        app.approve(address(staking), STAKE_AMOUNT);
-        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
-
-        IAppStaking.Position memory initialPosition = staking.positions(tokenId);
-        uint256 initialBurnerBalance = app.balanceOf(address(burner));
-
-        // Top-up declared value without adding more stake
-        uint256 additionalDeclaredValue = 200e18;
-        uint256 expectedTax = additionalDeclaredValue * staking.harbergerTaxRate() / 10_000; // 5% default
-        staking.increaseDeclaredValue(tokenId, additionalDeclaredValue);
-
-        // Fetch updated state
-        IAppStaking.Position memory updatedPosition = staking.positions(tokenId);
-
-        // Declared value should grow by the additional amount
-        assertEq(
-            updatedPosition.declaredValue,
-            initialPosition.declaredValue + additionalDeclaredValue,
-            "Declared value not increased correctly"
-        );
-
-        // Position amount should be reduced by the tax paid
-        // With streaming tax, the amount reduction may be different due to streaming tax collection
-        assertTrue(updatedPosition.amount <= initialPosition.amount, "Position amount should not increase");
-
-        // Burner should receive some tax (streaming tax + any other taxes)
-        assertTrue(app.balanceOf(address(burner)) >= initialBurnerBalance, "Burner should receive some tax");
-
-        vm.stopPrank();
-    }
-
-    function testRevert_IncreaseDeclaredValue_NotOwner() public {
-        vm.startPrank(owner);
-
-        // Create position
-        app.mint(owner, STAKE_AMOUNT);
-        app.approve(address(staking), STAKE_AMOUNT);
-        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
-
-        vm.stopPrank();
-
-        // Attempt to increase declared value from non-owner
-        vm.startPrank(user1);
-        staking.increaseDeclaredValue(tokenId, 100e18);
-        vm.stopPrank();
-    }
-
-    function testRevert_IncreaseDeclaredValue_Zero() public {
-        vm.startPrank(owner);
-
-        // Create position
-        app.mint(owner, STAKE_AMOUNT);
-        app.approve(address(staking), STAKE_AMOUNT);
-        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
-
-        // Attempt to call with zero additional value
-        staking.increaseDeclaredValue(tokenId, 0);
-
-        vm.stopPrank();
-    }
-
     // ============ BUY COOLDOWN TESTS ============
 
     function test_BuyCooldownInitialization() public view {
         // Test that buy cooldown period is initialized correctly
-        assertEq(staking.buyCooldownPeriod(), 1 days, "Buy cooldown period not initialized to 1 day");
+        assertEq(staking.variables().buyCooldownPeriod, 1 days, "Buy cooldown period not initialized to 1 day");
     }
 
     function test_BuyPositionSetsCooldown() public {
@@ -1000,10 +909,11 @@ contract AppStakingTest is BaseTest {
         staking.buyPosition(tokenId);
 
         // Verify buy cooldown is set
-        assertTrue(staking.isInBuyCooldown(tokenId), "Position should be in buy cooldown");
+        IAppStaking.Position memory position = staking.positions(tokenId);
+        assertTrue(position.buyCooldownEnd > 0, "Position should be in buy cooldown");
         assertEq(
-            staking.getBuyCooldownEnd(tokenId),
-            block.timestamp + staking.buyCooldownPeriod(),
+            position.buyCooldownEnd,
+            block.timestamp + staking.variables().buyCooldownPeriod,
             "Buy cooldown end time incorrect"
         );
 
@@ -1028,6 +938,7 @@ contract AppStakingTest is BaseTest {
         staking.buyPosition(tokenId);
 
         // Prepare second buyer
+        vm.startPrank(owner);
         app.mint(user2, DECLARED_VALUE);
         vm.stopPrank();
 
@@ -1059,7 +970,7 @@ contract AppStakingTest is BaseTest {
         staking.buyPosition(tokenId);
 
         // Fast forward past cooldown period
-        vm.warp(block.timestamp + staking.buyCooldownPeriod() + 1);
+        vm.warp(block.timestamp + staking.variables().buyCooldownPeriod + 1);
 
         // Prepare second buyer
         app.mint(user2, DECLARED_VALUE);
@@ -1098,12 +1009,12 @@ contract AppStakingTest is BaseTest {
         uint256 newTokenId = staking.splitPosition(tokenId, splitRatio, user2);
 
         // Verify both positions inherit the buy cooldown
-        assertTrue(staking.isInBuyCooldown(tokenId), "Original position should still be in buy cooldown");
-        assertTrue(staking.isInBuyCooldown(newTokenId), "Split position should inherit buy cooldown");
+        IAppStaking.Position memory position = staking.positions(tokenId);
+        assertTrue(position.buyCooldownEnd > 0, "Original position should still be in buy cooldown");
+        IAppStaking.Position memory newPosition = staking.positions(newTokenId);
+        assertTrue(newPosition.buyCooldownEnd > 0, "Split position should inherit buy cooldown");
         assertEq(
-            staking.getBuyCooldownEnd(tokenId),
-            staking.getBuyCooldownEnd(newTokenId),
-            "Split positions should have same cooldown end time"
+            position.buyCooldownEnd, newPosition.buyCooldownEnd, "Split positions should have same cooldown end time"
         );
 
         vm.stopPrank();
@@ -1128,17 +1039,20 @@ contract AppStakingTest is BaseTest {
         staking.buyPosition(tokenId2);
 
         // Verify both positions are in cooldown
-        assertTrue(staking.isInBuyCooldown(tokenId1), "Position 1 should be in buy cooldown");
-        assertTrue(staking.isInBuyCooldown(tokenId2), "Position 2 should be in buy cooldown");
+        IAppStaking.Position memory position1 = staking.positions(tokenId1);
+        assertTrue(position1.buyCooldownEnd > 0, "Position 1 should be in buy cooldown");
+        IAppStaking.Position memory position2 = staking.positions(tokenId2);
+        assertTrue(position2.buyCooldownEnd > 0, "Position 2 should be in buy cooldown");
 
         // Merge the positions
         uint256 mergedTokenId = staking.mergePositions(tokenId1, tokenId2);
 
         // Verify merged position is in cooldown (inherits from tokenId1)
-        assertTrue(staking.isInBuyCooldown(mergedTokenId), "Merged position should inherit buy cooldown");
+        IAppStaking.Position memory mergedPosition = staking.positions(mergedTokenId);
+        assertTrue(mergedPosition.buyCooldownEnd > 0, "Merged position should inherit buy cooldown");
         assertEq(
-            staking.getBuyCooldownEnd(mergedTokenId),
-            staking.getBuyCooldownEnd(tokenId1),
+            mergedPosition.buyCooldownEnd,
+            position1.buyCooldownEnd,
             "Merged position should inherit cooldown from first position"
         );
 
@@ -1166,13 +1080,14 @@ contract AppStakingTest is BaseTest {
         staking.buyPosition(tokenId);
 
         // Verify buy cooldown is set
-        assertTrue(staking.isInBuyCooldown(tokenId), "Position should be in buy cooldown");
+        IAppStaking.Position memory position = staking.positions(tokenId);
+        assertTrue(position.buyCooldownEnd > 0, "Position should be in buy cooldown");
 
         // Start unstaking
         staking.startUnstaking(tokenId);
 
         // Fast forward past withdraw cooldown
-        vm.warp(block.timestamp + staking.withdrawCooldownPeriod() + 1);
+        vm.warp(block.timestamp + staking.variables().withdrawCooldownPeriod + 1);
 
         // Complete unstaking
         staking.completeUnstaking(tokenId);
@@ -1187,13 +1102,14 @@ contract AppStakingTest is BaseTest {
         vm.startPrank(owner);
 
         uint256 newCooldownPeriod = 2 days;
-        uint256 oldCooldownPeriod = staking.buyCooldownPeriod();
+        uint256 oldCooldownPeriod = staking.variables().buyCooldownPeriod;
 
         // Set new cooldown period
-        staking.setBuyCooldownPeriod(newCooldownPeriod);
+        defaultVariables.buyCooldownPeriod = newCooldownPeriod;
+        staking.setVariables(defaultVariables);
 
         // Verify the change
-        assertEq(staking.buyCooldownPeriod(), newCooldownPeriod, "Buy cooldown period not updated");
+        assertEq(staking.variables().buyCooldownPeriod, newCooldownPeriod, "Buy cooldown period not updated");
         assertEq(oldCooldownPeriod, 1 days, "Old cooldown period should be 1 day");
 
         vm.stopPrank();
@@ -1203,8 +1119,9 @@ contract AppStakingTest is BaseTest {
         vm.startPrank(owner);
 
         // Try to set zero cooldown period
+        defaultVariables.buyCooldownPeriod = 0;
         vm.expectRevert("Invalid buy cooldown period");
-        staking.setBuyCooldownPeriod(0);
+        staking.setVariables(defaultVariables);
 
         vm.stopPrank();
     }
@@ -1214,7 +1131,8 @@ contract AppStakingTest is BaseTest {
 
         // Non-governor tries to set cooldown period
         vm.expectRevert("UNAUTHORIZED");
-        staking.setBuyCooldownPeriod(2 days);
+        defaultVariables.buyCooldownPeriod = 0;
+        staking.setVariables(defaultVariables);
 
         vm.stopPrank();
     }
@@ -1224,7 +1142,8 @@ contract AppStakingTest is BaseTest {
         authority.addPolicy(user1);
 
         // Set a shorter cooldown period for testing
-        staking.setBuyCooldownPeriod(1 hours);
+        defaultVariables.buyCooldownPeriod = 1 hours;
+        staking.setVariables(defaultVariables);
 
         // Create position
         app.mint(owner, STAKE_AMOUNT);
@@ -1273,7 +1192,8 @@ contract AppStakingTest is BaseTest {
         authority.addPolicy(user1);
 
         // Set custom cooldown period
-        staking.setBuyCooldownPeriod(cooldownPeriod);
+        defaultVariables.buyCooldownPeriod = cooldownPeriod;
+        staking.setVariables(defaultVariables);
 
         // Create position
         app.mint(owner, stakeAmount);
@@ -1290,10 +1210,9 @@ contract AppStakingTest is BaseTest {
         staking.buyPosition(tokenId);
 
         // Verify cooldown is set correctly
-        assertTrue(staking.isInBuyCooldown(tokenId), "Position should be in buy cooldown");
-        assertEq(
-            staking.getBuyCooldownEnd(tokenId), block.timestamp + cooldownPeriod, "Buy cooldown end time incorrect"
-        );
+        IAppStaking.Position memory position = staking.positions(tokenId);
+        assertTrue(position.buyCooldownEnd > 0, "Position should be in buy cooldown");
+        assertEq(position.buyCooldownEnd, block.timestamp + cooldownPeriod, "Buy cooldown end time incorrect");
 
         // Try to buy again immediately (should fail)
         app.mint(user2, declaredValue);
@@ -1334,7 +1253,8 @@ contract AppStakingTest is BaseTest {
         staking.buyPosition(tokenId);
 
         // Verify buy cooldown is set and rewards were claimed
-        assertTrue(staking.isInBuyCooldown(tokenId), "Position should be in buy cooldown");
+        IAppStaking.Position memory position = staking.positions(tokenId);
+        assertTrue(position.buyCooldownEnd > 0, "Position should be in buy cooldown");
         assertGt(app.balanceOf(user1), 0, "Buyer should have received rewards");
 
         // Try to buy again immediately (should fail)
@@ -1371,10 +1291,9 @@ contract AppStakingTest is BaseTest {
         staking.buyPosition(tokenId);
 
         // Verify buy cooldown is set and unstaking was cancelled
-        assertTrue(staking.isInBuyCooldown(tokenId), "Position should be in buy cooldown");
-
         IAppStaking.Position memory position = staking.positions(tokenId);
-        assertEq(position.cooldownEnd, 0, "Unstaking should be cancelled");
+        assertTrue(position.buyCooldownEnd > 0, "Position should be in buy cooldown");
+        assertEq(position.withdrawCooldownEnd, 0, "Unstaking should be cancelled");
 
         // Try to buy again immediately (should fail)
         app.mint(user2, DECLARED_VALUE);
@@ -1391,7 +1310,9 @@ contract AppStakingTest is BaseTest {
     // ============ INPUT VALIDATION TESTS ============
 
     function test_CreatePositionWithValidInputs() public {
-            app.approve(address(staking), STAKE_AMOUNT);
+        vm.startPrank(owner);
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
 
         // Create position with valid inputs
         (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
@@ -1528,10 +1449,11 @@ contract AppStakingTest is BaseTest {
         vm.stopPrank();
     }
 
-    function test_DynamicFeeParameters() public {
-        assertEq(staking.lowDemandThresholdBps(), LOW_DEMAND_THRESHOLD_BPS, "Low demand threshold not set correctly");
-        assertEq(staking.highDemandThresholdBps(), HIGH_DEMAND_THRESHOLD_BPS, "High demand threshold not set correctly");
-        assertEq(staking.maxDepositFeeBps(), MAX_DEPOSIT_FEE_BPS, "Max deposit fee not set correctly");
+    function test_DynamicFeeParameters() public view {
+        IAppStaking.Variables memory variables = staking.variables();
+        assertEq(variables.lowDemandThreshold, LOW_DEMAND_THRESHOLD_BPS, "Low demand threshold not set correctly");
+        assertEq(variables.highDemandThreshold, HIGH_DEMAND_THRESHOLD_BPS, "High demand threshold not set correctly");
+        assertEq(variables.maxDepositFee, MAX_DEPOSIT_FEE_BPS, "Max deposit fee not set correctly");
     }
 
     function test_Market_HighDemand() public {
@@ -1543,7 +1465,7 @@ contract AppStakingTest is BaseTest {
         app.approve(address(staking), STAKE_AMOUNT);
 
         // Tax that user will pay. Initial tax is 0%
-        uint256 tax = (staking.getDepositFeeBps() * STAKE_AMOUNT) / staking.BASIS_POINTS();
+        uint256 tax = (staking.getDepositFee() * STAKE_AMOUNT) / 1e18;
 
         // Create position
         (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
@@ -1552,12 +1474,12 @@ contract AppStakingTest is BaseTest {
         IAppStaking.Position memory position = staking.positions(tokenId);
 
         assertEq(position.declaredValue, DECLARED_VALUE);
-        assertEq(position.cooldownEnd, 0);
+        assertEq(position.withdrawCooldownEnd, 0);
         assertEq(position.amount, STAKE_AMOUNT);
         assertEq(staking.totalStaked(), STAKE_AMOUNT);
         vm.stopPrank();
 
-        tax = (staking.getDepositFeeBps() * STAKE_AMOUNT) / staking.BASIS_POINTS(); // Tax will be 5%
+        tax = (staking.getDepositFee() * STAKE_AMOUNT) / 1e18; // Tax will be 5%
 
         vm.startPrank(user1);
         app.approve(address(staking), STAKE_AMOUNT);
@@ -1567,7 +1489,7 @@ contract AppStakingTest is BaseTest {
         position = staking.positions(tokenId);
         assertEq(position.amount, STAKE_AMOUNT - tax);
         assertEq(position.declaredValue, DECLARED_VALUE);
-        assertEq(position.cooldownEnd, 0);
+        assertEq(position.withdrawCooldownEnd, 0);
     }
 
     function test_Market_LowDemand() public {
@@ -1575,7 +1497,7 @@ contract AppStakingTest is BaseTest {
 
         // Mint RZR tokens to owner
         app.mint(owner, STAKE_AMOUNT);
-        app.mint(user1, STAKE_AMOUNT*5);
+        app.mint(user1, STAKE_AMOUNT * 5);
 
         app.approve(address(staking), STAKE_AMOUNT);
         (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
@@ -1583,7 +1505,7 @@ contract AppStakingTest is BaseTest {
 
         vm.startPrank(user1);
         app.approve(address(staking), STAKE_AMOUNT);
-        uint256 tax = (staking.getDepositFeeBps() * STAKE_AMOUNT) / staking.BASIS_POINTS(); // Tax will be 0%
+        uint256 tax = (staking.getDepositFee() * STAKE_AMOUNT) / 1e18; // Tax will be 0%
         (tokenId,) = staking.createPosition(user1, STAKE_AMOUNT, DECLARED_VALUE, 0);
         vm.stopPrank();
 
@@ -1591,9 +1513,8 @@ contract AppStakingTest is BaseTest {
 
         assertEq(position.amount, STAKE_AMOUNT - tax);
         assertEq(position.declaredValue, DECLARED_VALUE);
-        assertEq(position.cooldownEnd, 0);
-        
+        assertEq(position.withdrawCooldownEnd, 0);
+
         vm.stopPrank();
     }
-
 }

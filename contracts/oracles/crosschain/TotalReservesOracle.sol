@@ -116,7 +116,6 @@ contract TotalReservesOracle is AppAccessControlled, ITotalReservesOracle {
         chainReserves.rzrReserves = _rzrReserves;
         chainReserves.usdReserves = _usdReserves;
         chainReserves.lastUpdatedAt = block.timestamp;
-
         emit CrosschainReservesUpdated(eid, _rzrReserves, _usdReserves, block.timestamp);
     }
 
@@ -136,13 +135,11 @@ contract TotalReservesOracle is AppAccessControlled, ITotalReservesOracle {
         chainReserves.rzrReserves = _rzrReserves;
         chainReserves.usdReserves = _usdReserves;
         chainReserves.lastUpdatedAt = block.timestamp;
-
         emit CrosschainReservesUpdated(eid, _rzrReserves, _usdReserves, block.timestamp);
 
         // Update the total cross-chain reserves
         l2chainRzrReserves = l2chainRzrReserves - oldRzrReserves + _rzrReserves;
         l2chainUsdReserves = l2chainUsdReserves - oldUsdReserves + _usdReserves;
-
         emit ReservesOnchainUpdated(l2chainRzrReserves, l2chainUsdReserves);
     }
 

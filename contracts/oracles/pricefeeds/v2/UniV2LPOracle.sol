@@ -26,6 +26,7 @@ contract UniV2LPOracle is IOracleV2 {
         asset = IERC20Metadata(_uniV2LP);
         (uint256 rzrAmount, uint256 usdAmount,) = getPriceForAmount(1e18);
         require(rzrAmount > 0 || usdAmount > 0, "Invalid price");
+        require(amm.token0() == rzr || amm.token1() == rzr, "Invalid LP token");
     }
 
     /// @inheritdoc IOracleV2
@@ -46,21 +47,21 @@ contract UniV2LPOracle is IOracleV2 {
             rzrAssets = amount0;
 
             // convert amount1 to usd
-            usdAssets = getPrice(amm.token1(), amount1);
+            (usdAssets, lastUpdatedAt) = getPrice(amm.token1(), amount1);
         } else {
             rzrAssets = amount1;
 
             // convert amount0 to usd
-            usdAssets = getPrice(amm.token0(), amount0);
+            (usdAssets, lastUpdatedAt) = getPrice(amm.token0(), amount0);
         }
     }
 
     /// @notice Get the price of a token in 1e18
     /// @param token The token to get the price of
     /// @return price The price of the token in 1e18
-    function getPrice(address token, uint256 amount) public view returns (uint256) {
+    function getPrice(address token, uint256 amount) public view returns (uint256, uint256) {
         uint8 decimals = IERC20Metadata(token).decimals();
-        (, uint256 usdAmount,) = appOracle.getPriceForAmount(token, amount);
-        return (usdAmount * 1e18) / (10 ** decimals); // convert to 1e18
+        (, uint256 usdAmount, uint256 lastUpdatedAt) = appOracle.getPriceForAmount(token, amount);
+        return ((usdAmount * 1e18) / (10 ** decimals), lastUpdatedAt); // convert to 1e18
     }
 }

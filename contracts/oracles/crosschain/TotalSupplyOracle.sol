@@ -14,10 +14,10 @@ import "../../core/AppAccessControlled.sol";
  */
 contract TotalSupplyOracle is AppAccessControlled, ITotalSupplyOracle {
     /// @notice The maximum deviation from the onchain total supply
-    uint256 public maxDeviation = 0.01e18; // 1% max deviation
+    uint256 public maxDeviation;
 
     /// @notice The staleness of the offchain total supply
-    uint256 public staleness = 1 days;
+    uint256 public staleness;
 
     /// @notice The offchain total supply
     uint256 public offchainTotalSupply;

@@ -14,10 +14,10 @@ import "../../core/AppAccessControlled.sol";
  */
 contract TotalReservesOracle is AppAccessControlled, ITotalReservesOracle {
     /// @notice The maximum deviation from the onchain reserves (1% = 0.01e18)
-    uint256 public maxDeviation = 0.01e18; // 1% max deviation
+    uint256 public maxDeviation;
 
     /// @notice The staleness of the offchain reserves
-    uint256 public staleness = 1 days;
+    uint256 public staleness;
 
     /// @notice The offchain RZR reserves
     uint256 public offchainRzrReserves;

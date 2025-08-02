@@ -34,6 +34,7 @@ contract TotalSupplyOracle is AppAccessControlled, ITotalSupplyOracle {
     /// @notice The crosschain total supply for each chain
     mapping(uint256 eid => uint256 totalSupply) public crosschainTotalSupply;
 
+    /// @notice The RZR token
     IApp public rzr;
 
     /// @inheritdoc ITotalSupplyOracle

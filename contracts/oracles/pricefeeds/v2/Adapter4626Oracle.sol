@@ -22,7 +22,7 @@ contract Adapter4626Oracle is IOracleV2 {
         returns (uint256 rzrAssets, uint256 usdAssets, uint256 lastUpdatedAt)
     {
         rzrAssets = VAULT.convertToAssets(amount);
-        usdAssets = amount;
+        usdAssets = 0;
         lastUpdatedAt = block.timestamp;
     }
 }

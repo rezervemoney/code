@@ -50,6 +50,11 @@ contract CappedOracle is IOracleV2 {
         maxLowerBoundUsd = _maxLowerBoundUsd;
         maxUpperBoundRzr = _maxUpperBoundRzr;
         maxLowerBoundRzr = _maxLowerBoundRzr;
+        asset = IERC20Metadata(_asset);
+
+        require(_maxUpperBoundUsd > _maxLowerBoundUsd, "Invalid USD bounds");
+        require(_maxUpperBoundRzr > _maxLowerBoundRzr, "Invalid RZR bounds");
+        require(_oracle.asset() == asset, "Oracle asset mismatch");
     }
 
     /// @inheritdoc IOracleV2

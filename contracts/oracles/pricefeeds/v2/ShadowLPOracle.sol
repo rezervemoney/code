@@ -17,9 +17,6 @@ interface IShadowLP {
  * @dev Price is returned in 18 decimals
  */
 contract ShadowLPOracle is IOracleV2 {
-    /// @notice The shadow LP pair
-    IShadowLP public amm;
-
     /// @notice The decimal offset
     uint256 public decimalOffset;
 
@@ -36,8 +33,6 @@ contract ShadowLPOracle is IOracleV2 {
     /// @param _amm The shadow LP pair
     /// @param _baseToken The base token
     constructor(IShadowLP _amm, address _baseToken) {
-        amm = _amm;
-
         baseToken = IERC20Metadata(_baseToken);
         quoteToken = IERC20Metadata(amm.token0() == _baseToken ? amm.token1() : amm.token0());
 

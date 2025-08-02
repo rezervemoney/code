@@ -6,6 +6,7 @@ import "../../../interfaces/IAppOracle.sol";
 import "../../../interfaces/IBalancerVault.sol";
 import "../../../utils/BalancerMath.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title BalancerLPOracle
@@ -13,36 +14,32 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
  */
 contract BalancerLPOracle is BalancerMath, IOracleV2 {
     /// @notice The Balancer vault
-    IBalancerVault public vault;
-
-    /// @notice The Balancer pool
-    address public pool;
-
-    /// @notice The rzr
-    address public rzr;
+    IBalancerVault public immutable vault;
 
     /// @notice The app oracle
-    IAppOracle public appOracle;
+    IAppOracle public immutable appOracle;
 
-    /// @notice The asset
+    /// @inheritdoc IOracleV2
     IERC20Metadata public immutable asset;
 
     /// @notice Constructor
     /// @param _vault The Balancer vault
     /// @param _balancerLP The Balancer pool
-    /// @param _rzr The rzr
     /// @param _appOracle The app oracle
-    constructor(address _vault, address _balancerLP, address _rzr, IAppOracle _appOracle) {
-        require(_vault != address(0), "Invalid vault");
-        require(_balancerLP != address(0), "Invalid balancer LP");
-        require(_rzr != address(0), "Invalid rzr");
+    constructor(address _vault, address _balancerLP, IAppOracle _appOracle) {
+        require(_vault != address(0), "Invalid vault address");
+        require(_balancerLP != address(0), "Invalid balancer LP address");
         require(address(_appOracle) != address(0), "Invalid app oracle");
 
         vault = IBalancerVault(_vault);
-        pool = _balancerLP;
-        rzr = _rzr;
         appOracle = _appOracle;
         asset = IERC20Metadata(_balancerLP);
+
+        IBalancerVault.BalancerPoolData memory poolData = vault.getPoolData(address(asset));
+        require(poolData.tokens.length == 2, "num tokens must be 2");
+
+        _checkOracle(poolData.tokens[0]);
+        _checkOracle(poolData.tokens[1]);
     }
 
     /// @inheritdoc IOracleV2
@@ -51,38 +48,34 @@ contract BalancerLPOracle is BalancerMath, IOracleV2 {
         view
         returns (uint256 rzrAssets, uint256 usdAssets, uint256 lastUpdatedAt)
     {
-        IBalancerVault.BalancerPoolData memory poolData = vault.getPoolData(pool);
-        require(poolData.tokens.length == 2, "num tokens must be 2");
+        IBalancerVault.BalancerPoolData memory poolData = vault.getPoolData(address(asset));
+        uint256 totalSupply = asset.totalSupply();
 
-        IERC20 tokenA = poolData.tokens[0];
-        IERC20 tokenB = poolData.tokens[1];
-
-        uint256 balanceA = poolData.balancesRaw[0];
-        uint256 balanceB = poolData.balancesRaw[1];
-
-        uint256 totalSupply = IERC20(pool).totalSupply();
-        uint256 amountA = balanceA * amount / totalSupply;
-        uint256 amountB = balanceB * amount / totalSupply;
-
-        if (tokenA == IERC20(address(rzr))) {
-            uint256 pxB = getPrice(address(tokenB));
-            rzrAssets = amountA;
-            usdAssets = amountB * pxB / 1e18;
-        } else {
-            uint256 pxA = getPrice(address(tokenA));
-            rzrAssets = amountB * pxA / 1e18;
-            usdAssets = amountA;
+        {
+            uint256 balanceA = poolData.balancesRaw[0];
+            uint256 amountA = balanceA * amount / totalSupply;
+            (uint256 rzrAmountA, uint256 usdAmountA, uint256 lastUpdatedAtA) =
+                appOracle.getPriceForAmount(address(poolData.tokens[0]), amountA);
+            rzrAssets = rzrAmountA;
+            usdAssets = usdAmountA;
+            lastUpdatedAt = lastUpdatedAtA;
         }
-
-        lastUpdatedAt = block.timestamp;
+        {
+            uint256 balanceB = poolData.balancesRaw[1];
+            uint256 amountB = balanceB * amount / totalSupply;
+            (uint256 rzrAmountB, uint256 usdAmountB, uint256 lastUpdatedAtB) =
+                appOracle.getPriceForAmount(address(poolData.tokens[1]), amountB);
+            rzrAssets += rzrAmountB;
+            usdAssets += usdAmountB;
+            lastUpdatedAt = Math.min(lastUpdatedAt, lastUpdatedAtB);
+        }
     }
 
-    /// @notice Get the price of a token in USD
-    /// @param token The token to get the price of
-    /// @return px The price of the token in USD
-    function getPrice(address token) public view returns (uint256) {
-        uint8 decimals = IERC20Metadata(token).decimals();
-        (, uint256 usdAmount,) = appOracle.getPrice(token);
-        return (usdAmount * 1e18) / (10 ** decimals); // convert to 1e18
+    function _checkOracle(IERC20 token) internal view {
+        require(address(token) != address(asset), "Token is the same as the asset");
+        (uint256 rzrAmount, uint256 usdAmount, uint256 lastUpdatedAt) =
+            appOracle.getPriceForAmount(address(token), 1e18);
+        require(rzrAmount > 0 || usdAmount > 0, "Invalid price");
+        require(lastUpdatedAt > 0, "Invalid last updated at");
     }
 }

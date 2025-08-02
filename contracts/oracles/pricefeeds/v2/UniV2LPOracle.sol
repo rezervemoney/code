@@ -5,6 +5,7 @@ import "../../../interfaces/IAppOracle.sol";
 import "../../../interfaces/IOracleV2.sol";
 import "../../../interfaces/IUniswapV2Pair.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title UniV2LPOracle
@@ -38,30 +39,21 @@ contract UniV2LPOracle is IOracleV2 {
     {
         uint256 totalSupply = amm.totalSupply();
 
-        (uint256 reserve0, uint256 reserve1,) = amm.getReserves();
+        (uint256 balanceA, uint256 balanceB,) = amm.getReserves();
 
-        uint256 amount0 = amount * reserve0 / totalSupply;
-        uint256 amount1 = amount * reserve1 / totalSupply;
-
-        if (amm.token0() == rzr) {
-            rzrAssets = amount0;
-
-            // convert amount1 to usd
-            (usdAssets, lastUpdatedAt) = getPrice(amm.token1(), amount1);
-        } else {
-            rzrAssets = amount1;
-
-            // convert amount0 to usd
-            (usdAssets, lastUpdatedAt) = getPrice(amm.token0(), amount0);
+        {
+            uint256 amountA = balanceA * amount / totalSupply;
+            (uint256 rzrA, uint256 usdA, uint256 lastUpdatedAtA) = appOracle.getPriceForAmount(amm.token0(), amountA);
+            rzrAssets = rzrA;
+            usdAssets = usdA;
+            lastUpdatedAt = lastUpdatedAtA;
         }
-    }
-
-    /// @notice Get the price of a token in 1e18
-    /// @param token The token to get the price of
-    /// @return price The price of the token in 1e18
-    function getPrice(address token, uint256 amount) public view returns (uint256, uint256) {
-        uint8 decimals = IERC20Metadata(token).decimals();
-        (, uint256 usdAmount, uint256 lastUpdatedAt) = appOracle.getPriceForAmount(token, amount);
-        return ((usdAmount * 1e18) / (10 ** decimals), lastUpdatedAt); // convert to 1e18
+        {
+            uint256 amountB = balanceB * amount / totalSupply;
+            (uint256 rzrB, uint256 usdB, uint256 lastUpdatedAtB) = appOracle.getPriceForAmount(amm.token1(), amountB);
+            rzrAssets += rzrB;
+            usdAssets += usdB;
+            lastUpdatedAt = Math.min(lastUpdatedAt, lastUpdatedAtB);
+        }
     }
 }

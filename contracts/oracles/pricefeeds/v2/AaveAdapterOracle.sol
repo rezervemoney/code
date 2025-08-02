@@ -7,14 +7,15 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract AaveAdapterOracle is IOracleV2 {
     IAggregatorV3 public immutable AGGREGATOR;
-    uint256 private decimalsToAdjust;
+    uint256 private oracleDecimals;
+    uint256 private assetDecimals;
 
     IERC20Metadata public immutable asset;
 
     constructor(IAggregatorV3 _aggregator, address _asset) {
         AGGREGATOR = _aggregator;
-        uint8 decimals = AGGREGATOR.decimals();
-        decimalsToAdjust = 10 ** (18 - decimals);
+        oracleDecimals = AGGREGATOR.decimals();
+        assetDecimals = IERC20Metadata(_asset).decimals();
         asset = IERC20Metadata(_asset);
     }
 
@@ -26,8 +27,12 @@ contract AaveAdapterOracle is IOracleV2 {
         returns (uint256 rzrAssets, uint256 usdAssets, uint256 lastUpdatedAt)
     {
         (, int256 answer,, uint256 updatedAt,) = AGGREGATOR.latestRoundData();
+
+        uint256 oracleAnswerE18 = uint256(answer) * 10 ** (18 - oracleDecimals);
+        uint256 amountE18 = amount * 10 ** (18 - assetDecimals);
+
         rzrAssets = 0;
-        usdAssets = amount * uint256(answer) * decimalsToAdjust;
+        usdAssets = amountE18 * oracleAnswerE18 / 1e18;
         lastUpdatedAt = updatedAt;
     }
 }

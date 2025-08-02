@@ -21,16 +21,14 @@ contract BeaconOracle is IOracleV2, Ownable {
     /// @notice Constructor
     /// @param _beacon The initial beacon
     constructor(IOracleV2 _beacon, address _asset) Ownable(msg.sender) {
-        beacon = _beacon;
         asset = IERC20Metadata(_asset);
-        emit BeaconUpdated(_beacon);
+        _setBeacon(_beacon);
     }
 
     /// @notice Sets the beacon
     /// @param _beacon The new beacon
     function setBeacon(IOracleV2 _beacon) external onlyOwner {
-        beacon = _beacon;
-        emit BeaconUpdated(_beacon);
+        _setBeacon(_beacon);
     }
 
     /// @inheritdoc IOracleV2
@@ -41,5 +39,14 @@ contract BeaconOracle is IOracleV2, Ownable {
         returns (uint256 rzrAssets, uint256 usdAssets, uint256 lastUpdatedAt)
     {
         (rzrAssets, usdAssets, lastUpdatedAt) = beacon.getPriceForAmount(amount);
+    }
+
+    /// @notice Sets the beacon
+    /// @param _beacon The new beacon
+    function _setBeacon(IOracleV2 _beacon) internal {
+        require(address(_beacon) != address(0), "Invalid beacon address");
+        require(_beacon.asset() == asset, "Beacon asset mismatch");
+        beacon = _beacon;
+        emit BeaconUpdated(_beacon);
     }
 }

@@ -4,7 +4,6 @@ pragma solidity 0.8.28;
 import "../../../interfaces/IOracleV2.sol";
 import "../../../interfaces/IAppOracle.sol";
 import "../../../interfaces/IBalancerVault.sol";
-import "../../../utils/BalancerMath.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
@@ -12,7 +11,7 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
  * @title BalancerLPOracle
  * @notice An oracle for a Balancer LP token.
  */
-contract BalancerLPOracle is BalancerMath, IOracleV2 {
+contract BalancerLPOracle is IOracleV2 {
     /// @notice The Balancer vault
     IBalancerVault public immutable vault;
 

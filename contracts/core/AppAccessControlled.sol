@@ -95,6 +95,13 @@ abstract contract AppAccessControlled is Initializable {
         _;
     }
 
+    /// @notice Modifier to check if the contract is not paused
+    /// @dev This modifier is only callable if the contract is not paused
+    modifier whenNotPaused() {
+        _ensureUnpaused();
+        _;
+    }
+
     /// @notice Sets the authority for the contract
     /// @dev This function is only callable by the governor
     /// @param _newAuthority The address of the new authority
@@ -116,5 +123,9 @@ abstract contract AppAccessControlled is Initializable {
     /// @param projectID The project ID to set
     function setFeeMProjectId(address registry, uint256 projectID) external onlyGovernor {
         ISonicFeeMRegistry(registry).selfRegister(projectID);
+    }
+
+    function _ensureUnpaused() internal view {
+        require(!authority.underEmergencyPause(), "PAUSED");
     }
 }

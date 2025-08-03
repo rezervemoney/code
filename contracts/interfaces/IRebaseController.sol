@@ -4,11 +4,16 @@ pragma solidity 0.8.28;
 import "./IApp.sol";
 import "./IAppTreasury.sol";
 import "./IAppStaking.sol";
+import "./IAppOracle.sol";
+import "./ITotalSupplyOracle.sol";
+import "./ITotalReservesOracle.sol";
 
 interface IRebaseController {
     // --- State Variables -----------------------------------------------------
     function app() external view returns (IApp);
-    function treasury() external view returns (IAppTreasury);
+    function appOracle() external view returns (IAppOracle);
+    function totalSupplyOracle() external view returns (ITotalSupplyOracle);
+    function totalReservesOracle() external view returns (ITotalReservesOracle);
     function staking() external view returns (IAppStaking);
     function EPOCH() external view returns (uint256);
     function lastEpochTime() external view returns (uint256);
@@ -19,18 +24,61 @@ interface IRebaseController {
     event AprVariablesSet(uint16 floorApr, uint16 ceilApr, uint16 k1, uint16 k2);
 
     // --- Functions ----------------------------------------------------------
-    function initialize(address _dre, address _treasury, address _staking, address _authority, address _burner)
+    /// @notice Initialize the rebase controller
+    /// @param _rzr The address of the RZR
+    /// @param _treasury The address of the treasury
+    /// @param _staking The address of the staking contract
+    /// @param _authority The address of the authority contract
+    /// @param _burner The address of the burner contract
+    function initialize(address _rzr, address _treasury, address _staking, address _authority, address _burner)
         external;
 
+    /// @notice Set the target percentages
+    /// @param _targetOpsPct The target operations percentage
+    /// @param _minFloorPct The minimum floor percentage
+    /// @param _maxFloorPct The maximum floor percentage
+    /// @param _floorSlope The floor slope
+    function setTargetPcts(uint256 _targetOpsPct, uint256 _minFloorPct, uint256 _maxFloorPct, uint256 _floorSlope)
+        external;
+
+    /// @notice Set the APR variables
+    /// @param _floorApr The floor APR
+    /// @param _ceilApr The ceiling APR
+    /// @param _k1 The k1 parameter
+    /// @param _k2 The k2 parameter
+    function setAprVariables(uint16 _floorApr, uint16 _ceilApr, uint16 _k1, uint16 _k2) external;
+
+    /// @notice Execute the epoch
     function executeEpoch() external;
 
-    function currentBackingRatio() external view returns (uint256);
+    /// @notice Get the excess reserves
+    /// @return excessReserves The excess reserves
+    function excessReserves() external view returns (uint256 excessReserves);
 
+    /// @notice Get the current backing ratio
+    /// @return backingRatio The current backing ratio
+    function currentBackingRatio() external view returns (uint256 backingRatio);
+
+    /// @notice Get the projected epoch rate
+    /// @return apr The APR
+    /// @return epochRate The epoch rate
+    /// @return toStakers The amount to mint to stakers
+    /// @return toOps The amount to mint to operations
+    /// @return toBurner The amount to mint to the burner
     function projectedEpochRate()
         external
         view
         returns (uint256 apr, uint256 epochRate, uint256 toStakers, uint256 toOps, uint256 toBurner);
 
+    /// @notice Get the projected epoch rate
+    /// @param pcv The PCV
+    /// @param supply The supply
+    /// @param stakedSupply The staked supply
+    /// @return apr The APR
+    /// @return epochRate The epoch rate
+    /// @return toStakers The amount to mint to stakers
+    /// @return toOps The amount to mint to operations
+    /// @return toBurner The amount to mint to the burner
     function projectedEpochRateRaw(uint256 pcv, uint256 supply, uint256 stakedSupply)
         external
         view

@@ -1,0 +1,61 @@
+[
+  {
+    "inputs": [],
+    "name": "getCurrentState",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "staking4626Rate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "rzrSupply",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "lstRzrSupply",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "rzrReserves",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "usdReserves",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "updatedAt",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct IBridge.State",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "syncRzrToL1LiquidStaking",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "syncStateToL1",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  }
+]

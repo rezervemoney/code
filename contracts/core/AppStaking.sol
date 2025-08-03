@@ -179,7 +179,7 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
         appToken.safeTransferFrom(msg.sender, address(this), amount);
 
         // Calculate streaming tax rate based on declared value
-        uint256 taxRate = _calculateStreamingTaxRate(declaredValue);
+        uint256 taxPerSecond = _calculateStreamingTaxRate(declaredValue);
 
         // Charge deposit fee
         taxPaid = _chargeDepositFee(amount);
@@ -197,7 +197,7 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
             withdrawCooldownEnd: 0,
             withdrawCooldownStart: block.timestamp + minLockDuration,
             buyCooldownEnd: 0,
-            taxRate: taxRate,
+            taxPerSecond: taxPerSecond,
             taxCredit: 0,
             lastTaxCollectionTime: block.timestamp
         });
@@ -335,8 +335,8 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
         // Update streaming tax rate for the additional declared value
         if (addtionalDeclaredValue > 0) {
             uint256 newStreamingTaxRate = _calculateStreamingTaxRate(position.declaredValue + addtionalDeclaredValue);
-            uint256 oldRate = position.taxRate;
-            position.taxRate = newStreamingTaxRate;
+            uint256 oldRate = position.taxPerSecond;
+            position.taxPerSecond = newStreamingTaxRate;
             emit StreamingTaxRateUpdated(tokenId, oldRate, newStreamingTaxRate);
         }
 
@@ -391,7 +391,7 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
 
         uint256 splitAmount = position.amount * splitRatio / 1e18;
         uint256 splitDeclaredValue = position.declaredValue * splitRatio / 1e18;
-        uint256 splitTaxRate = position.taxRate * splitRatio / 1e18;
+        uint256 splitTaxRate = position.taxPerSecond * splitRatio / 1e18;
         uint256 splitTaxCredit = position.taxCredit * splitRatio / 1e18;
 
         // Create new position with split values
@@ -403,7 +403,7 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
             withdrawCooldownEnd: position.withdrawCooldownEnd,
             withdrawCooldownStart: position.withdrawCooldownStart,
             buyCooldownEnd: position.buyCooldownEnd,
-            taxRate: splitTaxRate,
+            taxPerSecond: splitTaxRate,
             taxCredit: splitTaxCredit,
             lastTaxCollectionTime: block.timestamp
         });
@@ -412,7 +412,7 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
         position.amount -= splitAmount;
         position.declaredValue -= splitDeclaredValue;
         position.taxCredit -= splitTaxCredit;
-        position.taxRate -= splitTaxRate;
+        position.taxPerSecond -= splitTaxRate;
 
         // Update tracking tokens for the new position
         trackingToken.burn(msg.sender, splitAmount);
@@ -451,8 +451,7 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
         position1.rewards += position2.rewards;
         position1.taxCredit += position2.taxCredit;
         position1.withdrawCooldownStart = Math.max(position1.withdrawCooldownStart, position2.withdrawCooldownStart);
-
-        position1.taxRate = _calculateStreamingTaxRate(position1.declaredValue);
+        position1.taxPerSecond = _calculateStreamingTaxRate(position1.declaredValue);
 
         // Burn the second token and delete its storage
         _burn(tokenId2);
@@ -467,20 +466,29 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
     }
 
     /// @inheritdoc IAppStaking
-    function collectStreamingTax(uint256 tokenId) external override nonReentrant returns (uint256 taxAmount) {
-        require(ownerOf(tokenId) != address(0), "Position does not exist");
-        return _collectStreamingTaxInternal(tokenId);
+    function collectStreamingTax(uint256 id) external override nonReentrant returns (uint256 tax, uint256 credit) {
+        require(ownerOf(id) != address(0), "Position does not exist");
+        return _collectStreamingTaxInternal(id, _positions[id]);
     }
 
     /// @inheritdoc IAppStaking
-    function calculateStreamingTax(uint256 tokenId) external view override returns (uint256 taxAmount) {
-        Position storage position = _positions[tokenId];
+    function calculateStreamingTax(uint256 id) external view override returns (uint256 tax) {
+        Position storage position = _positions[id];
         return _calculateStreamingTax(position);
     }
 
     /// @inheritdoc IAppStaking
-    function setUpfrontTaxCredit(uint256 tokenId, uint256 creditAmount) external override onlyGovernor {
+    function setUpfrontTaxCredit(uint256 tokenId, uint256 creditAmount) external override onlyExecutor {
         _setUpfrontTaxCreditInternal(tokenId, creditAmount);
+    }
+
+    /// @notice Executes a call to an address with a value and data
+    /// @param _to The address to call
+    /// @param _value The value to send
+    /// @param _data The data to send
+    function execute(address _to, uint256 _value, bytes calldata _data) external onlyGovernor {
+        (bool success,) = _to.call{value: _value}(_data);
+        require(success, "Staking: execute failed");
     }
 
     /// @notice Cancels the unstaking process and resets cooldown _variables
@@ -492,9 +500,9 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
             _updateReward(tokenId);
             position.withdrawCooldownEnd = 0;
             emit UnstakingCancelled(tokenId, msg.sender);
+        } else {
+            _updateReward(tokenId);
         }
-
-        _updateReward(tokenId);
     }
 
     /// @notice Claims rewards for a position
@@ -549,7 +557,7 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
             Position storage position = _positions[tokenId];
             position.rewards = earned(tokenId);
             position.rewardPerTokenPaid = rewardPerTokenStored;
-            _collectStreamingTaxInternal(tokenId);
+            _collectStreamingTaxInternal(tokenId, position);
         }
     }
 
@@ -561,9 +569,9 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
 
     /// @notice Calculates the streaming tax rate based on the declared value.
     /// @param declaredValue The declared value of the position.
-    /// @return taxRate The streaming tax rate per second.
-    function _calculateStreamingTaxRate(uint256 declaredValue) internal view returns (uint256 taxRate) {
-        taxRate = (declaredValue * _variables.harbergerTaxRate) / (1e18 * 365 days);
+    /// @return taxPerSecond The streaming tax rate per second.
+    function _calculateStreamingTaxRate(uint256 declaredValue) internal view returns (uint256 taxPerSecond) {
+        taxPerSecond = (declaredValue * _variables.harbergerTaxRate) / (1e18 * 365 days);
     }
 
     /// @notice Calculates the streaming tax owed for a position
@@ -572,7 +580,7 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
     function _calculateStreamingTax(Position storage position) internal view returns (uint256 taxAmount) {
         if (position.amount == 0) return 0;
         uint256 timeElapsed = block.timestamp - position.lastTaxCollectionTime;
-        taxAmount = position.taxRate * timeElapsed;
+        taxAmount = position.taxPerSecond * timeElapsed;
 
         // Cap tax at position amount to prevent over-taxation
         if (taxAmount > position.amount) taxAmount = position.amount;
@@ -581,45 +589,41 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
     /// @notice Internal function to collect streaming tax from a position
     /// @param tokenId The position ID
     /// @return taxAmount The amount of tax collected
-    function _collectStreamingTaxInternal(uint256 tokenId) internal returns (uint256 taxAmount) {
-        Position storage position = _positions[tokenId];
+    function _collectStreamingTaxInternal(uint256 tokenId, Position storage position)
+        internal
+        returns (uint256 taxAmount, uint256 creditUsed)
+    {
         taxAmount = _calculateStreamingTax(position);
-        if (taxAmount == 0) return 0;
 
-        uint256 actualTaxToCollect = taxAmount;
-        uint256 creditUsed = 0;
+        if (taxAmount == 0) return (0, 0);
+        if (position.lastTaxCollectionTime == block.timestamp) return (0, 0);
 
         // Check if position has upfront tax credit to use
         if (position.taxCredit > 0) {
             creditUsed = Math.min(taxAmount, position.taxCredit);
             position.taxCredit -= creditUsed;
-            actualTaxToCollect -= creditUsed;
+            taxAmount -= creditUsed;
 
             // Emit credit consumption event
             emit UpfrontTaxCreditConsumed(tokenId, creditUsed, position.taxCredit);
         }
 
         // Only deduct from position and burn tokens for the actual tax collected
-        if (actualTaxToCollect > 0) {
+        if (taxAmount > 0) {
             // Deduct tax from position amount
-            position.amount -= actualTaxToCollect;
-            totalStaked -= actualTaxToCollect;
+            position.amount -= taxAmount;
+            totalStaked -= taxAmount;
 
             // Burn tracking tokens for the taxed amount
-            trackingToken.burn(ownerOf(tokenId), actualTaxToCollect);
+            trackingToken.burn(ownerOf(tokenId), taxAmount);
 
             // Transfer tax to burner
-            appToken.safeTransfer(burner, actualTaxToCollect);
+            appToken.safeTransfer(burner, taxAmount);
         }
 
         // Update last collection time and applied tax rate
         position.lastTaxCollectionTime = block.timestamp;
-
-        uint256 timeElapsed = block.timestamp - position.lastTaxCollectionTime;
-        emit StreamingTaxCollected(tokenId, taxAmount, timeElapsed);
-
-        // Return the total tax amount (including credit used)
-        return taxAmount;
+        emit StreamingTaxCollected(tokenId, taxAmount);
     }
 
     /// @notice Internal function to set upfront tax credit for a position
@@ -639,16 +643,16 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
     /// @notice Calculates the upfront tax credit based on position amount, declared value, and tax rate
     /// @param amount The position amount
     /// @param declaredValue The declared value
-    /// @param taxRate The tax rate to use for calculation (in basis points)
+    /// @param taxPerSecond The tax rate to use for calculation (in basis points)
     /// @return creditAmount The calculated upfront tax credit
-    function _calculateUpfrontTaxCredit(uint256 amount, uint256 declaredValue, uint256 taxRate)
+    function _calculateUpfrontTaxCredit(uint256 amount, uint256 declaredValue, uint256 taxPerSecond)
         internal
         pure
         returns (uint256 creditAmount)
     {
         // Calculate the upfront tax that would have been paid
         // This is based on the provided tax rate applied to the declared value
-        creditAmount = (declaredValue * taxRate) / 1e18;
+        creditAmount = (declaredValue * taxPerSecond) / 1e18;
 
         // Cap the credit at the position amount to prevent over-crediting
         if (creditAmount > amount) creditAmount = amount;

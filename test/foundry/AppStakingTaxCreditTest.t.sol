@@ -56,10 +56,11 @@ contract AppStakingTaxCreditTest is BaseTest {
         uint256 expectedTaxAmount = staking.calculateStreamingTax(tokenId);
 
         // Collect streaming tax
-        uint256 taxCollected = staking.collectStreamingTax(tokenId);
+        (uint256 taxCollected, uint256 creditUsed) = staking.collectStreamingTax(tokenId);
 
         // Verify tax was collected
-        assertEq(taxCollected, expectedTaxAmount);
+        assertEq(taxCollected, 0);
+        assertTrue(creditUsed > 0);
 
         // Verify credit was consumed first
         uint256 remainingCredit = staking.getUpfrontTaxCredit(tokenId);
@@ -96,10 +97,11 @@ contract AppStakingTaxCreditTest is BaseTest {
         vm.warp(block.timestamp + 30 days);
 
         // Collect streaming tax
-        uint256 taxCollected = staking.collectStreamingTax(tokenId);
+        (uint256 taxCollected, uint256 creditUsed) = staking.collectStreamingTax(tokenId);
 
-        // Verify tax was collected
-        assertTrue(taxCollected > 0);
+        // Verify tax was not collected but credit was used
+        assertTrue(taxCollected == 0);
+        assertTrue(creditUsed > 0);
 
         // Verify position amount was NOT reduced (fully covered by credit)
         assertEq(staking.positions(tokenId).amount, initialAmount);
@@ -109,7 +111,7 @@ contract AppStakingTaxCreditTest is BaseTest {
 
         // Verify credit was reduced
         uint256 remainingCredit = staking.getUpfrontTaxCredit(tokenId);
-        assertEq(remainingCredit, largeCredit - taxCollected);
+        assertEq(remainingCredit, largeCredit - creditUsed);
 
         vm.stopPrank();
     }
@@ -136,10 +138,11 @@ contract AppStakingTaxCreditTest is BaseTest {
         uint256 expectedTaxAmount = staking.calculateStreamingTax(tokenId);
 
         // Collect streaming tax
-        uint256 taxCollected = staking.collectStreamingTax(tokenId);
+        (uint256 taxCollected, uint256 creditUsed) = staking.collectStreamingTax(tokenId);
 
-        // Verify tax was collected
-        assertEq(taxCollected, expectedTaxAmount);
+        // Verify tax was not collected but credit was used
+        assertEq(taxCollected, 0);
+        assertTrue(creditUsed > 0);
 
         // Verify credit was consumed (either fully or partially)
         uint256 remainingCredit = staking.getUpfrontTaxCredit(tokenId);

@@ -30,7 +30,9 @@ contract RebaseControllerTest is BaseTest {
 
     function test_Initialization() public view {
         assertEq(address(rebaseController.app()), address(app));
-        assertEq(address(rebaseController.treasury()), address(treasury));
+        assertEq(address(rebaseController.appOracle()), address(mockOracle));
+        assertEq(address(rebaseController.totalSupplyOracle()), address(totalSupplyOracle));
+        assertEq(address(rebaseController.totalReservesOracle()), address(totalReservesOracle));
         assertEq(address(rebaseController.staking()), address(staking));
         assertEq(address(rebaseController.burner()), address(burner));
         assertEq(rebaseController.lastEpochTime(), 0);

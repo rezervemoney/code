@@ -37,6 +37,12 @@ contract TotalReservesOracle is AppAccessControlled, ITotalReservesOracle {
     /// @notice The address of the offchain updater
     address public offchainUpdater;
 
+    /// @notice The reserves credit for the current epoch
+    uint256 public reservesCreditUsd;
+
+    /// @notice The reserves credit for the current epoch
+    uint256 public reservesCreditRzr;
+
     /// @notice The crosschain reserves for each chain
     /// @dev Mapping from chain eid to a struct containing RZR and USD reserves
     mapping(uint256 eid => ChainReserves) public crosschainReserves;
@@ -88,13 +94,13 @@ contract TotalReservesOracle is AppAccessControlled, ITotalReservesOracle {
             "USD reserves deviation too high"
         );
 
-        _rzrReserves = _onchainRzrReserves;
-        _usdReserves = _onchainUsdReserves;
+        _rzrReserves = _onchainRzrReserves + reservesCreditRzr;
+        _usdReserves = _onchainUsdReserves + reservesCreditUsd;
     }
 
     /// @inheritdoc ITotalReservesOracle
     function updateReservesOffchain(uint256 _rzrReserves, uint256 _usdReserves) external {
-        require(msg.sender == offchainUpdater, "Only offchainUpdater");
+        require(msg.sender == offchainUpdater, "Only updater");
         offchainRzrReserves = _rzrReserves;
         offchainUsdReserves = _usdReserves;
         lastUpdatedOffchainAt = block.timestamp;
@@ -124,6 +130,18 @@ contract TotalReservesOracle is AppAccessControlled, ITotalReservesOracle {
         l2chainRzrReserves = _rzrReserves;
         l2chainUsdReserves = _usdReserves;
         emit ReservesOnchainUpdated(l2chainRzrReserves, l2chainUsdReserves);
+    }
+
+    /// @inheritdoc ITotalReservesOracle
+    function setReservesCreditUsd(uint256 _reservesCreditUsd) external onlyGovernor {
+        reservesCreditUsd = _reservesCreditUsd;
+        emit ReservesCreditUsdUpdated(reservesCreditUsd);
+    }
+
+    /// @inheritdoc ITotalReservesOracle
+    function setReservesCreditRzr(uint256 _reservesCreditRzr) external onlyGovernor {
+        reservesCreditRzr = _reservesCreditRzr;
+        emit ReservesCreditRzrUpdated(reservesCreditRzr);
     }
 
     /// @inheritdoc ITotalReservesOracle

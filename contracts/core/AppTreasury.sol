@@ -6,12 +6,11 @@ import "../interfaces/IAppOracle.sol";
 import "../interfaces/IApp.sol";
 import "../interfaces/IAppTreasury.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, ReentrancyGuardUpgradeable {
+contract AppTreasury is AppAccessControlled, IAppTreasury, ReentrancyGuardUpgradeable {
     using SafeERC20 for IERC20;
     using SafeERC20 for IApp;
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -49,7 +48,6 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
         require(_appOracle != address(0), "Zero address: appOracle");
         app = IApp(_app);
         appOracle = IAppOracle(_appOracle);
-        __Pausable_init();
         __AppAccessControlled_init(_authority);
         __ReentrancyGuard_init();
         _updateReserves();
@@ -190,9 +188,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
         require(_address != address(app), "RZR address");
 
         // add token into tokens array if not already added
-        if (!_tokens.contains(_address)) {
-            _tokens.add(_address);
-        }
+        if (!_tokens.contains(_address)) _tokens.add(_address);
 
         // ensure the token has a valid price in appOracle contract
         (uint256 rzrAmount, uint256 usdAmount,) = appOracle.getPrice(_address);
@@ -311,14 +307,6 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
             (, uint256 usdValue) = tokenValueE18(_token, balance);
             require(usdValue <= reserveDebts[_token], "Treasury: reserve debt exceeded");
         }
-    }
-
-    function pause() external onlyGuardian {
-        _pause();
-    }
-
-    function unpause() external onlyGuardian {
-        _unpause();
     }
 
     function execute(address _to, uint256 _value, bytes calldata _data) external onlyGovernor {

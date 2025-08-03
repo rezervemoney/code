@@ -199,11 +199,6 @@
           },
           {
             "internalType": "uint256",
-            "name": "rewardsUnlockAt",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
             "name": "withdrawCooldownStart",
             "type": "uint256"
           },
@@ -565,11 +560,6 @@
           {
             "internalType": "uint256",
             "name": "withdrawCooldownEnd",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "rewardsUnlockAt",
             "type": "uint256"
           },
           {

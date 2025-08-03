@@ -1,0 +1,209 @@
+[
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "eid",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "crosschainTotalSupply",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "lastUpdatedAt",
+        "type": "uint256"
+      }
+    ],
+    "name": "CrosschainTotalSupplyUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "offchainUpdater",
+        "type": "address"
+      }
+    ],
+    "name": "OffchainUpdaterUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "offchainTotalSupply",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "lastUpdatedOffchainAt",
+        "type": "uint256"
+      }
+    ],
+    "name": "TotalSupplyOffchainUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "onchainTotalSupply",
+        "type": "uint256"
+      }
+    ],
+    "name": "TotalSupplyOnchainUpdated",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "getOffchainTotalSupply",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "_offchainTotalSupply",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getOnchainTotalSupply",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "_onchainTotalSupply",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getTotalSupply",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "_totalSupply",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_authority",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_offchainUpdater",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_rzr",
+        "type": "address"
+      }
+    ],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "eid",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_crosschainTotalSupply",
+        "type": "uint256"
+      }
+    ],
+    "name": "overwriteCrosschainTotalSupply",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_onchainTotalSupply",
+        "type": "uint256"
+      }
+    ],
+    "name": "overwriteOnchainTotalSupply",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "eid",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_crosschainTotalSupply",
+        "type": "uint256"
+      }
+    ],
+    "name": "setCrosschainTotalSupply",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_offchainUpdater",
+        "type": "address"
+      }
+    ],
+    "name": "setOffchainUpdater",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_offchainTotalSupply",
+        "type": "uint256"
+      }
+    ],
+    "name": "updateTotalSupplyOffchain",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]

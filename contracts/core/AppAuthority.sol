@@ -3,8 +3,9 @@ pragma solidity 0.8.28;
 
 import "../interfaces/IAppAuthority.sol";
 import "@openzeppelin/contracts/access/extensions/AccessControlEnumerable.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
-contract AppAuthority is IAppAuthority, AccessControlEnumerable {
+contract AppAuthority is IAppAuthority, AccessControlEnumerable, Pausable {
     bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE");
     bytes32 public constant GUARDIAN_ROLE = keccak256("GUARDIAN_ROLE");
     bytes32 public constant POLICY_ROLE = keccak256("POLICY_ROLE");
@@ -41,6 +42,11 @@ contract AppAuthority is IAppAuthority, AccessControlEnumerable {
         _;
     }
 
+    modifier onlyGovernorOrGuardian() {
+        require(hasRole(GOVERNOR_ROLE, msg.sender) || hasRole(GUARDIAN_ROLE, msg.sender), "Only governor or guardian");
+        _;
+    }
+
     /// @inheritdoc IAppAuthority
     function setOperationsTreasury(address _newOperationsTreasury) external onlyGovernor {
         address oldOperationsTreasury = operationsTreasury;
@@ -60,6 +66,21 @@ contract AppAuthority is IAppAuthority, AccessControlEnumerable {
         address oldBridge = bridge;
         bridge = _newBridge;
         emit BridgeUpdated(_newBridge, oldBridge);
+    }
+
+    /// @inheritdoc IAppAuthority
+    function emergencyPause() external onlyGovernorOrGuardian {
+        _pause();
+    }
+
+    /// @inheritdoc IAppAuthority
+    function emergencyUnpause() external onlyGovernor {
+        _unpause();
+    }
+
+    /// @inheritdoc IAppAuthority
+    function underEmergencyPause() external view override returns (bool) {
+        return paused();
     }
 
     /// @inheritdoc IAppAuthority

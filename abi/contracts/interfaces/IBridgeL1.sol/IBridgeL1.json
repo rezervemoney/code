@@ -1,0 +1,225 @@
+[
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "l2Bridge",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "peer",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint32",
+        "name": "eid",
+        "type": "uint32"
+      }
+    ],
+    "name": "L2BridgeRegistered",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint32",
+        "name": "dstEid",
+        "type": "uint32"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes",
+        "name": "message",
+        "type": "bytes"
+      }
+    ],
+    "name": "StateSent",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "getCurrentState",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "staking4626Rate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "rzrSupply",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "lstRzrSupply",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "rzrReserves",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "usdReserves",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "updatedAt",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct IBridge.State",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_delegate",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_authority",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_staking",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_staking4626",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_totalReservesOracle",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_totalSupplyOracle",
+        "type": "address"
+      }
+    ],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "purge",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_l2Bridge",
+        "type": "address"
+      },
+      {
+        "internalType": "uint32",
+        "name": "_eid",
+        "type": "uint32"
+      }
+    ],
+    "name": "registerL2Bridge",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint32",
+        "name": "_dstEid",
+        "type": "uint32"
+      }
+    ],
+    "name": "sentStateToL2",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "staking",
+    "outputs": [
+      {
+        "internalType": "contract IAppStaking",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "staking4626",
+    "outputs": [
+      {
+        "internalType": "contract IStaking4626",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalReservesOracle",
+    "outputs": [
+      {
+        "internalType": "contract ITotalReservesOracle",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalSupplyOracle",
+    "outputs": [
+      {
+        "internalType": "contract ITotalSupplyOracle",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

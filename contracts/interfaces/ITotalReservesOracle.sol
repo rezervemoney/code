@@ -28,6 +28,14 @@ interface ITotalReservesOracle {
     /// @param usdReserves The total USD reserves across all chains
     event ReservesOnchainUpdated(uint256 indexed rzrReserves, uint256 indexed usdReserves);
 
+    /// @notice Emitted when the reserves credit for USD is updated
+    /// @param reservesCreditUsd The reserves credit for USD
+    event ReservesCreditUsdUpdated(uint256 indexed reservesCreditUsd);
+
+    /// @notice Emitted when the reserves credit for RZR is updated
+    /// @param reservesCreditRzr The reserves credit for RZR
+    event ReservesCreditRzrUpdated(uint256 indexed reservesCreditRzr);
+
     /// @notice Initialize the total reserves oracle
     /// @param _authority The authority address
     /// @param _offchainUpdater The address of the offchain updater
@@ -79,4 +87,12 @@ interface ITotalReservesOracle {
     /// @return _rzrReserves The RZR reserves for the chain
     /// @return _usdReserves The USD reserves for the chain
     function getCrosschainReserves(uint256 eid) external view returns (uint256 _rzrReserves, uint256 _usdReserves);
+
+    /// @notice Set the reserves credit for USD
+    /// @param _reservesCreditUsd The reserves credit for USD
+    function setReservesCreditUsd(uint256 _reservesCreditUsd) external;
+
+    /// @notice Set the reserves credit for RZR
+    /// @param _reservesCreditRzr The reserves credit for RZR
+    function setReservesCreditRzr(uint256 _reservesCreditRzr) external;
 }

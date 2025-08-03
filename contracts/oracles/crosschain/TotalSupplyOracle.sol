@@ -37,6 +37,12 @@ contract TotalSupplyOracle is AppAccessControlled, ITotalSupplyOracle {
     /// @notice The RZR token
     IApp public rzr;
 
+    /// @notice The total supply credit for the current epoch
+    uint256 public totalSupplyCredit;
+
+    /// @notice The total supply credit for the current epoch
+    uint256 public totalSupplyUnbacked;
+
     /// @inheritdoc ITotalSupplyOracle
     function initialize(address _authority, address _offchainUpdater, address _rzr) external initializer {
         __AppAccessControlled_init(_authority);
@@ -66,7 +72,7 @@ contract TotalSupplyOracle is AppAccessControlled, ITotalSupplyOracle {
                 && _offchainTotalSupply < _onchainTotalSupply * (10000 + maxDeviation) / 10000,
             "Total supply deviation too high"
         );
-        _totalSupply = _onchainTotalSupply;
+        _totalSupply = _onchainTotalSupply + totalSupplyCredit - totalSupplyUnbacked;
     }
 
     /// @inheritdoc ITotalSupplyOracle
@@ -93,6 +99,18 @@ contract TotalSupplyOracle is AppAccessControlled, ITotalSupplyOracle {
     function overwriteOnchainTotalSupply(uint256 _onchainTotalSupply) external onlyGovernor {
         l2chainTotalSupply = _onchainTotalSupply;
         emit TotalSupplyOnchainUpdated(l2chainTotalSupply);
+    }
+
+    /// @inheritdoc ITotalSupplyOracle
+    function setTotalSupplyCredit(uint256 _totalSupplyCredit) external onlyGovernor {
+        totalSupplyCredit = _totalSupplyCredit;
+        emit TotalSupplyCreditUpdated(totalSupplyCredit);
+    }
+
+    /// @inheritdoc ITotalSupplyOracle
+    function setTotalSupplyUnbacked(uint256 _totalSupplyUnbacked) external onlyGovernor {
+        totalSupplyUnbacked = _totalSupplyUnbacked;
+        emit TotalSupplyUnbackedUpdated(totalSupplyUnbacked);
     }
 
     /// @inheritdoc ITotalSupplyOracle

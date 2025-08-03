@@ -23,6 +23,14 @@ interface ITotalSupplyOracle {
     /// @param onchainTotalSupply The onchain total supply
     event TotalSupplyOnchainUpdated(uint256 indexed onchainTotalSupply);
 
+    /// @notice Emitted when the total supply credit is updated
+    /// @param totalSupplyCredit The total supply credit
+    event TotalSupplyCreditUpdated(uint256 indexed totalSupplyCredit);
+
+    /// @notice Emitted when the total supply unbacked is updated
+    /// @param totalSupplyUnbacked The total supply unbacked
+    event TotalSupplyUnbackedUpdated(uint256 indexed totalSupplyUnbacked);
+
     /// @notice Initialize the total supply oracle
     /// @param _authority The authority address
     /// @param _offchainUpdater The address of the offchain updater
@@ -40,6 +48,10 @@ interface ITotalSupplyOracle {
     /// @notice Get the total supply
     /// @return _totalSupply The total supply
     function getTotalSupply() external view returns (uint256 _totalSupply);
+
+    /// @notice Get the total supply unbacked
+    /// @return _totalSupplyUnbacked The total supply unbacked
+    function totalSupplyUnbacked() external view returns (uint256 _totalSupplyUnbacked);
 
     /// @notice Update the offchain total supply
     /// @param _offchainTotalSupply The offchain total supply
@@ -62,4 +74,12 @@ interface ITotalSupplyOracle {
     /// @param eid The eid of the chain
     /// @param _crosschainTotalSupply The crosschain total supply
     function setCrosschainTotalSupply(uint256 eid, uint256 _crosschainTotalSupply) external;
+
+    /// @notice Set the total supply credit
+    /// @param _totalSupplyCredit The total supply credit
+    function setTotalSupplyCredit(uint256 _totalSupplyCredit) external;
+
+    /// @notice Set the total supply unbacked
+    /// @param _totalSupplyUnbacked The total supply unbacked
+    function setTotalSupplyUnbacked(uint256 _totalSupplyUnbacked) external;
 }

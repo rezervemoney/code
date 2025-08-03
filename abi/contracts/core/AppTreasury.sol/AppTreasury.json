@@ -1,16 +1,6 @@
 [
   {
     "inputs": [],
-    "name": "EnforcedPause",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ExpectedPause",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "InvalidInitialization",
     "type": "error"
   },
@@ -85,7 +75,13 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "value",
+        "name": "usdValue",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "rzrValue",
         "type": "uint256"
       }
     ],
@@ -147,19 +143,6 @@
       }
     ],
     "name": "Minted",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "Paused",
     "type": "event"
   },
   {
@@ -286,19 +269,6 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "Unpaused",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
         "indexed": true,
         "internalType": "address",
         "name": "token",
@@ -313,7 +283,13 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "value",
+        "name": "usdValue",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "rzrValue",
         "type": "uint256"
       }
     ],
@@ -417,7 +393,12 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "reserves",
+        "name": "usdReserves",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "rzrReserves",
         "type": "uint256"
       }
     ],
@@ -430,7 +411,12 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "usdReserves",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "rzrReserves",
         "type": "uint256"
       }
     ],
@@ -554,6 +540,29 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "_to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_value",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_data",
+        "type": "bytes"
+      }
+    ],
+    "name": "execute",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "_app",
         "type": "address"
       },
@@ -595,7 +604,12 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "value_",
+        "name": "rzrValue",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "usdValue",
         "type": "uint256"
       }
     ],
@@ -618,26 +632,6 @@
     "name": "mint",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "pause",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "paused",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -840,7 +834,12 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "value_",
+        "name": "rzrValue",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "usdValue",
         "type": "uint256"
       }
     ],
@@ -862,7 +861,20 @@
   },
   {
     "inputs": [],
-    "name": "totalReserves",
+    "name": "totalReservesRzr",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalReservesUsd",
     "outputs": [
       {
         "internalType": "uint256",
@@ -897,13 +909,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "unpause",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

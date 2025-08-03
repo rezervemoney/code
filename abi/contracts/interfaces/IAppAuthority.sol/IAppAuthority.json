@@ -5,6 +5,25 @@
       {
         "indexed": true,
         "internalType": "address",
+        "name": "newBridge",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "oldBridge",
+        "type": "address"
+      }
+    ],
+    "name": "BridgeUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
         "name": "newOperationsTreasury",
         "type": "address"
       },
@@ -124,6 +143,33 @@
       }
     ],
     "name": "addReserveManager",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "bridge",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "emergencyPause",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "emergencyUnpause",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -498,6 +544,19 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "_newBridge",
+        "type": "address"
+      }
+    ],
+    "name": "setBridge",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "_newOperationsTreasury",
         "type": "address"
       }
@@ -528,6 +587,19 @@
         "internalType": "contract IAppTreasury",
         "name": "",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "underEmergencyPause",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",

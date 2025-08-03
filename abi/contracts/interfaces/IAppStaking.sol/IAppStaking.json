@@ -53,44 +53,6 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "oldValue",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newValue",
-        "type": "uint256"
-      }
-    ],
-    "name": "BasisPointsUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "oldValue",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newValue",
-        "type": "uint256"
-      }
-    ],
-    "name": "BuyCooldownPeriodUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
         "indexed": true,
         "internalType": "uint256",
         "name": "tokenId",
@@ -123,44 +85,6 @@
       }
     ],
     "name": "CooldownStarted",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "oldValue",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newValue",
-        "type": "uint256"
-      }
-    ],
-    "name": "EpochDurationUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "oldValue",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newValue",
-        "type": "uint256"
-      }
-    ],
-    "name": "HarbergerTaxRateUpdated",
     "type": "event"
   },
   {
@@ -378,25 +302,6 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "oldValue",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newValue",
-        "type": "uint256"
-      }
-    ],
-    "name": "RewardCooldownPeriodUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
         "indexed": true,
         "internalType": "address",
         "name": "user",
@@ -441,19 +346,50 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "uint256",
-        "name": "oldValue",
+        "name": "tokenId",
         "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "newValue",
+        "name": "taxAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timeElapsed",
         "type": "uint256"
       }
     ],
-    "name": "StakingFeeRateUpdated",
+    "name": "StreamingTaxCollected",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "oldRate",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newRate",
+        "type": "uint256"
+      }
+    ],
+    "name": "StreamingTaxRateUpdated",
     "type": "event"
   },
   {
@@ -504,19 +440,94 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "uint256",
-        "name": "oldValue",
+        "name": "tokenId",
         "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "newValue",
+        "name": "creditConsumed",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "remainingCredit",
         "type": "uint256"
       }
     ],
-    "name": "WithdrawCooldownPeriodUpdated",
+    "name": "UpfrontTaxCreditConsumed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "creditAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "UpfrontTaxCreditSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "harbergerTaxRate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "resellFeeRate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "withdrawCooldownPeriod",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "buyCooldownPeriod",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "lowDemandThreshold",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "highDemandThreshold",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxDepositFee",
+            "type": "uint256"
+          }
+        ],
+        "indexed": false,
+        "internalType": "struct IAppStaking.Variables",
+        "name": "variables",
+        "type": "tuple"
+      }
+    ],
+    "name": "VariablesUpdated",
     "type": "event"
   },
   {
@@ -596,19 +607,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "buyCooldownPeriod",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -619,6 +617,25 @@
     "name": "buyPosition",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "calculateStreamingTax",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "taxAmount",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -647,6 +664,25 @@
       {
         "internalType": "uint256",
         "name": "reward",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "collectStreamingTax",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "taxAmount",
         "type": "uint256"
       }
     ],
@@ -747,24 +783,11 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_tokenId",
+        "name": "tokenId",
         "type": "uint256"
       }
     ],
-    "name": "getBuyCooldownEnd",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "buyCooldownEnd",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "harbergerTaxRate",
+    "name": "getUpfrontTaxCredit",
     "outputs": [
       {
         "internalType": "uint256",
@@ -794,30 +817,6 @@
       }
     ],
     "name": "increaseAmount",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "taxPaid",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "tokenId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "additionalDeclaredValue",
-        "type": "uint256"
-      }
-    ],
-    "name": "increaseDeclaredValue",
     "outputs": [
       {
         "internalType": "uint256",
@@ -875,49 +874,6 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_tokenId",
-        "type": "uint256"
-      }
-    ],
-    "name": "isInBuyCooldown",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_tokenId",
-        "type": "uint256"
-      }
-    ],
-    "name": "isInWithdrawCooldown",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      },
-      {
-        "internalType": "uint256",
-        "name": "withdrawCooldownEnd",
-        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -1057,26 +1013,33 @@
           },
           {
             "internalType": "uint256",
-            "name": "rewardsUnlockAt",
+            "name": "withdrawCooldownStart",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "buyCooldownEnd",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "taxPerSecond",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "taxCredit",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "lastTaxCollectionTime",
             "type": "uint256"
           }
         ],
         "internalType": "struct IAppStaking.Position",
         "name": "",
         "type": "tuple"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "rewardCooldownPeriod",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -1186,6 +1149,74 @@
       }
     ],
     "name": "setApprovalForAll",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "creditAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "setUpfrontTaxCredit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "harbergerTaxRate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "resellFeeRate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "withdrawCooldownPeriod",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "buyCooldownPeriod",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "lowDemandThreshold",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "highDemandThreshold",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxDepositFee",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct IAppStaking.Variables",
+        "name": "_variables",
+        "type": "tuple"
+      }
+    ],
+    "name": "setVariables",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1345,12 +1376,49 @@
   },
   {
     "inputs": [],
-    "name": "withdrawCooldownPeriod",
+    "name": "variables",
     "outputs": [
       {
-        "internalType": "uint256",
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "harbergerTaxRate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "resellFeeRate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "withdrawCooldownPeriod",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "buyCooldownPeriod",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "lowDemandThreshold",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "highDemandThreshold",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxDepositFee",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct IAppStaking.Variables",
         "name": "",
-        "type": "uint256"
+        "type": "tuple"
       }
     ],
     "stateMutability": "view",

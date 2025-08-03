@@ -1,0 +1,145 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "contract IOracleV2",
+        "name": "_oracle",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_maxUpperBoundUsd",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_maxLowerBoundUsd",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_maxUpperBoundRzr",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_maxLowerBoundRzr",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "_asset",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "asset",
+    "outputs": [
+      {
+        "internalType": "contract IERC20Metadata",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "getPriceForAmount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "rzrAssets",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "usdAssets",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "lastUpdatedAt",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "maxLowerBoundRzr",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "maxLowerBoundUsd",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "maxUpperBoundRzr",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "maxUpperBoundUsd",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "oracle",
+    "outputs": [
+      {
+        "internalType": "contract IOracleV2",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

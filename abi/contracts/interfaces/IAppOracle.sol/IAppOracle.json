@@ -46,6 +46,25 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "oldPrice",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newPrice",
+        "type": "uint256"
+      }
+    ],
+    "name": "FloorPriceUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
         "internalType": "address",
         "name": "token",
@@ -56,9 +75,52 @@
         "internalType": "address",
         "name": "oracle",
         "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "maxStaleness",
+        "type": "uint256"
       }
     ],
     "name": "OracleUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "rzrAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "usdAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "lastUpdatedAt",
+        "type": "uint256"
+      }
+    ],
+    "name": "PriceFetched",
     "type": "event"
   },
   {
@@ -73,7 +135,17 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "rzrAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "usdAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "lastUpdatedAt",
         "type": "uint256"
       }
     ],
@@ -97,26 +169,17 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "rzrAmount",
         "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      }
-    ],
-    "name": "getPriceInToken",
-    "outputs": [
+      },
       {
         "internalType": "uint256",
-        "name": "price",
+        "name": "usdAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "lastUpdatedAt",
         "type": "uint256"
       }
     ],
@@ -136,11 +199,21 @@
         "type": "uint256"
       }
     ],
-    "name": "getPriceInTokenForAmount",
+    "name": "getPriceForAmountInFloor",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "price",
+        "name": "rzrAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "usdAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "lastUpdatedAt",
         "type": "uint256"
       }
     ],
@@ -169,7 +242,7 @@
       },
       {
         "internalType": "address",
-        "name": "_dre",
+        "name": "_app",
         "type": "address"
       }
     ],
@@ -202,6 +275,11 @@
         "internalType": "address",
         "name": "oracle",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "maxStaleness",
+        "type": "uint256"
       }
     ],
     "name": "updateOracle",

@@ -17,6 +17,8 @@ import "../../contracts/core/AppOracle.sol";
 import "../../contracts/core/AppBurner.sol";
 import "../../contracts/periphery/Staking4626.sol";
 import "../../contracts/periphery/LoyaltyList.sol";
+import "../../contracts/oracles/crosschain/TotalSupplyOracle.sol";
+import "../../contracts/oracles/crosschain/TotalReservesOracle.sol";
 
 contract BaseTest is Test {
     RebaseController public rebaseController;
@@ -34,6 +36,8 @@ contract BaseTest is Test {
     MockOracleV2 public mockOracle2;
     MockOracleV2 public mockOracle3;
 
+    MockEndpoint public lz;
+
     LoyaltyList public loyaltyList;
 
     AppAuthority public authority;
@@ -41,6 +45,9 @@ contract BaseTest is Test {
     AppBurner public burner;
 
     Staking4626 public staking4626;
+
+    TotalSupplyOracle public totalSupplyOracle;
+    TotalReservesOracle public totalReservesOracle;
 
     address public owner = makeAddr("owner");
     address public user1 = makeAddr("user1");
@@ -63,7 +70,7 @@ contract BaseTest is Test {
         mockOracle3 = new MockOracleV2(0, 0.5e18, address(mockQuoteToken3)); // 0.5:1 price
 
         // Deploy RZR token
-        MockEndpoint lz = new MockEndpoint();
+        lz = new MockEndpoint();
         app = new RZR(address(lz), address(authority));
 
         // Deploy sRZR token
@@ -107,7 +114,7 @@ contract BaseTest is Test {
         rebaseController.setTargetPcts(0.1e18, 0.15e18, 0.5e18, 0.5e18);
 
         staking4626 = new Staking4626();
-        staking4626.initialize("RZR Vault", "vRZR", address(staking), address(authority));
+        staking4626.initialize("RZR Vault", "vRZR", address(staking), address(authority), address(lz), owner);
 
         authority.addPolicy(address(treasury));
         authority.addPolicy(address(rebaseController));

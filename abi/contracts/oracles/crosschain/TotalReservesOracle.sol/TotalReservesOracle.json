@@ -1,0 +1,520 @@
+[
+  {
+    "inputs": [],
+    "name": "InvalidInitialization",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotInitializing",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "contract IAppAuthority",
+        "name": "authority",
+        "type": "address"
+      }
+    ],
+    "name": "AuthorityUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "eid",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "rzrReserves",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "usdReserves",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "lastUpdatedAt",
+        "type": "uint256"
+      }
+    ],
+    "name": "CrosschainReservesUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint64",
+        "name": "version",
+        "type": "uint64"
+      }
+    ],
+    "name": "Initialized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "offchainUpdater",
+        "type": "address"
+      }
+    ],
+    "name": "OffchainUpdaterUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "rzrReserves",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "usdReserves",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "lastUpdatedAt",
+        "type": "uint256"
+      }
+    ],
+    "name": "ReservesOffchainUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "rzrReserves",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "usdReserves",
+        "type": "uint256"
+      }
+    ],
+    "name": "ReservesOnchainUpdated",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "authority",
+    "outputs": [
+      {
+        "internalType": "contract IAppAuthority",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "eid",
+        "type": "uint256"
+      }
+    ],
+    "name": "crosschainReserves",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "rzrReserves",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "usdReserves",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "lastUpdatedAt",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "eid",
+        "type": "uint256"
+      }
+    ],
+    "name": "getCrosschainReserves",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "_rzrReserves",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_usdReserves",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getOffchainReserves",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "_rzrReserves",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_usdReserves",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getOnchainReserves",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "_rzrReserves",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_usdReserves",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getTotalReserves",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "_rzrReserves",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_usdReserves",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_authority",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_offchainUpdater",
+        "type": "address"
+      }
+    ],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "l2chainRzrReserves",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "l2chainUsdReserves",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "lastUpdatedOffchainAt",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "maxDeviation",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "offchainRzrReserves",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "offchainUpdater",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "offchainUsdReserves",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "eid",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_rzrReserves",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_usdReserves",
+        "type": "uint256"
+      }
+    ],
+    "name": "overwriteCrosschainReserves",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_rzrReserves",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_usdReserves",
+        "type": "uint256"
+      }
+    ],
+    "name": "overwriteOnchainReserves",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IAppAuthority",
+        "name": "_newAuthority",
+        "type": "address"
+      }
+    ],
+    "name": "setAuthority",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "eid",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_rzrReserves",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_usdReserves",
+        "type": "uint256"
+      }
+    ],
+    "name": "setCrosschainReserves",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "registry",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "projectID",
+        "type": "uint256"
+      }
+    ],
+    "name": "setFeeMProjectId",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_maxDeviation",
+        "type": "uint256"
+      }
+    ],
+    "name": "setMaxDeviation",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_offchainUpdater",
+        "type": "address"
+      }
+    ],
+    "name": "setOffchainUpdater",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_staleness",
+        "type": "uint256"
+      }
+    ],
+    "name": "setStaleness",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "staleness",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_rzrReserves",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_usdReserves",
+        "type": "uint256"
+      }
+    ],
+    "name": "updateReservesOffchain",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]

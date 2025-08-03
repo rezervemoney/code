@@ -28,9 +28,9 @@ contract AppStakingStreamingTaxTest is BaseTest {
 
         // Verify streaming tax rate is calculated correctly
         // harbergerTaxRate = 500 (5%), declaredValue = 1000e18
-        // taxRate = (1000e18 * 500) / (10000 * 365 days)
+        // taxPerSecond = (1000e18 * 500) / (10000 * 365 days)
         uint256 expectedStreamingTaxRate = (DECLARED_VALUE * 500) / (10000 * 365 days);
-        assertEq(position.taxRate, expectedStreamingTaxRate);
+        assertEq(position.taxPerSecond, expectedStreamingTaxRate);
         assertEq(position.lastTaxCollectionTime, block.timestamp);
 
         vm.stopPrank();
@@ -72,7 +72,7 @@ contract AppStakingStreamingTaxTest is BaseTest {
         vm.warp(block.timestamp + 180 days);
 
         // Collect streaming tax
-        uint256 taxCollected = staking.collectStreamingTax(tokenId);
+        (uint256 taxCollected,) = staking.collectStreamingTax(tokenId);
 
         // Verify tax was collected
         assertTrue(taxCollected > 0);
@@ -106,7 +106,7 @@ contract AppStakingStreamingTaxTest is BaseTest {
         vm.warp(block.timestamp + 10 * 365 days);
 
         // Collect streaming tax
-        uint256 taxCollected = staking.collectStreamingTax(tokenId);
+        (uint256 taxCollected,) = staking.collectStreamingTax(tokenId);
 
         // Tax should be capped at position amount
         assertEq(taxCollected, smallAmount);
@@ -240,7 +240,7 @@ contract AppStakingStreamingTaxTest is BaseTest {
         (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         IAppStaking.Position memory position = staking.positions(tokenId);
-        uint256 initialRate = position.taxRate;
+        uint256 initialRate = position.taxPerSecond;
 
         // Increase declared value
         uint256 additionalDeclaredValue = 500e18;
@@ -251,8 +251,8 @@ contract AppStakingStreamingTaxTest is BaseTest {
         // Verify streaming tax rate was recalculated
         position = staking.positions(tokenId);
         uint256 expectedNewRate = ((DECLARED_VALUE + additionalDeclaredValue) * 500) / (10000 * 365 days);
-        assertEq(position.taxRate, expectedNewRate);
-        assertTrue(position.taxRate > initialRate);
+        assertEq(position.taxPerSecond, expectedNewRate);
+        assertTrue(position.taxPerSecond > initialRate);
 
         vm.stopPrank();
     }

@@ -143,6 +143,10 @@ interface IAppAuthority {
     /// @return address The address of the bridge
     function bridge() external view returns (address);
 
+    /// @notice Returns if the contract is under emergency pause
+    /// @return bool True if the contract is under emergency pause, false otherwise
+    function underEmergencyPause() external view returns (bool);
+
     /// @notice Returns an array of all candidates for a given role
     /// @param role The role to get candidates for (e.g., GOVERNOR_ROLE, GUARDIAN_ROLE, etc.)
     /// @return candidates Array of addresses that are candidates for the given role
@@ -175,4 +179,10 @@ interface IAppAuthority {
     /// @notice Returns an array of all bond manager candidates
     /// @return candidates Array of addresses that are bond manager candidates
     function getAllBondManagerCandidates() external view returns (address[] memory candidates);
+
+    /// @notice Pauses the contract
+    function emergencyPause() external;
+
+    /// @notice Unpauses the contract
+    function emergencyUnpause() external;
 }

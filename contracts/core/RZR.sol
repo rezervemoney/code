@@ -6,9 +6,8 @@ import "../interfaces/IApp.sol";
 import "@layerzerolabs/oft-evm/contracts/OFT.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
-import "@openzeppelin/contracts/utils/Pausable.sol";
 
-contract RZR is OFT, ERC20Permit, Pausable, AppAccessControlled, IApp {
+contract RZR is OFT, ERC20Permit, AppAccessControlled, IApp {
     constructor(address _lzEndpoint, address _authority)
         OFT("Rezerve.money", "RZR", _lzEndpoint, msg.sender)
         ERC20Permit("Rezerve")
@@ -26,24 +25,11 @@ contract RZR is OFT, ERC20Permit, Pausable, AppAccessControlled, IApp {
         }
     }
 
-    function pause() external onlyGuardian {
-        _pause();
-    }
-
-    function unpause() external onlyGuardian {
-        _unpause();
-    }
-
     function mint(address account_, uint256 amount_) external override onlyPolicy whenNotPaused {
         _mint(account_, amount_);
     }
 
     function burn(uint256 amount) external override whenNotPaused {
         _burn(msg.sender, amount);
-    }
-
-    function _update(address from, address to, uint256 value) internal override {
-        super._update(from, to, value);
-        require(!paused(), "RZR: paused");
     }
 }

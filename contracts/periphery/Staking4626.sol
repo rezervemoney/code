@@ -3,15 +3,15 @@ pragma solidity 0.8.28;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
+import "./oft-proxy/OFTProxy.sol";
 import "../core/AppAccessControlled.sol";
 import "../interfaces/IAppStaking.sol";
 import "../interfaces/IStaking4626.sol";
 
 /// @title Staking4626
 /// @notice ERC-4626 compliant staking vault that automatically compounds rewards
-contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAccessControlled {
+contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessControlled {
     using SafeERC20 for IERC20;
     using Math for uint256;
 
@@ -26,14 +26,17 @@ contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAcce
 
     mapping(uint256 => bool) public unstakingTokenId;
 
-    function initialize(string memory name, string memory symbol, address _staking, address _authority)
-        external
-        reinitializer(5)
-    {
-        staking = IAppStaking(_staking);
-
-        __ERC20_init(name, symbol);
+    function initialize(
+        string memory name,
+        string memory symbol,
+        address _staking,
+        address _authority,
+        address _lzEndpoint,
+        address _delegate
+    ) external reinitializer(5) {
+        __OFTProxy_init(name, symbol, _lzEndpoint, _delegate);
         __AppAccessControlled_init(_authority);
+        staking = IAppStaking(_staking);
         appToken = IERC20(staking.appToken());
         appToken.approve(address(staking), type(uint256).max);
 

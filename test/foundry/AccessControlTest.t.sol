@@ -117,17 +117,17 @@ contract AccessControlTest is BaseTest {
     /*//////////////////////////////////////////////////////////////
                          Guardian functions
     //////////////////////////////////////////////////////////////*/
-    function test_GuardianCanPauseUnpause() external {
+    function test_GovernorCanPauseUnpause() external {
         vm.prank(guardian);
-        app.pause();
-        vm.prank(guardian);
-        app.unpause();
+        authority.emergencyPause();
+        vm.prank(governor);
+        authority.emergencyUnpause();
     }
 
     function test_NonGuardianCannotPause() external {
         vm.prank(user1);
-        vm.expectRevert("UNAUTHORIZED");
-        app.pause();
+        vm.expectRevert("Only governor or guardian");
+        authority.emergencyPause();
     }
 
     /*//////////////////////////////////////////////////////////////

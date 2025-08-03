@@ -4,10 +4,15 @@ pragma abicoder v2;
 
 import "./AppUIHelperBase.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "../interfaces/ITotalSupplyOracle.sol";
+import "../interfaces/ITotalReservesOracle.sol";
 
 /// @title RZR UI Helper
 /// @author RZR Protocol
 contract AppUIHelperRead is AppUIHelperBase {
+    ITotalSupplyOracle public totalSupplyOracle;
+    ITotalReservesOracle public totalReservesOracle;
+
     constructor(
         address _staking,
         address _bondDepository,
@@ -57,9 +62,7 @@ contract AppUIHelperRead is AppUIHelperBase {
         )
     {
         // Get protocol-wide stats
-        // (uint256 usdReserves, uint256 rzrReserves) = treasury.calculateReserves();
-
-        totalSupply = appToken.totalSupply();
+        totalSupply = totalSupplyOracle.getTotalSupply();
         totalStaked = staking.totalStaked();
         totalRewards = staking.rewardPerToken();
         currentAPR = calculateAPRRaw(totalStaked);
@@ -68,10 +71,14 @@ contract AppUIHelperRead is AppUIHelperBase {
         // tokenInfos = getTokenInfos(user, bondTokens);
         // stakingPositions = getStakingPositions(user);
         // bondPositions = getBondPositions(user);
-        unbackedSupply = treasury.unbackedSupply();
+        unbackedSupply = totalSupplyOracle.totalSupplyUnbacked();
         referralCode = referrals.referrerCodes(user);
+        tvl = getTvl();
+    }
 
-        // tvl = usdReserves + rzrReserves * currentSpotPrice / 1e18;
+    function getTvl() internal view returns (uint256) {
+        (uint256 rzrReserves, uint256 usdReserves) = totalReservesOracle.getTotalReserves();
+        return usdReserves + rzrReserves * shadowLP.getPrice() / 1e18;
     }
 
     function getTokenInfos(address user, address[] memory bondTokens)

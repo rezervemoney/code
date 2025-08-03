@@ -17,7 +17,7 @@ interface IAppStaking is IERC721Enumerable {
     /// @param withdrawCooldownEnd Timestamp when withdraw cooldown period ends; if 0, position is not in withdraw cooldown
     /// @param withdrawCooldownStart Timestamp when withdraw cooldown period starts; if 0, position is not in withdraw cooldown
     /// @param buyCooldownEnd Timestamp when buy cooldown period ends; if 0, position is not in buy cooldown
-    /// @param taxRate Tax rate for this position
+    /// @param taxPerSecond Tax rate for this position
     /// @param taxCredit Tax credit for this position
     /// @param lastTaxCollectionTime Timestamp of last tax collection for this position
     struct Position {
@@ -28,7 +28,7 @@ interface IAppStaking is IERC721Enumerable {
         uint256 withdrawCooldownEnd;
         uint256 withdrawCooldownStart;
         uint256 buyCooldownEnd;
-        uint256 taxRate;
+        uint256 taxPerSecond;
         uint256 taxCredit;
         uint256 lastTaxCollectionTime;
     }
@@ -149,8 +149,7 @@ interface IAppStaking is IERC721Enumerable {
     /// @notice Emitted when streaming tax is collected from a position
     /// @param tokenId The ID of the position NFT
     /// @param taxAmount The amount of tax collected
-    /// @param timeElapsed The time elapsed since last collection
-    event StreamingTaxCollected(uint256 indexed tokenId, uint256 taxAmount, uint256 timeElapsed);
+    event StreamingTaxCollected(uint256 indexed tokenId, uint256 taxAmount);
 
     /// @notice Emitted when streaming tax rate is updated for a position
     /// @param tokenId The ID of the position NFT
@@ -294,12 +293,13 @@ interface IAppStaking is IERC721Enumerable {
     function mergePositions(uint256 tokenId1, uint256 tokenId2) external returns (uint256 mergedTokenId);
 
     /// @notice Collects streaming tax from a position
-    /// @param tokenId The ID of the position NFT
-    /// @return taxAmount The amount of tax collected
-    function collectStreamingTax(uint256 tokenId) external returns (uint256 taxAmount);
+    /// @param id The ID of the position NFT
+    /// @return tax The amount of tax collected
+    /// @return credit The amount of credit used
+    function collectStreamingTax(uint256 id) external returns (uint256 tax, uint256 credit);
 
     /// @notice Calculates the streaming tax owed for a position
-    /// @param tokenId The ID of the position NFT
-    /// @return taxAmount The amount of tax owed
-    function calculateStreamingTax(uint256 tokenId) external view returns (uint256 taxAmount);
+    /// @param id The ID of the position NFT
+    /// @return tax The amount of tax owed
+    function calculateStreamingTax(uint256 id) external view returns (uint256 tax);
 }

@@ -1,0 +1,145 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "contract IOracleV2",
+        "name": "_oracle0",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IOracleV2",
+        "name": "_oracle1",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_maxDeviationPercent",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "_asset",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "usdAmount0",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "usdAmount1",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "deviationUsd",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "rzrAmount0",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "rzrAmount1",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "deviationRzr",
+        "type": "uint256"
+      }
+    ],
+    "name": "ExcessiveDeviation",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "asset",
+    "outputs": [
+      {
+        "internalType": "contract IERC20Metadata",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "getPriceForAmount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "rzrAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "usdAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "lastUpdatedAt",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "maxDeviationPercent",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "oracle0",
+    "outputs": [
+      {
+        "internalType": "contract IOracleV2",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "oracle1",
+    "outputs": [
+      {
+        "internalType": "contract IOracleV2",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

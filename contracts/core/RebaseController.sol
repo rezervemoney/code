@@ -29,7 +29,7 @@ contract RebaseController is AppAccessControlled, IRebaseController {
     address public burner; // burner contract
 
     // --- Epoch params --------------------------------------------------------
-    uint256 public immutable EPOCH = 1 days;
+    uint256 public immutable EPOCH = 23 hours;
     uint256 public lastEpochTime;
 
     uint256 public targetOpsPct; // ideally 10%

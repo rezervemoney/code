@@ -12,7 +12,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract BridgeL2 is OAppControlledProxy, IBridgeL2 {
-    uint32 public l1Eid;
+    uint256 public immutable MAINNET_EID = 30101;
+
+    address public l1Bridge;
     IStaking4626L2 public liquidStaking;
     ITotalReservesOracle public totalReservesOracle;
     ITotalSupplyOracle public totalSupplyOracle;
@@ -27,17 +29,17 @@ contract BridgeL2 is OAppControlledProxy, IBridgeL2 {
     /// @param _delegate The address of the delegate
     /// @param _authority The address of the authority
     function initialize(
+        address _l1Bridge,
         address _lzEndpoint,
         address _delegate,
         address _authority,
-        uint32 _l1Eid,
         address _treasury,
         address _liquidStaking,
         address _totalReservesOracle,
         address _totalSupplyOracle
     ) external initializer {
         __OAppControlledProxy_init(_lzEndpoint, _delegate, _authority);
-        l1Eid = _l1Eid;
+        l1Bridge = _l1Bridge;
         liquidStaking = IStaking4626L2(_liquidStaking);
         treasury = IAppTreasury(_treasury);
         totalReservesOracle = ITotalReservesOracle(_totalReservesOracle);
@@ -59,7 +61,7 @@ contract BridgeL2 is OAppControlledProxy, IBridgeL2 {
     /// @inheritdoc IBridgeL2
     function syncStateToL1() external payable onlyExecutor whenNotPaused {
         State memory state = getCurrentState();
-        _lzSend(l1Eid, abi.encode(state), "", MessagingFee({nativeFee: msg.value, lzTokenFee: 0}), address(this));
+        _lzSend(MAINNET_EID, abi.encode(state), "", MessagingFee({nativeFee: msg.value, lzTokenFee: 0}), address(this));
     }
 
     /// @inheritdoc IBridge
@@ -80,7 +82,8 @@ contract BridgeL2 is OAppControlledProxy, IBridgeL2 {
         override
         whenNotPaused
     {
-        require(_origin.srcEid == l1Eid, "Invalid origin");
+        require(_origin.srcEid == MAINNET_EID, "Invalid origin");
+        require(_origin.sender == l1Bridge, "Invalid origin");
 
         State memory state = abi.decode(_message, (State));
         uint256 newRate = state.staking4626Rate;

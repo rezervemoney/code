@@ -2,8 +2,15 @@
 pragma solidity 0.8.28;
 
 import "./IAppOracle.sol";
+import "./IApp.sol";
 
 interface IAppTreasury {
+    /**
+     * @notice Gets the app
+     * @return app_ The app
+     */
+    function app() external view returns (IApp app_);
+
     /**
      * @notice allow approved address to deposit an asset for app
      * @param _amount uint256 amount of token to deposit

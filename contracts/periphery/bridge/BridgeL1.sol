@@ -123,6 +123,8 @@ contract BridgeL1 is OAppControlledProxy, IBridgeL1 {
     {
         // todo check if the executor is the same as the one that sent the message
         uint256 eid = _origin.srcEid;
+        require(l2Bridges[eid] == _origin.sender, "Invalid origin");
+
         State memory state = abi.decode(_message, (State));
 
         require(state.updatedAt < block.timestamp, "Invalid updatedAt");

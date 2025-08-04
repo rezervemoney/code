@@ -26,15 +26,11 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
 
     mapping(uint256 => bool) public unstakingTokenId;
 
-    function initialize(
-        string memory name,
-        string memory symbol,
-        address _staking,
-        address _authority,
-        address _lzEndpoint,
-        address _delegate
-    ) external reinitializer(5) {
-        __OFTProxy_init(name, symbol, _lzEndpoint, _delegate);
+    function initialize(address _staking, address _authority, address _lzEndpoint, address _delegate)
+        external
+        reinitializer(6)
+    {
+        __OFTProxy_init("Liquid Staked Rezerve.money", "lstRZR", _lzEndpoint, _delegate);
         __AppAccessControlled_init(_authority);
         staking = IAppStaking(_staking);
         appToken = IERC20(staking.appToken());

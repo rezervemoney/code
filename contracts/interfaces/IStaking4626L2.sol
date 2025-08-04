@@ -15,16 +15,9 @@ interface IStaking4626L2 is IERC4626 {
     /// @notice Initialize the staking contract
     /// @param _authority The address of the authority contract
     /// @param _lzEndpoint The address of the LayerZero endpoint
-    /// @param _name The name of the staking contract
-    /// @param _symbol The symbol of the staking contract
+    /// @param _delegate The address of the delegate contract
     /// @param _underlying The underlying token of the staking
-    function initialize(
-        address _authority,
-        address _lzEndpoint,
-        string memory _name,
-        string memory _symbol,
-        address _underlying
-    ) external;
+    function initialize(address _authority, address _lzEndpoint, address _delegate, address _underlying) external;
 
     /// @notice Set the rate of the staking
     /// @param _rate The new rate of the staking

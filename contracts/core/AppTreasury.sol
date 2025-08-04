@@ -20,7 +20,8 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, ReentrancyGuardUpgrad
 
     EnumerableSet.AddressSet private _tokens;
 
-    IApp public app;
+    /// @inheritdoc IAppTreasury
+    IApp public override app;
 
     /// @inheritdoc IAppTreasury
     IAppOracle public appOracle;
@@ -28,7 +29,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, ReentrancyGuardUpgrad
     /// @inheritdoc IAppTreasury
     uint256 public reserveFee;
 
-    function initialize(address _app, address _appOracle, address _authority) public reinitializer(5) {
+    function initialize(address _app, address _appOracle, address _authority) public reinitializer(10) {
         require(_app != address(0), "Zero address: app");
         require(_appOracle != address(0), "Zero address: appOracle");
         app = IApp(_app);

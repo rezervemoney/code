@@ -23,15 +23,12 @@ contract Staking4626L2 is IStaking4626L2, ERC20Upgradeable, OFTProxy, AppAccessC
     IERC20 public underlying;
 
     /// @inheritdoc IStaking4626L2
-    function initialize(
-        address _authority,
-        address _lzEndpoint,
-        string memory _name,
-        string memory _symbol,
-        address _underlying
-    ) external initializer {
+    function initialize(address _authority, address _lzEndpoint, address _delegate, address _underlying)
+        external
+        initializer
+    {
         __AppAccessControlled_init(_authority);
-        __OFTProxy_init(_name, _symbol, _lzEndpoint, msg.sender);
+        __OFTProxy_init("Liquid Staked Rezerve.money", "lstRZR", _lzEndpoint, _delegate);
         underlying = IERC20(_underlying);
         if (rate == 0) rate = 1e18;
     }

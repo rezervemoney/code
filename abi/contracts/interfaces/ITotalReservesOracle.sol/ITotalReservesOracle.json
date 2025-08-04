@@ -49,6 +49,32 @@
       {
         "indexed": true,
         "internalType": "uint256",
+        "name": "reservesCreditRzr",
+        "type": "uint256"
+      }
+    ],
+    "name": "ReservesCreditRzrUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "reservesCreditUsd",
+        "type": "uint256"
+      }
+    ],
+    "name": "ReservesCreditUsdUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
         "name": "rzrReserves",
         "type": "uint256"
       },
@@ -256,6 +282,32 @@
       }
     ],
     "name": "setOffchainUpdater",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_reservesCreditRzr",
+        "type": "uint256"
+      }
+    ],
+    "name": "setReservesCreditRzr",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_reservesCreditUsd",
+        "type": "uint256"
+      }
+    ],
+    "name": "setReservesCreditUsd",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

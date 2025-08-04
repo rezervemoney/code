@@ -4,6 +4,7 @@ pragma solidity 0.8.28;
 import "./AppAccessControlled.sol";
 import "../interfaces/IAppOracle.sol";
 import "../interfaces/IApp.sol";
+import "../interfaces/ITotalSupplyOracle.sol";
 
 /// @title AppBurner
 /// @notice This contract is used to burn the balance of the App contract
@@ -12,6 +13,7 @@ contract AppBurner is AppAccessControlled {
 
     uint256 private immutable ONE = 1e18; // 100 %
     IAppOracle public appOracle;
+    ITotalSupplyOracle public totalSupplyOracle;
     IApp public app;
 
     /* ========== EVENTS ========== */
@@ -20,22 +22,26 @@ contract AppBurner is AppAccessControlled {
     /// @notice Initializes the AppBurner contract
     /// @dev This function is only callable once
     /// @param _appOracle The address of the appOracle contract
-    /// @param _dre The address of the dre contract
+    /// @param _rzr The address of the rzr contract
     /// @param _authority The address of the authority contract
-    function initialize(address _appOracle, address _dre, address _authority) external initializer {
+    /// @param _totalSupplyOracle The address of the total supply oracle contract
+    function initialize(address _appOracle, address _rzr, address _authority, address _totalSupplyOracle)
+        external
+        initializer
+    {
         __AppAccessControlled_init(_authority);
         appOracle = IAppOracle(_appOracle);
-        app = IApp(_dre);
+        app = IApp(_rzr);
         app.approve(address(this), type(uint256).max);
+        totalSupplyOracle = ITotalSupplyOracle(_totalSupplyOracle);
     }
 
     /// @notice Burns the balance of the App contract
     /// @dev This function is only callable by the executor
     function burn() external onlyExecutor {
-        IAppTreasury treasury = IAppTreasury(authority.treasury());
         uint256 balance = app.balanceOf(address(this));
         uint256 floorPrice = appOracle.getTokenPrice();
-        uint256 totalSupply = treasury.totalSupply();
+        uint256 totalSupply = totalSupplyOracle.getTotalSupply();
         uint256 newFloorPrice = calculateFloorUpdate(balance, totalSupply, floorPrice);
 
         require(newFloorPrice >= floorPrice, "New floor price must be greater than current floor price");
@@ -44,12 +50,6 @@ contract AppBurner is AppAccessControlled {
         app.burn(balance);
         appOracle.setTokenPrice(newFloorPrice);
         emit Burned(balance, newFloorPrice);
-
-        // ensure that the treasury has enough RZR to cover the new floor price
-        uint256 newTotalSupply = totalSupply - balance;
-        (uint256 usdReserves, uint256 rzrReserves) = treasury.calculateReserves();
-        uint256 currentRZR = usdReserves + rzrReserves * newFloorPrice / 1e18;
-        require(currentRZR >= newTotalSupply, "treasury backing would fail");
     }
 
     /// @notice Calculates the new floor price based on the amount to burn and the total supply

@@ -339,6 +339,16 @@
         "internalType": "address",
         "name": "_authority",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_lzEndpoint",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_delegate",
+        "type": "address"
       }
     ],
     "name": "initialize",

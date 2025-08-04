@@ -79,6 +79,19 @@
       {
         "indexed": true,
         "internalType": "uint256",
+        "name": "totalSupplyCredit",
+        "type": "uint256"
+      }
+    ],
+    "name": "TotalSupplyCreditUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
         "name": "offchainTotalSupply",
         "type": "uint256"
       },
@@ -103,6 +116,19 @@
       }
     ],
     "name": "TotalSupplyOnchainUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "totalSupplyUnbacked",
+        "type": "uint256"
+      }
+    ],
+    "name": "TotalSupplyUnbackedUpdated",
     "type": "event"
   },
   {
@@ -371,8 +397,60 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_totalSupplyCredit",
+        "type": "uint256"
+      }
+    ],
+    "name": "setTotalSupplyCredit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_totalSupplyUnbacked",
+        "type": "uint256"
+      }
+    ],
+    "name": "setTotalSupplyUnbacked",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "staleness",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalSupplyCredit",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalSupplyUnbacked",
     "outputs": [
       {
         "internalType": "uint256",

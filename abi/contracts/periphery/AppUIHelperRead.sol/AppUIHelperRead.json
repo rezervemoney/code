@@ -783,6 +783,32 @@
   },
   {
     "inputs": [],
+    "name": "totalReservesOracle",
+    "outputs": [
+      {
+        "internalType": "contract ITotalReservesOracle",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalSupplyOracle",
+    "outputs": [
+      {
+        "internalType": "contract ITotalSupplyOracle",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "treasury",
     "outputs": [
       {

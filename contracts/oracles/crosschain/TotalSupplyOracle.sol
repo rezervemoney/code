@@ -34,6 +34,9 @@ contract TotalSupplyOracle is AppAccessControlled, ITotalSupplyOracle {
     /// @notice The crosschain total supply for each chain
     mapping(uint256 eid => uint256 totalSupply) public crosschainTotalSupply;
 
+    /// @notice The enabled status for each chain
+    mapping(uint256 eid => bool enabled) public enabledEids;
+
     /// @notice The RZR token
     IApp public rzr;
 
@@ -49,7 +52,7 @@ contract TotalSupplyOracle is AppAccessControlled, ITotalSupplyOracle {
         rzr = IApp(_rzr);
         offchainUpdater = _offchainUpdater;
         maxDeviation = 0.01e18; // 1% max deviation
-        staleness = 1 days; // 1 day staleness
+        staleness = 24.5 hours; // 24.5 hours staleness
     }
 
     /// @inheritdoc ITotalSupplyOracle
@@ -76,9 +79,16 @@ contract TotalSupplyOracle is AppAccessControlled, ITotalSupplyOracle {
     }
 
     /// @inheritdoc ITotalSupplyOracle
+    function toggleEid(uint256 eid) external onlyGovernor {
+        enabledEids[eid] = !enabledEids[eid];
+        emit EidToggled(eid, enabledEids[eid]);
+    }
+
+    /// @inheritdoc ITotalSupplyOracle
     function updateTotalSupplyOffchain(uint256 _offchainTotalSupply) external {
         require(msg.sender == offchainUpdater, "Only offchainUpdater");
         offchainTotalSupply = _offchainTotalSupply;
+        lastUpdatedOffchainAt = block.timestamp;
         emit TotalSupplyOffchainUpdated(offchainTotalSupply, block.timestamp);
     }
 

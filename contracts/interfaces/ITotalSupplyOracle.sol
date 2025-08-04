@@ -31,6 +31,11 @@ interface ITotalSupplyOracle {
     /// @param totalSupplyUnbacked The total supply unbacked
     event TotalSupplyUnbackedUpdated(uint256 indexed totalSupplyUnbacked);
 
+    /// @notice Emitted when the enabled status for a chain is toggled
+    /// @param eid The eid of the chain
+    /// @param enabled The enabled status
+    event EidToggled(uint256 indexed eid, bool indexed enabled);
+
     /// @notice Initialize the total supply oracle
     /// @param _authority The authority address
     /// @param _offchainUpdater The address of the offchain updater
@@ -52,6 +57,10 @@ interface ITotalSupplyOracle {
     /// @notice Get the total supply unbacked
     /// @return _totalSupplyUnbacked The total supply unbacked
     function totalSupplyUnbacked() external view returns (uint256 _totalSupplyUnbacked);
+
+    /// @notice Toggle the enabled status for a chain
+    /// @param eid The eid of the chain
+    function toggleEid(uint256 eid) external;
 
     /// @notice Update the offchain total supply
     /// @param _offchainTotalSupply The offchain total supply

@@ -156,6 +156,19 @@
   },
   {
     "inputs": [],
+    "name": "appOracle",
+    "outputs": [
+      {
+        "internalType": "contract IAppOracle",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "authority",
     "outputs": [
       {
@@ -196,6 +209,19 @@
   {
     "inputs": [],
     "name": "currentBackingRatio",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "excessReserves",
     "outputs": [
       {
         "internalType": "uint256",
@@ -534,10 +560,23 @@
   },
   {
     "inputs": [],
-    "name": "treasury",
+    "name": "totalReservesOracle",
     "outputs": [
       {
-        "internalType": "contract IAppTreasury",
+        "internalType": "contract ITotalReservesOracle",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalSupplyOracle",
+    "outputs": [
+      {
+        "internalType": "contract ITotalSupplyOracle",
         "name": "",
         "type": "address"
       }

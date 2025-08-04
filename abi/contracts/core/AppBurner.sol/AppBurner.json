@@ -138,12 +138,17 @@
       },
       {
         "internalType": "address",
-        "name": "_dre",
+        "name": "_rzr",
         "type": "address"
       },
       {
         "internalType": "address",
         "name": "_authority",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_totalSupplyOracle",
         "type": "address"
       }
     ],
@@ -199,6 +204,19 @@
     "name": "setFeeMProjectId",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalSupplyOracle",
+    "outputs": [
+      {
+        "internalType": "contract ITotalSupplyOracle",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   }
 ]

@@ -68,9 +68,9 @@ contract AppUIHelperRead is AppUIHelperBase {
         currentAPR = calculateAPRRaw(totalStaked);
         currentSpotPrice = shadowLP.getPrice();
         projectedEpochRate = getProjectedEpochRate();
-        // tokenInfos = getTokenInfos(user, bondTokens);
-        // stakingPositions = getStakingPositions(user);
-        // bondPositions = getBondPositions(user);
+        tokenInfos = getTokenInfos(user, bondTokens);
+        stakingPositions = getStakingPositions(user);
+        bondPositions = getBondPositions(user);
         unbackedSupply = totalSupplyOracle.totalSupplyUnbacked();
         referralCode = referrals.referrerCodes(user);
         tvl = getTvl();

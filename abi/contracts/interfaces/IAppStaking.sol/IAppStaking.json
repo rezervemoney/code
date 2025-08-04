@@ -356,12 +356,6 @@
         "internalType": "uint256",
         "name": "taxAmount",
         "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "timeElapsed",
-        "type": "uint256"
       }
     ],
     "name": "StreamingTaxCollected",
@@ -623,7 +617,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "tokenId",
+        "name": "id",
         "type": "uint256"
       }
     ],
@@ -631,7 +625,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "taxAmount",
+        "name": "tax",
         "type": "uint256"
       }
     ],
@@ -674,7 +668,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "tokenId",
+        "name": "id",
         "type": "uint256"
       }
     ],
@@ -682,7 +676,12 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "taxAmount",
+        "name": "tax",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "credit",
         "type": "uint256"
       }
     ],

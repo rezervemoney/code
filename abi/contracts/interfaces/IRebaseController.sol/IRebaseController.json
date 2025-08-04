@@ -120,11 +120,37 @@
   },
   {
     "inputs": [],
+    "name": "appOracle",
+    "outputs": [
+      {
+        "internalType": "contract IAppOracle",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "currentBackingRatio",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "backingRatio",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "excessReserves",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "excessReserves",
         "type": "uint256"
       }
     ],
@@ -142,7 +168,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_dre",
+        "name": "_rzr",
         "type": "address"
       },
       {
@@ -267,6 +293,62 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint16",
+        "name": "_floorApr",
+        "type": "uint16"
+      },
+      {
+        "internalType": "uint16",
+        "name": "_ceilApr",
+        "type": "uint16"
+      },
+      {
+        "internalType": "uint16",
+        "name": "_k1",
+        "type": "uint16"
+      },
+      {
+        "internalType": "uint16",
+        "name": "_k2",
+        "type": "uint16"
+      }
+    ],
+    "name": "setAprVariables",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_targetOpsPct",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_minFloorPct",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_maxFloorPct",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_floorSlope",
+        "type": "uint256"
+      }
+    ],
+    "name": "setTargetPcts",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "staking",
     "outputs": [
@@ -281,10 +363,23 @@
   },
   {
     "inputs": [],
-    "name": "treasury",
+    "name": "totalReservesOracle",
     "outputs": [
       {
-        "internalType": "contract IAppTreasury",
+        "internalType": "contract ITotalReservesOracle",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalSupplyOracle",
+    "outputs": [
+      {
+        "internalType": "contract ITotalSupplyOracle",
         "name": "",
         "type": "address"
       }

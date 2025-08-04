@@ -18,10 +18,9 @@ contract RebaseInvariant is BaseTest {
         // Seed credit reserves so that treasury has excess and we can mint.
         vm.startPrank(owner);
         authority.addPolicy(owner);
-        treasury.setCreditReserves(1_000_000e18);
 
         // Ensure some initial supply so the BR denominator is never zero.
-        treasury.mint(owner, 1e18);
+        app.mint(owner, 1e18);
         vm.stopPrank();
 
         // Initialise trackers.
@@ -71,14 +70,14 @@ contract RebaseInvariant is BaseTest {
 
     /// @dev The treasury backing ratio must never fall below 1 (100%).
     function invariant_BackingRatioGTEOne() external view {
-        assertGe(treasury.backingRatioE18(), 1e18);
+        assertGe(rebaseController.currentBackingRatio(), 1e18);
     }
 
     /// @dev Tokens minted or burned during a supply change must respect excess reserves logic and affect BR proportionally.
     function invariant_SupplyChangesRespectBacking() external {
-        uint256 currentSupply = treasury.totalSupply();
+        uint256 currentSupply = app.totalSupply();
         uint256 currentReserves = treasury.totalReservesUsd();
-        uint256 currentBR = treasury.backingRatioE18();
+        uint256 currentBR = rebaseController.currentBackingRatio();
 
         if (currentSupply != lastSupply) {
             if (currentSupply > lastSupply) {
@@ -110,7 +109,7 @@ contract RebaseInvariant is BaseTest {
     //////////////////////////////////////////////////////////////////////////*/
     function _snapshotState() internal {
         lastReserves = treasury.totalReservesUsd();
-        lastSupply = treasury.totalSupply();
-        lastBackingRatioE18 = treasury.backingRatioE18();
+        lastSupply = app.totalSupply();
+        lastBackingRatioE18 = rebaseController.currentBackingRatio();
     }
 }

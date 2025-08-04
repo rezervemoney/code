@@ -153,7 +153,7 @@ contract UnbackedAccounting is AppAccessControlled {
 
         uint256 _netUnbackedSupply = totalUnbackedSupply - totalOutflow;
 
-        treasury.setUnbackedSupply(_netUnbackedSupply);
+        // treasury.setUnbackedSupply(_netUnbackedSupply);
         emit UnbackedSupplyUpdated(totalUnbackedSupply, totalOutflow, _netUnbackedSupply);
     }
 

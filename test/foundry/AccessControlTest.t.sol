@@ -32,10 +32,8 @@ contract AccessControlTest is BaseTest {
         // Enable mockQuoteToken in treasury for deposit/withdraw tests.
 
         treasury.enable(address(mockQuoteToken));
-        treasury.setReserveDebt(address(mockQuoteToken), 10000e18);
 
-        // Provide some reserves for mint & withdraw tests.
-        treasury.setCreditReserves(10_000e18);
+        // Provide some reserves for deposit tests.
         vm.stopPrank();
 
         // Mint quote tokens for depositor to use later
@@ -71,7 +69,7 @@ contract AccessControlTest is BaseTest {
     //////////////////////////////////////////////////////////////*/
     function test_PolicyCanMintAndSetReserveFee() external {
         vm.prank(policy);
-        treasury.mint(user1, TEST_AMOUNT);
+        treasury.deposit(TEST_AMOUNT, address(mockQuoteToken), 0);
 
         vm.prank(policy);
         treasury.setReserveFee(500); // 5%
@@ -80,7 +78,7 @@ contract AccessControlTest is BaseTest {
     function test_NonPolicyCannotMint() external {
         vm.prank(user1);
         vm.expectRevert("UNAUTHORIZED");
-        treasury.mint(user1, TEST_AMOUNT);
+        treasury.deposit(TEST_AMOUNT, address(mockQuoteToken), 0);
     }
 
     /*//////////////////////////////////////////////////////////////

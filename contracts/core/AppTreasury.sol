@@ -15,9 +15,6 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, ReentrancyGuardUpgrad
     using SafeERC20 for IApp;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    /// @inheritdoc IAppTreasury
-    uint256 public immutable BASIS_POINTS = 10000; // 100%
-
     uint256 private _totalReservesUsd;
     uint256 private _totalReservesRzr;
 
@@ -31,18 +28,6 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, ReentrancyGuardUpgrad
     /// @inheritdoc IAppTreasury
     uint256 public reserveFee;
 
-    /// @inheritdoc IAppTreasury
-    uint256 public override creditReserves;
-
-    /// @inheritdoc IAppTreasury
-    uint256 public override unbackedSupply;
-
-    /// @inheritdoc IAppTreasury
-    mapping(address token => uint256 cap) public reserveCaps;
-
-    /// @inheritdoc IAppTreasury
-    mapping(address token => uint256 reserveDebt) public reserveDebts;
-
     function initialize(address _app, address _appOracle, address _authority) public reinitializer(5) {
         require(_app != address(0), "Zero address: app");
         require(_appOracle != address(0), "Zero address: appOracle");
@@ -50,41 +35,13 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, ReentrancyGuardUpgrad
         appOracle = IAppOracle(_appOracle);
         __AppAccessControlled_init(_authority);
         __ReentrancyGuard_init();
-        _updateReserves();
-    }
-
-    /// @inheritdoc IAppTreasury
-    function setCreditReserves(uint256 _credit) external onlyPolicy {
-        emit CreditReservesSet(_credit, creditReserves);
-        creditReserves = _credit;
-        _updateReserves();
     }
 
     /// @inheritdoc IAppTreasury
     function setReserveFee(uint256 _reserveFee) external onlyPolicy {
-        require(_reserveFee <= BASIS_POINTS, "Invalid reserve fee");
+        require(_reserveFee <= 1e18, "Invalid reserve fee");
         emit ReserveFeeSet(_reserveFee, reserveFee);
         reserveFee = _reserveFee;
-    }
-
-    /// @inheritdoc IAppTreasury
-    function setUnbackedSupply(uint256 _unbacked) external onlyPolicy {
-        require(_unbacked <= app.totalSupply(), "Unbacked supply too high");
-        emit UnbackedSupplySet(_unbacked, unbackedSupply);
-        unbackedSupply = _unbacked;
-        _updateReserves();
-    }
-
-    /// @inheritdoc IAppTreasury
-    function setReserveCap(address _token, uint256 _cap) external onlyPolicy {
-        reserveCaps[_token] = _cap;
-        emit ReserveCapSet(_token, _cap);
-    }
-
-    /// @inheritdoc IAppTreasury
-    function setReserveDebt(address _token, uint256 _debt) external onlyPolicy {
-        reserveDebts[_token] = _debt;
-        emit ReserveDebtSet(_token, _debt);
     }
 
     /// @inheritdoc IAppTreasury
@@ -101,49 +58,24 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, ReentrancyGuardUpgrad
         IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
 
         // send 10% to the treasury
-        uint256 fee = _amount * reserveFee / BASIS_POINTS;
+        uint256 fee = _amount * reserveFee / 1e18;
         IERC20(_token).safeTransfer(authority.operationsTreasury(), fee);
         _amount -= fee;
 
         (uint256 rzrValue, uint256 usdValue) = tokenValueE18(_token, _amount);
-
-        uint256 floorPrice = appOracle.getTokenPrice();
-        uint256 usdValueToFloor = usdValue * 1e18 / floorPrice;
+        require(rzrValue == 0, "avoid rzr value");
+        require(usdValue > 0, "invalid usd value");
 
         // mint app needed and store amount of rewards for distribution
-        send_ = usdValueToFloor - _profit;
+        send_ = usdValue - _profit;
         app.mint(msg.sender, send_);
 
         _totalReservesUsd += usdValue;
         _totalReservesRzr += rzrValue;
 
-        // invariant check - only do bond sales if the reserves are greater than the total supply
-        _checkCaps(_token);
-        require(totalReservesUsd() >= totalSupply(), "Reserves too low");
+        // todo add invariant checks
 
         emit Deposit(_token, _amount, usdValue, rzrValue);
-    }
-
-    /// @inheritdoc IAppTreasury
-    function withdraw(uint256 _amount, address _token)
-        external
-        override
-        nonReentrant
-        whenNotPaused
-        onlyReserveManager
-    {
-        require(_tokens.contains(_token), "Treasury: not accepted");
-
-        (uint256 rzrValue, uint256 usdValue) = tokenValueE18(_token, _amount);
-        app.safeTransferFrom(msg.sender, address(this), usdValue);
-        app.burn(usdValue);
-
-        _totalReservesUsd = _totalReservesUsd - usdValue;
-        _totalReservesRzr = _totalReservesRzr - rzrValue;
-
-        IERC20(_token).safeTransfer(msg.sender, _amount);
-
-        emit Withdrawal(_token, _amount, usdValue, rzrValue);
     }
 
     /// @inheritdoc IAppTreasury
@@ -155,29 +87,22 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, ReentrancyGuardUpgrad
         onlyReserveManager
         returns (uint256 rzrValue, uint256 usdValue)
     {
-        _updateReserves();
         if (_tokens.contains(_token)) {
             (rzrValue, usdValue) = tokenValueE18(_token, _amount);
-            require(usdValue <= excessReserves(), "Treasury: insufficient reserves");
-            require(_totalReservesUsd >= usdValue, "Treasury: insufficient reserves");
             _totalReservesUsd = _totalReservesUsd - usdValue;
             _totalReservesRzr = _totalReservesRzr - rzrValue;
         }
+
         IERC20(_token).safeTransfer(_recipient, _amount);
         emit Managed(_token, _amount);
+
+        _updateReserves();
     }
 
     /// @inheritdoc IAppTreasury
-    function mint(address _recipient, uint256 _amount) external override nonReentrant whenNotPaused onlyPolicy {
+    function syncReserves() external onlyBridge returns (uint256 usdReserves, uint256 rzrReserves) {
         _updateReserves();
-        require(_amount <= excessReserves(), "Treasury: insufficient reserves");
-        app.mint(_recipient, _amount);
-        emit Minted(msg.sender, _recipient, _amount);
-    }
-
-    /// @inheritdoc IAppTreasury
-    function syncReserves() external onlyExecutor {
-        _updateReserves();
+        return (_totalReservesUsd, _totalReservesRzr);
     }
 
     /// @inheritdoc IAppTreasury
@@ -203,19 +128,6 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, ReentrancyGuardUpgrad
     }
 
     /// @inheritdoc IAppTreasury
-    function backingRatioE18() public view returns (uint256) {
-        return (totalReservesUsd() * 1e18) / totalSupply();
-    }
-
-    /// @inheritdoc IAppTreasury
-    function excessReserves() public view override returns (uint256) {
-        uint256 totalSupply_ = totalSupply();
-        uint256 totalReserves_ = totalReservesUsd();
-        if (totalReserves_ <= totalSupply_) return 0;
-        return totalReserves_ - totalSupply_;
-    }
-
-    /// @inheritdoc IAppTreasury
     function tokenValueE18(address _token, uint256 _amount)
         public
         view
@@ -226,18 +138,8 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, ReentrancyGuardUpgrad
     }
 
     /// @inheritdoc IAppTreasury
-    function actualReserves() public view override returns (uint256) {
-        return _totalReservesUsd;
-    }
-
-    /// @inheritdoc IAppTreasury
-    function actualSupply() public view override returns (uint256) {
-        return app.totalSupply();
-    }
-
-    /// @inheritdoc IAppTreasury
     function totalReservesUsd() public view override returns (uint256) {
-        return _totalReservesUsd + creditReserves;
+        return _totalReservesUsd;
     }
 
     /// @inheritdoc IAppTreasury
@@ -246,23 +148,12 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, ReentrancyGuardUpgrad
     }
 
     /// @inheritdoc IAppTreasury
-    function totalSupply() public view override returns (uint256) {
-        return app.totalSupply() - unbackedSupply - _totalReservesRzr;
-    }
-
-    /// @inheritdoc IAppTreasury
     function calculateReserves() public view override returns (uint256 usdReserves, uint256 rzrReserves) {
-        (usdReserves, rzrReserves) = calculateActualReserves();
-        return (usdReserves + creditReserves, rzrReserves);
-    }
-
-    /// @inheritdoc IAppTreasury
-    function calculateActualReserves() public view override returns (uint256 usdReserves, uint256 rzrReserves) {
         for (uint256 i = 0; i < _tokens.length(); i++) {
             address token = _tokens.at(i);
             uint256 balance = IERC20(token).balanceOf(address(this));
             (uint256 rzrValue, uint256 usdValue) = tokenValueE18(token, balance);
-            usdReserves += Math.min(usdValue, reserveDebts[token]);
+            usdReserves += usdValue;
             rzrReserves += rzrValue;
         }
     }
@@ -288,25 +179,10 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, ReentrancyGuardUpgrad
     }
 
     function _updateReserves() internal {
-        (uint256 usdReserves, uint256 rzrReserves) = calculateActualReserves();
+        (uint256 usdReserves, uint256 rzrReserves) = calculateReserves();
         _totalReservesUsd = usdReserves;
         _totalReservesRzr = rzrReserves;
-        emit ReservesAudited(usdReserves, rzrReserves, usdReserves + creditReserves);
-    }
-
-    function _checkCaps(address _token) internal view {
-        uint256 balance = IERC20(_token).balanceOf(address(this));
-
-        // check if the token has exceeded the reserve cap
-        if (reserveCaps[_token] > 0) {
-            require(balance <= reserveCaps[_token], "Treasury: reserve cap exceeded");
-        }
-
-        // check if the token has a reserve debt
-        if (reserveDebts[_token] > 0) {
-            (, uint256 usdValue) = tokenValueE18(_token, balance);
-            require(usdValue <= reserveDebts[_token], "Treasury: reserve debt exceeded");
-        }
+        emit ReservesAudited(usdReserves, rzrReserves);
     }
 
     function execute(address _to, uint256 _value, bytes calldata _data) external onlyGovernor {

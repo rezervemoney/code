@@ -590,10 +590,6 @@ contract AppBondDepositoryTest is BaseTest {
         treasury.enable(address(mockQuoteToken2));
         treasury.enable(address(mockQuoteToken3));
 
-        treasury.setReserveDebt(address(mockQuoteToken), 100000000e18);
-        treasury.setReserveDebt(address(mockQuoteToken2), 100000000e18);
-        treasury.setReserveDebt(address(mockQuoteToken3), 100000000e18);
-
         // Set initial oracle prices
         mockOracle.setPrice(0, 1e18); // 1:1 price
         mockOracle2.setPrice(0, 2e18); // 2:1 price
@@ -810,7 +806,7 @@ contract AppBondDepositoryTest is BaseTest {
         mockQuoteToken.approve(address(bondDepository), BOND_AMOUNT);
 
         // Record treasury stats before deposit
-        uint256 initialExcessReserves = treasury.excessReserves();
+        uint256 initialExcessReserves = rebaseController.excessReserves();
         uint256 initialTotalReserves = treasury.totalReservesUsd();
         uint256 initialTotalSupply = app.totalSupply();
 
@@ -827,7 +823,7 @@ contract AppBondDepositoryTest is BaseTest {
         );
         assertEq(app.totalSupply(), initialTotalSupply + payout, "Incorrect total supply increase");
         assertApproxEqRel(
-            treasury.excessReserves() - initialExcessReserves,
+            rebaseController.excessReserves() - initialExcessReserves,
             expectedProfit,
             0.0001e18,
             "Treasury did not capture expected profit"
@@ -859,13 +855,13 @@ contract AppBondDepositoryTest is BaseTest {
         mockQuoteToken.mint(user1, BOND_AMOUNT);
         mockQuoteToken.approve(address(bondDepository), BOND_AMOUNT);
 
-        uint256 initialExcessReserves = treasury.excessReserves();
+        uint256 initialExcessReserves = rebaseController.excessReserves();
 
         // Deposit at par price
         bondDepository.deposit(bondId, BOND_AMOUNT, parPrice, 0, user1);
 
         // Since price equals oracle value, profit should be zero
-        assertEq(treasury.excessReserves(), initialExcessReserves, "Unexpected profit captured at par price");
+        assertEq(rebaseController.excessReserves(), initialExcessReserves, "Unexpected profit captured at par price");
 
         vm.stopPrank();
     }
@@ -904,13 +900,15 @@ contract AppBondDepositoryTest is BaseTest {
         mockQuoteToken.mint(user1, BOND_AMOUNT);
         mockQuoteToken.approve(address(bondDepository), BOND_AMOUNT);
 
-        uint256 initialExcessReserves = treasury.excessReserves();
+        uint256 initialExcessReserves = treasury.totalReservesUsd();
 
         // Expect no profit since payout > reserves value when price < oracle
         bondDepository.deposit(bondId, BOND_AMOUNT, currentPrice, 0, user1);
 
         assertEq(
-            treasury.excessReserves(), initialExcessReserves, "Profit should be zero when depositing at discount price"
+            rebaseController.excessReserves(),
+            initialExcessReserves,
+            "Profit should be zero when depositing at discount price"
         );
 
         vm.stopPrank();

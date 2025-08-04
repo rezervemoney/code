@@ -14,13 +14,6 @@ interface IAppTreasury {
     function deposit(uint256 _amount, address _token, uint256 _profit) external returns (uint256 send_);
 
     /**
-     * @notice allow approved address to burn app for reserves
-     * @param _amount amount of app to burn
-     * @param _token address of the token to burn
-     */
-    function withdraw(uint256 _amount, address _token) external;
-
-    /**
      * @notice Returns the value of a token in RZR, 18 decimals
      * @param _token The address of the token
      * @param _amount The amount of the token
@@ -31,13 +24,6 @@ interface IAppTreasury {
         external
         view
         returns (uint256 rzrValue_, uint256 usdValue_);
-
-    /**
-     * @notice allow approved address to mint app
-     * @param _recipient address of the recipient
-     * @param _amount amount of app to mint
-     */
-    function mint(address _recipient, uint256 _amount) external;
 
     /**
      * @notice allow approved address to manage the reserves of the treasury
@@ -58,60 +44,10 @@ interface IAppTreasury {
     function enable(address _address) external;
 
     /**
-     * @notice Returns the backing ratio of the treasury in RZR terms (1e18)
-     * @return backingRatio_ The backing ratio (1e18)
-     */
-    function backingRatioE18() external view returns (uint256);
-
-    /**
      * @notice allow approved address to disable a token as a reserve
      * @param _address address to disable
      */
     function disable(address _address) external;
-
-    /**
-     * @notice Sets the credit reserves of the treasury
-     * @param _credit The amount of reserves (in RZR terms) that has been credited to the treasury but not yet deposited
-     */
-    function setCreditReserves(uint256 _credit) external;
-
-    /**
-     * @notice Sets the unbacked supply of the treasury
-     * @param _unbacked The amount of RZR that is in the minted but not yet backed
-     */
-    function setUnbackedSupply(uint256 _unbacked) external;
-
-    /**
-     * @notice Credit is amount of reserves (in RZR terms) that has been credited to the treasury but
-     * not yet deposited in. This is important in the case that the collateral asset for RZR exists somewhere else
-     * (such as in an RWA for example).
-     *
-     * This is particulary important in case of PSM modules where RZR is minted into a lending protocol for example
-     * and RZR is taken out only when it it being borrowed with an over-collateralized position.
-     *
-     * @dev Credit is not included in the total supply of RZR.
-     * @return credit_ The amount of reserves (in RZR terms) that has been credited to the treasury but not yet minted
-     */
-    function creditReserves() external view returns (uint256 credit_);
-
-    /**
-     * @notice Returns the actual supply of RZR excluding credit
-     * @return actualSupply_ The actual supply of RZR excluding credit
-     */
-    function actualSupply() external view returns (uint256 actualSupply_);
-
-    /**
-     * @notice Returns the amount of RZR that has been minted but not yet backed
-     * @return unbackedSupply_ The amount of RZR
-     */
-    function unbackedSupply() external view returns (uint256 unbackedSupply_);
-
-    /**
-     * @notice Returns the excess reserves of the treasury in RZR terms (excluding credit and debit)
-     * that is not backing the RZR supply
-     * @return excessReserves_ The excess reserves of the treasury in RZR terms
-     */
-    function excessReserves() external view returns (uint256);
 
     /**
      * @notice Returns the total reserves of the treasury in USD terms (including credit and debit)
@@ -128,18 +64,6 @@ interface IAppTreasury {
     function totalReservesRzr() external view returns (uint256);
 
     /**
-     * @notice Returns the total supply of RZR (including credit and debit)
-     * @return totalSupply_ The total supply of RZR
-     */
-    function totalSupply() external view returns (uint256 totalSupply_);
-
-    /**
-     * @notice Returns the actual reserves of the treasury in RZR terms excluding credit and debit
-     * @return actualReserves_ The actual reserves of the treasury in RZR terms
-     */
-    function actualReserves() external view returns (uint256 actualReserves_);
-
-    /**
      * @notice Sets the reserve fee
      * @param _reserveFee The new reserve fee
      */
@@ -148,7 +72,7 @@ interface IAppTreasury {
     /**
      * @notice Syncs the reserves of the treasury
      */
-    function syncReserves() external;
+    function syncReserves() external returns (uint256 usdReserves, uint256 rzrReserves);
 
     /**
      * @notice Calculates the total reserves of the treasury in RZR terms (including credit and debit)
@@ -156,13 +80,6 @@ interface IAppTreasury {
      * @return rzrReserves_ The total reserves of the treasury in RZR terms
      */
     function calculateReserves() external view returns (uint256 usdReserves_, uint256 rzrReserves_);
-
-    /**
-     * @notice Calculates the actual reserves of the treasury in RZR terms excluding credit and debit
-     * @return usdReserves_ The actual reserves of the treasury in USD terms
-     * @return rzrReserves_ The actual reserves of the treasury in RZR terms
-     */
-    function calculateActualReserves() external view returns (uint256 usdReserves_, uint256 rzrReserves_);
 
     /**
      * @notice Gets the reserve fee
@@ -183,12 +100,6 @@ interface IAppTreasury {
     function enabledTokens(address _token) external view returns (bool enabledTokens_);
 
     /**
-     * @notice Gets the basis points
-     * @return basisPoints_ The basis points
-     */
-    function BASIS_POINTS() external view returns (uint256 basisPoints_);
-
-    /**
      * @notice Gets the tokens enabled in the treasury
      * @return tokens_ The tokens
      */
@@ -207,47 +118,13 @@ interface IAppTreasury {
      */
     function enabledTokensLength() external view returns (uint256 length_);
 
-    /**
-     * @notice Gets the reserve cap for a token
-     * @param _token The address of the token
-     * @return cap_ The reserve cap for the token
-     */
-    function reserveCaps(address _token) external view returns (uint256 cap_);
-
-    /**
-     * @notice Gets the reserve debt for a token
-     * @param _token The address of the token
-     * @return debt_ The reserve debt for the token
-     */
-    function reserveDebts(address _token) external view returns (uint256 debt_);
-
-    /**
-     * @notice Sets the reserve cap for a token
-     * @param _token The address of the token
-     * @param _cap The reserve cap for the token
-     */
-    function setReserveCap(address _token, uint256 _cap) external;
-
-    /**
-     * @notice Sets the reserve debt for a token
-     * @param _token The address of the token
-     * @param _debt The reserve debt for the token
-     */
-    function setReserveDebt(address _token, uint256 _debt) external;
-
     /* ========== EVENTS ========== */
 
     event Deposit(address indexed token, uint256 amount, uint256 usdValue, uint256 rzrValue);
     event Withdrawal(address indexed token, uint256 amount, uint256 usdValue, uint256 rzrValue);
     event Managed(address indexed token, uint256 amount);
-    event ReservesAudited(
-        uint256 indexed totalReserves, uint256 indexed creditReserves, uint256 indexed totalReservesWithCredit
-    );
+    event ReservesAudited(uint256 indexed totalReserves, uint256 indexed totalReservesWithCredit);
     event Minted(address indexed caller, address indexed recipient, uint256 amount);
     event TokenEnabled(address addr, bool result);
-    event CreditReservesSet(uint256 newCredit, uint256 oldCredit);
-    event UnbackedSupplySet(uint256 newUnbacked, uint256 oldUnbacked);
     event ReserveFeeSet(uint256 newFee, uint256 oldFee);
-    event ReserveCapSet(address indexed token, uint256 cap);
-    event ReserveDebtSet(address indexed token, uint256 debt);
 }

@@ -5,10 +5,12 @@ import "./IBridge.sol";
 import "./IAppStaking.sol";
 import "./IStaking4626.sol";
 import "./ITotalReservesOracle.sol";
+import "./IAppTreasury.sol";
+import "./IApp.sol";
 import "./ITotalSupplyOracle.sol";
 
 interface IBridgeL1 is IBridge {
-    event L2BridgeRegistered(address indexed l2Bridge, bytes32 indexed peer, uint32 indexed eid);
+    event L2BridgeRegistered(address indexed l2Bridge, uint32 indexed eid);
     event StateSent(uint32 indexed dstEid, bytes message);
 
     /// @notice Get the staking contract
@@ -16,6 +18,12 @@ interface IBridgeL1 is IBridge {
 
     /// @notice Get the staking4626 contract
     function staking4626() external view returns (IStaking4626);
+
+    /// @notice Get the treasury contract
+    function treasury() external view returns (IAppTreasury);
+
+    /// @notice Get the rzr contract
+    function rzr() external view returns (IApp);
 
     /// @notice Initialize the bridge
     /// @param _delegate The delegate of the bridge
@@ -46,7 +54,12 @@ interface IBridgeL1 is IBridge {
     /// @param _dstEid The eid of the L2 bridge to send the state to
     /// @dev This function is used to send the current protocol state to all L2s
     /// @dev This function is only callable by the executor
-    function sentStateToL2(uint32 _dstEid) external payable;
+    function sentStateToL2(uint32[] calldata _dstEid) external payable;
+
+    /// @notice Sync the mainnet reserves to the total reserves oracle
+    /// @dev This function is used to sync the mainnet reserves to the total reserves oracle
+    /// @dev This function is only callable by the executor
+    function syncMainnetReserves() external;
 
     /// @notice Purge the given token
     /// @param token The token to purge

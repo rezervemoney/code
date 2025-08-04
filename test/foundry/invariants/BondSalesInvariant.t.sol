@@ -33,13 +33,9 @@ contract BondSalesInvariant is BaseTest {
         quoteToken = mockQuoteToken;
         treasury.enable(address(quoteToken));
 
-        // Seed the treasury with credit reserves to give it a healthy buffer.
-        uint256 initialCredit = 2_000_000e18;
-        treasury.setCreditReserves(initialCredit);
-
         // Mint a minimal amount of RZR so that totalSupply is non-zero, avoiding
         // division-by-zero when computing the initial backing ratio.
-        treasury.mint(owner, 1e18);
+        app.mint(owner, 1e18);
 
         // Create a bond with a generous capacity that the fuzzer can interact with.
         uint256 capacity = 1_000_000e18;
@@ -56,7 +52,7 @@ contract BondSalesInvariant is BaseTest {
         vm.stopPrank();
 
         // Cache the current backing ratio for later comparisons.
-        lastBackingRatioE18 = treasury.backingRatioE18();
+        lastBackingRatioE18 = rebaseController.currentBackingRatio();
 
         // Let the fuzzer call our helper and the bond depository directly.
         targetContract(address(this)); // Helper wrapper below
@@ -118,12 +114,12 @@ contract BondSalesInvariant is BaseTest {
     /// @notice Reserves must always cover supply (fully backed) and minted RZR for bonds can never exceed collateral value.
     function invariant_FullyBacked() external view {
         // Fully backed requirement
-        assertGe(treasury.totalReservesUsd(), treasury.totalSupply());
+        assertGe(treasury.totalReservesUsd(), app.totalSupply() - treasury.totalReservesRzr());
     }
 
     /// @notice Backing ratio must never decrease and must stay >= 1.
     function invariant_BackingRatioNonDecreasing() external {
-        uint256 currentBR = treasury.backingRatioE18();
+        uint256 currentBR = rebaseController.currentBackingRatio();
 
         // It must always be >= 1 (i.e., 100%).
         assertGe(currentBR, 1e18);
@@ -140,6 +136,6 @@ contract BondSalesInvariant is BaseTest {
         IAppBondDepository.Bond memory bond = bondDepository.getBond(bondId);
         uint256 totalSold = bond.sold; // RZR minted for this bond
 
-        assertLe(totalSold, treasury.excessReserves());
+        assertLe(totalSold, treasury.totalReservesUsd());
     }
 }

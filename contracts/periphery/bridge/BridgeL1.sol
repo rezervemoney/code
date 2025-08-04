@@ -4,6 +4,10 @@ pragma solidity 0.8.28;
 import "../../interfaces/IBridgeL1.sol";
 import "../../interfaces/ITotalReservesOracle.sol";
 import "../../interfaces/ITotalSupplyOracle.sol";
+import "../../interfaces/IAppTreasury.sol";
+import "../../interfaces/IAppStaking.sol";
+import "../../interfaces/IStaking4626.sol";
+import "../../interfaces/IApp.sol";
 import "../../libraries/OAppControlledProxy.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -16,7 +20,15 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 contract BridgeL1 is OAppControlledProxy, IBridgeL1 {
     using SafeERC20 for IERC20;
 
+    uint256 public immutable MAINNET_EID = 30101;
+
     mapping(uint32 eid => address l2Bridge) public l2Bridges;
+
+    /// @inheritdoc IBridgeL1
+    IApp public rzr;
+
+    /// @inheritdoc IBridgeL1
+    IAppTreasury public treasury;
 
     /// @inheritdoc IBridgeL1
     IAppStaking public staking;
@@ -38,6 +50,7 @@ contract BridgeL1 is OAppControlledProxy, IBridgeL1 {
         // do nothing
     }
 
+    /// @inheritdoc IBridgeL1
     function initialize(
         address _delegate,
         address _authority,
@@ -55,29 +68,37 @@ contract BridgeL1 is OAppControlledProxy, IBridgeL1 {
     }
 
     /// @inheritdoc IBridgeL1
-    function sentStateToL2(uint32 _dstEid) external payable onlyExecutor whenNotPaused {
+    function sentStateToL2(uint32[] calldata _dstEid) external payable onlyExecutor whenNotPaused {
+        treasury.syncReserves();
         bytes memory _message = abi.encode(getCurrentState());
-        _lzSend(_dstEid, _message, "", MessagingFee({nativeFee: msg.value, lzTokenFee: 0}), address(this));
-        emit StateSent(_dstEid, _message);
+        for (uint256 i = 0; i < _dstEid.length; i++) {
+            _lzSend(_dstEid[i], _message, "", MessagingFee({nativeFee: msg.value, lzTokenFee: 0}), address(this));
+            emit StateSent(_dstEid[i], _message);
+        }
     }
 
     /// @inheritdoc IBridgeL1
     function registerL2Bridge(address _l2Bridge, uint32 _eid) external onlyGovernor whenNotPaused {
-        bytes32 peer = bytes32(uint256(uint160(_l2Bridge))); // todo i think this is not correct
-        _setPeer(_eid, peer);
         l2Bridges[_eid] = _l2Bridge;
-        emit L2BridgeRegistered(_l2Bridge, peer, _eid);
+        emit L2BridgeRegistered(_l2Bridge, _eid);
+    }
+
+    /// @inheritdoc IBridgeL1
+    function syncMainnetReserves() external onlyExecutor {
+        (uint256 usdReserves, uint256 rzrReserves) = treasury.syncReserves();
+        totalReservesOracle.setCrosschainReserves(MAINNET_EID, rzrReserves, usdReserves);
     }
 
     /// @inheritdoc IBridge
     function getCurrentState() public view returns (State memory) {
         uint256 staking4626Rate = staking4626.convertToAssets(1e18);
+
         return State({
             staking4626Rate: staking4626Rate,
-            rzrReserves: 0,
-            usdReserves: 0,
-            rzrSupply: 0,
-            lstRzrSupply: 0,
+            rzrReserves: treasury.totalReservesRzr(),
+            usdReserves: treasury.totalReservesUsd(),
+            rzrSupply: rzr.totalSupply(),
+            lstRzrSupply: staking4626.totalSupply(),
             updatedAt: block.timestamp
         });
     }

@@ -86,6 +86,11 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "_lzEndpoint",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
         "name": "_delegate",
         "type": "address"
       },
@@ -102,6 +107,16 @@
       {
         "internalType": "address",
         "name": "_staking4626",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_rzr",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_treasury",
         "type": "address"
       },
       {

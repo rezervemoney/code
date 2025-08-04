@@ -45,13 +45,23 @@ contract RebaseController is AppAccessControlled, IRebaseController {
 
     // --- Constructor ---------------------------------------------------------
     /// @inheritdoc IRebaseController
-    function initialize(address _dre, address _treasury, address _staking, address _authority, address _burner)
-        public
-        reinitializer(3)
-    {
-        app = IApp(_dre);
+    function initialize(
+        address _rzr,
+        address _appOracle,
+        address _staking,
+        address _authority,
+        address _burner,
+        address _totalSupplyOracle,
+        address _totalReservesOracle
+    ) public reinitializer(3) {
+        app = IApp(_rzr);
+        appOracle = IAppOracle(_appOracle);
         staking = IAppStaking(_staking);
         burner = _burner;
+
+        totalSupplyOracle = ITotalSupplyOracle(_totalSupplyOracle);
+        totalReservesOracle = ITotalReservesOracle(_totalReservesOracle);
+
         __AppAccessControlled_init(_authority);
 
         floorApr = 500; // 500% APR

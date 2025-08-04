@@ -51,7 +51,7 @@ contract TotalSupplyOracle is AppAccessControlled, ITotalSupplyOracle {
         __AppAccessControlled_init(_authority);
         rzr = IApp(_rzr);
         offchainUpdater = _offchainUpdater;
-        maxDeviation = 0.01e18; // 1% max deviation
+        maxDeviation = 0.01e18; // 1% max deviation (100 basis points)
         staleness = 24.5 hours; // 24.5 hours staleness
     }
 
@@ -68,14 +68,11 @@ contract TotalSupplyOracle is AppAccessControlled, ITotalSupplyOracle {
 
     /// @inheritdoc ITotalSupplyOracle
     function getTotalSupply() external view returns (uint256 _totalSupply) {
-        uint256 _onchainTotalSupply = getOnchainTotalSupply();
-        uint256 _offchainTotalSupply = getOffchainTotalSupply();
-        require(
-            _offchainTotalSupply > _onchainTotalSupply * (10000 - maxDeviation) / 10000
-                && _offchainTotalSupply < _onchainTotalSupply * (10000 + maxDeviation) / 10000,
-            "Total supply deviation too high"
-        );
-        _totalSupply = _onchainTotalSupply + totalSupplyCredit - totalSupplyUnbacked;
+        uint256 _onchainSupply = getOnchainTotalSupply();
+        uint256 _offchainSupply = getOffchainTotalSupply();
+        require(_offchainSupply > _onchainSupply * (1e18 - maxDeviation) / 1e18, "deviation too high");
+        require(_offchainSupply < _onchainSupply * (1e18 + maxDeviation) / 1e18, "deviation too low");
+        _totalSupply = _onchainSupply + totalSupplyCredit - totalSupplyUnbacked;
     }
 
     /// @inheritdoc ITotalSupplyOracle
@@ -100,9 +97,10 @@ contract TotalSupplyOracle is AppAccessControlled, ITotalSupplyOracle {
 
     /// @inheritdoc ITotalSupplyOracle
     function overwriteCrosschainTotalSupply(uint256 eid, uint256 _crosschainTotalSupply) external onlyGovernor {
+        require(enabledEids[eid], "Eid not enabled");
         uint256 oldCrosschainTotalSupply = crosschainTotalSupply[eid];
         crosschainTotalSupply[eid] = _crosschainTotalSupply;
-        emit CrosschainTotalSupplyUpdated(eid, oldCrosschainTotalSupply, _crosschainTotalSupply);
+        emit CrosschainTotalSupplyUpdated(eid, _crosschainTotalSupply, block.timestamp);
     }
 
     /// @inheritdoc ITotalSupplyOracle
@@ -125,6 +123,7 @@ contract TotalSupplyOracle is AppAccessControlled, ITotalSupplyOracle {
 
     /// @inheritdoc ITotalSupplyOracle
     function setCrosschainTotalSupply(uint256 eid, uint256 _crosschainTotalSupply) external onlyBridge {
+        require(enabledEids[eid], "Eid not enabled");
         uint256 oldCrosschainTotalSupply = crosschainTotalSupply[eid];
         crosschainTotalSupply[eid] = _crosschainTotalSupply;
         emit CrosschainTotalSupplyUpdated(eid, oldCrosschainTotalSupply, _crosschainTotalSupply);

@@ -26,12 +26,21 @@ interface IRebaseController {
     // --- Functions ----------------------------------------------------------
     /// @notice Initialize the rebase controller
     /// @param _rzr The address of the RZR
-    /// @param _treasury The address of the treasury
+    /// @param _appOracle The address of the app oracle contract
     /// @param _staking The address of the staking contract
     /// @param _authority The address of the authority contract
     /// @param _burner The address of the burner contract
-    function initialize(address _rzr, address _treasury, address _staking, address _authority, address _burner)
-        external;
+    /// @param _totalSupplyOracle The address of the total supply oracle contract
+    /// @param _totalReservesOracle The address of the total reserves oracle contract
+    function initialize(
+        address _rzr,
+        address _appOracle,
+        address _staking,
+        address _authority,
+        address _burner,
+        address _totalSupplyOracle,
+        address _totalReservesOracle
+    ) external;
 
     /// @notice Set the target percentages
     /// @param _targetOpsPct The target operations percentage

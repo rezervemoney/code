@@ -46,17 +46,21 @@ contract BaseTest is Test {
 
     Staking4626 public staking4626;
 
-    TotalSupplyOracle public totalSupplyOracle;
     TotalReservesOracle public totalReservesOracle;
+    TotalSupplyOracle public totalSupplyOracle;
 
     address public owner = makeAddr("owner");
     address public user1 = makeAddr("user1");
     address public user2 = makeAddr("user2");
     address public user3 = makeAddr("user3");
+    address public offchainUpdater = makeAddr("offchainUpdater");
     address public operationsTreasury = makeAddr("operationsTreasury");
 
     function setUpBaseTest() public {
+        vm.warp(block.timestamp + 10 days);
+
         vm.startPrank(owner);
+
         authority = new AppAuthority();
 
         // Deploy mock quote token
@@ -76,6 +80,14 @@ contract BaseTest is Test {
         // Deploy sRZR token
         sapp = new sRZR(address(authority));
 
+        // Deploy TotalSupplyOracle
+        totalSupplyOracle = new TotalSupplyOracle();
+        totalSupplyOracle.initialize(address(authority), offchainUpdater, address(app));
+
+        // Deploy TotalReservesOracle
+        totalReservesOracle = new TotalReservesOracle();
+        totalReservesOracle.initialize(address(authority), offchainUpdater);
+
         appOracle = new AppOracle();
         appOracle.initialize(address(authority), address(app));
         appOracle.updateOracle(address(mockQuoteToken), address(mockOracle), 3600);
@@ -84,7 +96,7 @@ contract BaseTest is Test {
 
         // Deploy Burner
         burner = new AppBurner();
-        burner.initialize(address(appOracle), address(app), address(authority));
+        burner.initialize(address(appOracle), address(app), address(authority), address(totalSupplyOracle));
 
         // Deploy Treasury
         treasury = new AppTreasury();
@@ -109,7 +121,13 @@ contract BaseTest is Test {
         // Deploy RebaseController
         rebaseController = new RebaseController();
         rebaseController.initialize(
-            address(app), address(treasury), address(staking), address(authority), address(burner)
+            address(app),
+            address(appOracle),
+            address(staking),
+            address(authority),
+            address(burner),
+            address(totalReservesOracle),
+            address(totalSupplyOracle)
         );
         rebaseController.setTargetPcts(0.1e18, 0.15e18, 0.5e18, 0.5e18);
 

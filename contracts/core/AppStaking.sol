@@ -549,7 +549,7 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
 
     /// @notice Updates the reward for a position
     /// @param tokenId The position ID
-    function _updateReward(uint256 tokenId) internal {
+    function _updateReward(uint256 tokenId) internal whenNotPaused {
         rewardPerTokenStored = rewardPerToken();
         lastUpdateTime = lastTimeRewardApplicable();
 

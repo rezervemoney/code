@@ -20,6 +20,7 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
     uint256 public immutable EPOCH_DURATION = 24 hours;
 
     IERC20 public override appToken;
+
     IPermissionedERC20 public trackingToken;
 
     uint256 public lastId;
@@ -46,11 +47,16 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
     mapping(uint256 => Position) private _positions;
     Variables private _variables;
 
+    ITotalSupplyOracle public totalSupplyOracle;
+
     /// @inheritdoc IAppStaking
-    function initialize(address _appToken, address _trackingToken, address _authority, address _burner)
-        public
-        reinitializer(1)
-    {
+    function initialize(
+        address _appToken,
+        address _trackingToken,
+        address _authority,
+        address _burner,
+        address _totalSupplyOracle
+    ) public reinitializer(1) {
         if (lastId == 0) lastId = 1;
 
         __ERC721_init("RZR Staking Position", "RZR-POS");
@@ -63,6 +69,7 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
         appToken = IERC20(_appToken);
         trackingToken = IPermissionedERC20(_trackingToken);
         burner = _burner;
+        totalSupplyOracle = ITotalSupplyOracle(_totalSupplyOracle);
 
         _setVariables(
             Variables({
@@ -94,7 +101,7 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
 
     /// @notice Returns the current demand ratio as basis points (0…BASIS_POINTS)
     function getStakingRatio() public view returns (uint256) {
-        uint256 supply = appToken.totalSupply();
+        uint256 supply = totalSupplyOracle.getTotalSupply();
         if (supply == 0 || totalStaked == 0) return 0;
         return (totalStaked * 1e18) / supply;
     }
@@ -543,8 +550,10 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
     /// @param amount The amount of RZR to distribute
     /// @return depositFee The total amount of deposit fee paid
     function _chargeDepositFee(uint256 amount) internal returns (uint256 depositFee) {
-        depositFee = (amount * getDepositFee()) / 1e18;
-        if (depositFee > 0) appToken.safeTransfer(burner, depositFee);
+        // todo
+        // depositFee = (amount * getDepositFee()) / 1e18;
+        // if (depositFee > 0) appToken.safeTransfer(burner, depositFee);
+        return 0; // for now deposit fee is 0;
     }
 
     /// @notice Updates the reward for a position

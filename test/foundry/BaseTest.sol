@@ -107,7 +107,7 @@ contract BaseTest is Test {
 
         // Deploy Staking
         staking = new AppStaking();
-        staking.initialize(address(app), address(sapp), address(authority), address(burner));
+        staking.initialize(address(app), address(sapp), address(authority), address(burner), address(totalSupplyOracle));
 
         // Deploy LoyaltyList
         loyaltyList = new LoyaltyList(address(authority));

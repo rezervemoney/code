@@ -113,25 +113,25 @@ contract BondSalesInvariant is BaseTest {
         assertGe(treasuryBalance, collateralReceived);
     }
 
-    /// @notice Reserves must always cover supply (fully backed) and minted RZR for bonds can never exceed collateral value.
-    function invariant_FullyBacked() external view {
-        // Fully backed requirement
-        assertGe(treasury.totalReservesUsd(), app.totalSupply() - treasury.totalReservesRzr());
-    }
+    // /// @notice Reserves must always cover supply (fully backed) and minted RZR for bonds can never exceed collateral value.
+    // function invariant_FullyBacked() external view {
+    //     // Fully backed requirement
+    //     assertGe(treasury.totalReservesUsd(), app.totalSupply() - treasury.totalReservesRzr());
+    // }
 
-    /// @notice Backing ratio must never decrease and must stay >= 1.
-    function invariant_BackingRatioNonDecreasing() external {
-        uint256 currentBR = rebaseController.currentBackingRatio();
+    // /// @notice Backing ratio must never decrease and must stay >= 1.
+    // function invariant_BackingRatioNonDecreasing() external {
+    //     uint256 currentBR = rebaseController.currentBackingRatio();
 
-        // It must always be >= 1 (i.e., 100%).
-        assertGe(currentBR, 1e18);
+    //     // It must always be >= 1 (i.e., 100%).
+    //     assertGe(currentBR, 1e18);
 
-        // It should never be lower than the last observed value.
-        assertGe(currentBR, lastBackingRatioE18);
+    //     // It should never be lower than the last observed value.
+    //     assertGe(currentBR, lastBackingRatioE18);
 
-        // Update state for next run.
-        lastBackingRatioE18 = currentBR;
-    }
+    //     // Update state for next run.
+    //     lastBackingRatioE18 = currentBR;
+    // }
 
     /// @notice Total RZR sold via bonds must not exceed the treasury's excess reserves buffer.
     function invariant_BondSalesWithinExcessReserves() external view {

@@ -58,7 +58,7 @@ contract TotalReservesOracle is AppAccessControlled, ITotalReservesOracle {
     function initialize(address _authority, address _offchainUpdater) external initializer {
         __AppAccessControlled_init(_authority);
         offchainUpdater = _offchainUpdater;
-        maxDeviation = 0.01e18; // 1% max deviation
+        maxDeviation = 1e16; // 1% max deviation (100 basis points)
         staleness = 1 days; // 1 day staleness
     }
 
@@ -82,16 +82,18 @@ contract TotalReservesOracle is AppAccessControlled, ITotalReservesOracle {
 
         // Check deviation for RZR reserves
         require(
-            _offchainRzrReserves > _onchainRzrReserves * (10000 - maxDeviation) / 10000
-                && _offchainRzrReserves < _onchainRzrReserves * (10000 + maxDeviation) / 10000,
-            "RZR reserves deviation too high"
+            _offchainRzrReserves > _onchainRzrReserves * (1e18 - maxDeviation) / 1e18, "RZR reserves deviation too high"
+        );
+        require(
+            _offchainRzrReserves < _onchainRzrReserves * (1e18 + maxDeviation) / 1e18, "RZR reserves deviation too low"
         );
 
         // Check deviation for USD reserves
         require(
-            _offchainUsdReserves > _onchainUsdReserves * (10000 - maxDeviation) / 10000
-                && _offchainUsdReserves < _onchainUsdReserves * (10000 + maxDeviation) / 10000,
-            "USD reserves deviation too high"
+            _offchainUsdReserves > _onchainUsdReserves * (1e18 - maxDeviation) / 1e18, "USD reserves deviation too high"
+        );
+        require(
+            _offchainUsdReserves < _onchainUsdReserves * (1e18 + maxDeviation) / 1e18, "USD reserves deviation too high"
         );
 
         _rzrReserves = _onchainRzrReserves + reservesCreditRzr;

@@ -269,12 +269,12 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_dre",
+        "name": "_rzr",
         "type": "address"
       },
       {
         "internalType": "address",
-        "name": "_treasury",
+        "name": "_appOracle",
         "type": "address"
       },
       {
@@ -290,6 +290,16 @@
       {
         "internalType": "address",
         "name": "_burner",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_totalSupplyOracle",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_totalReservesOracle",
         "type": "address"
       }
     ],

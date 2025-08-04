@@ -29,6 +29,25 @@
     "inputs": [
       {
         "indexed": true,
+        "internalType": "uint256",
+        "name": "eid",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "bool",
+        "name": "enabled",
+        "type": "bool"
+      }
+    ],
+    "name": "EidToggled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
         "internalType": "address",
         "name": "offchainUpdater",
         "type": "address"
@@ -241,6 +260,19 @@
       }
     ],
     "name": "setTotalSupplyUnbacked",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "eid",
+        "type": "uint256"
+      }
+    ],
+    "name": "toggleEid",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

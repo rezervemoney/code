@@ -3,8 +3,6 @@ pragma solidity 0.8.28;
 pragma abicoder v2;
 
 import "./AppUIHelperBase.sol";
-import "../interfaces/IAppReferrals.sol";
-import "../interfaces/IStaking4626.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title RZR UI Helper
@@ -34,33 +32,7 @@ contract AppUIHelperWrite is AppUIHelperBase {
         bytes8 referralCode;
     }
 
-    constructor(
-        address _staking,
-        address _bondDepository,
-        address _treasury,
-        address _appToken,
-        address _stakingToken,
-        address _rebaseController,
-        address _appOracle,
-        address _shadowLP,
-        address _odos,
-        address _staking4626,
-        address _referrals
-    )
-        AppUIHelperBase(
-            _staking,
-            _bondDepository,
-            _treasury,
-            _appToken,
-            _stakingToken,
-            _rebaseController,
-            _appOracle,
-            _shadowLP,
-            _odos,
-            _staking4626,
-            _referrals
-        )
-    {}
+    constructor(InitParams memory params) AppUIHelperBase(params) {}
 
     /// @notice Claim all rewards for a staking position
     /// @return amount The amount of rewards claimed

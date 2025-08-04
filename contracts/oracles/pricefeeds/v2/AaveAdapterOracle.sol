@@ -26,13 +26,13 @@ contract AaveAdapterOracle is IOracleV2 {
         override
         returns (uint256 rzrAssets, uint256 usdAssets, uint256 lastUpdatedAt)
     {
-        (, int256 answer,, uint256 updatedAt,) = AGGREGATOR.latestRoundData();
+        int256 answer = AGGREGATOR.latestAnswer();
 
         uint256 oracleAnswerE18 = uint256(answer) * 10 ** (18 - oracleDecimals);
         uint256 amountE18 = amount * 10 ** (18 - assetDecimals);
 
         rzrAssets = 0;
         usdAssets = amountE18 * oracleAnswerE18 / 1e18;
-        lastUpdatedAt = updatedAt;
+        lastUpdatedAt = block.timestamp;
     }
 }

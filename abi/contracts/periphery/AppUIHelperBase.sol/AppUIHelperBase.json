@@ -98,10 +98,10 @@
   },
   {
     "inputs": [],
-    "name": "shadowLP",
+    "name": "spotOracle",
     "outputs": [
       {
-        "internalType": "contract IOracle",
+        "internalType": "contract IOracleV2",
         "name": "",
         "type": "address"
       }
@@ -141,6 +141,32 @@
     "outputs": [
       {
         "internalType": "contract IERC20",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalReservesOracle",
+    "outputs": [
+      {
+        "internalType": "contract ITotalReservesOracle",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalSupplyOracle",
+    "outputs": [
+      {
+        "internalType": "contract ITotalSupplyOracle",
         "name": "",
         "type": "address"
       }

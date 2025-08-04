@@ -7,9 +7,11 @@ import "../interfaces/IAppBondDepository.sol";
 import "../interfaces/IRebaseController.sol";
 import "../interfaces/IAppTreasury.sol";
 import "../interfaces/IAppOracle.sol";
-import "../interfaces/IOracle.sol";
+import "../interfaces/IOracleV2.sol";
 import "../interfaces/IStaking4626.sol";
 import "../interfaces/IAppReferrals.sol";
+import "../interfaces/ITotalSupplyOracle.sol";
+import "../interfaces/ITotalReservesOracle.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title RZR UI Helper
@@ -98,38 +100,46 @@ abstract contract AppUIHelperBase {
     IAppTreasury public treasury;
     IERC20 public appToken;
     IERC20 public stakingToken;
-    IOracle public shadowLP;
+    IOracleV2 public spotOracle;
     IRebaseController public rebaseController;
     IStaking4626 public staking4626;
     IAppReferrals public referrals;
+    ITotalSupplyOracle public totalSupplyOracle;
+    ITotalReservesOracle public totalReservesOracle;
 
     // Events
     event RewardsClaimed(uint256 indexed positionId, uint256 amount);
 
-    constructor(
-        address _staking,
-        address _bondDepository,
-        address _treasury,
-        address _appToken,
-        address _stakingToken,
-        address _rebaseController,
-        address _appOracle,
-        address _shadowLP,
-        address _odos,
-        address _staking4626,
-        address _referrals
-    ) {
-        staking = IAppStaking(_staking);
-        bondDepository = IAppBondDepository(_bondDepository);
-        treasury = IAppTreasury(_treasury);
-        appToken = IERC20(_appToken);
-        stakingToken = IERC20(_stakingToken);
-        appOracle = IAppOracle(_appOracle);
-        shadowLP = IOracle(_shadowLP);
-        rebaseController = IRebaseController(_rebaseController);
-        odos = _odos;
-        staking4626 = IStaking4626(_staking4626);
-        referrals = IAppReferrals(_referrals);
+    struct InitParams {
+        address staking;
+        address bondDepository;
+        address treasury;
+        address appToken;
+        address stakingToken;
+        address rebaseController;
+        address appOracle;
+        address spotOracle;
+        address odos;
+        address staking4626;
+        address referrals;
+        address totalSupplyOracle;
+        address totalReservesOracle;
+    }
+
+    constructor(InitParams memory params) {
+        staking = IAppStaking(params.staking);
+        bondDepository = IAppBondDepository(params.bondDepository);
+        treasury = IAppTreasury(params.treasury);
+        appToken = IERC20(params.appToken);
+        stakingToken = IERC20(params.stakingToken);
+        appOracle = IAppOracle(params.appOracle);
+        spotOracle = IOracleV2(params.spotOracle);
+        rebaseController = IRebaseController(params.rebaseController);
+        odos = params.odos;
+        staking4626 = IStaking4626(params.staking4626);
+        referrals = IAppReferrals(params.referrals);
+        totalSupplyOracle = ITotalSupplyOracle(params.totalSupplyOracle);
+        totalReservesOracle = ITotalReservesOracle(params.totalReservesOracle);
 
         appToken.approve(address(staking), type(uint256).max);
     }

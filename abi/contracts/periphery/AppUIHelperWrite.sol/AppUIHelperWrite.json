@@ -2,59 +2,76 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_staking",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_bondDepository",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_treasury",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_appToken",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_stakingToken",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_rebaseController",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_appOracle",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_shadowLP",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_odos",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_staking4626",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_referrals",
-        "type": "address"
+        "components": [
+          {
+            "internalType": "address",
+            "name": "staking",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "bondDepository",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "treasury",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "appToken",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "stakingToken",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "rebaseController",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "appOracle",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "spotOracle",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "odos",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "staking4626",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "referrals",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "totalSupplyOracle",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "totalReservesOracle",
+            "type": "address"
+          }
+        ],
+        "internalType": "struct AppUIHelperBase.InitParams",
+        "name": "params",
+        "type": "tuple"
       }
     ],
     "stateMutability": "nonpayable",
@@ -288,10 +305,10 @@
   },
   {
     "inputs": [],
-    "name": "shadowLP",
+    "name": "spotOracle",
     "outputs": [
       {
-        "internalType": "contract IOracle",
+        "internalType": "contract IOracleV2",
         "name": "",
         "type": "address"
       }
@@ -331,6 +348,32 @@
     "outputs": [
       {
         "internalType": "contract IERC20",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalReservesOracle",
+    "outputs": [
+      {
+        "internalType": "contract ITotalReservesOracle",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalSupplyOracle",
+    "outputs": [
+      {
+        "internalType": "contract ITotalSupplyOracle",
         "name": "",
         "type": "address"
       }

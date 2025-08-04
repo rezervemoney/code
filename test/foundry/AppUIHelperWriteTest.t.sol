@@ -42,17 +42,21 @@ contract AppUIHelperWriteTest is BaseTest {
 
         // Setup UI Helper
         uiHelper = new AppUIHelperWrite(
-            address(staking),
-            address(bondDepository),
-            address(treasury),
-            address(app),
-            address(staking),
-            address(rebaseController),
-            address(appOracle),
-            address(0),
-            ODOS,
-            address(staking4626),
-            address(referrals)
+            AppUIHelperBase.InitParams({
+                staking: address(staking),
+                bondDepository: address(bondDepository),
+                treasury: address(treasury),
+                appToken: address(app),
+                stakingToken: address(staking),
+                rebaseController: address(rebaseController),
+                appOracle: address(appOracle),
+                spotOracle: address(0),
+                odos: ODOS,
+                staking4626: address(staking4626),
+                referrals: address(referrals),
+                totalSupplyOracle: address(totalSupplyOracle),
+                totalReservesOracle: address(totalReservesOracle)
+            })
         );
 
         // Set up permissions

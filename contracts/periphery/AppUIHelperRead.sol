@@ -4,42 +4,11 @@ pragma abicoder v2;
 
 import "./AppUIHelperBase.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import "../interfaces/ITotalSupplyOracle.sol";
-import "../interfaces/ITotalReservesOracle.sol";
 
 /// @title RZR UI Helper
 /// @author RZR Protocol
 contract AppUIHelperRead is AppUIHelperBase {
-    ITotalSupplyOracle public totalSupplyOracle;
-    ITotalReservesOracle public totalReservesOracle;
-
-    constructor(
-        address _staking,
-        address _bondDepository,
-        address _treasury,
-        address _appToken,
-        address _stakingToken,
-        address _rebaseController,
-        address _appOracle,
-        address _shadowLP,
-        address _odos,
-        address _staking4626,
-        address _referrals
-    )
-        AppUIHelperBase(
-            _staking,
-            _bondDepository,
-            _treasury,
-            _appToken,
-            _stakingToken,
-            _rebaseController,
-            _appOracle,
-            _shadowLP,
-            _odos,
-            _staking4626,
-            _referrals
-        )
-    {}
+    constructor(InitParams memory params) AppUIHelperBase(params) {}
 
     /// @notice Get all protocol information for a user
     /// @param user The address of the user
@@ -66,7 +35,7 @@ contract AppUIHelperRead is AppUIHelperBase {
         totalStaked = staking.totalStaked();
         totalRewards = staking.rewardPerToken();
         currentAPR = calculateAPRRaw(totalStaked);
-        currentSpotPrice = shadowLP.getPrice();
+        currentSpotPrice = getSpotPrice();
         projectedEpochRate = getProjectedEpochRate();
         tokenInfos = getTokenInfos(user, bondTokens);
         stakingPositions = getStakingPositions(user);
@@ -78,7 +47,12 @@ contract AppUIHelperRead is AppUIHelperBase {
 
     function getTvl() internal view returns (uint256) {
         (uint256 rzrReserves, uint256 usdReserves) = totalReservesOracle.getTotalReserves();
-        return usdReserves + rzrReserves * shadowLP.getPrice() / 1e18;
+        return usdReserves + rzrReserves * getSpotPrice() / 1e18;
+    }
+
+    function getSpotPrice() internal view returns (uint256) {
+        (, uint256 spotPrice,) = spotOracle.getPriceForAmount(1e18);
+        return spotPrice;
     }
 
     function getTokenInfos(address user, address[] memory bondTokens)

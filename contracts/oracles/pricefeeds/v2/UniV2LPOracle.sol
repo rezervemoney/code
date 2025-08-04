@@ -14,20 +14,17 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
  */
 contract UniV2LPOracle is IOracleV2 {
     IUniswapV2Pair public amm;
-    address public rzr;
     IAppOracle public appOracle;
 
     /// @notice The asset
     IERC20Metadata public immutable asset;
 
-    constructor(address _uniV2LP, address _rzr, IAppOracle _appOracle) {
+    constructor(address _uniV2LP, IAppOracle _appOracle) {
         amm = IUniswapV2Pair(_uniV2LP);
-        rzr = _rzr;
         appOracle = _appOracle;
         asset = IERC20Metadata(_uniV2LP);
         (uint256 rzrAmount, uint256 usdAmount,) = getPriceForAmount(1e18);
         require(rzrAmount > 0 || usdAmount > 0, "Invalid price");
-        require(amm.token0() == rzr || amm.token1() == rzr, "Invalid LP token");
     }
 
     /// @inheritdoc IOracleV2

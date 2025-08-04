@@ -52,7 +52,7 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
     /// @inheritdoc IStaking4626
     function initializePosition(uint256 amount) external {
         require(initialAmount == 0, "Position already initialized");
-        initialAmount = _netStakeAfterTax(amount);
+        initialAmount = amount;
         appToken.safeTransferFrom(msg.sender, address(this), amount);
         _increaseAmount(amount);
     }
@@ -144,12 +144,11 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
 
     /// @inheritdoc IERC4626
     function previewDeposit(uint256 assets) public view override returns (uint256) {
-        uint256 netAssets = _netStakeAfterTax(assets);
         if (totalSupply() == 0) {
             // First external deposit: 1:1 mapping (post-tax) so that the initial price is 1 share per net RZR.
-            return netAssets;
+            return assets;
         }
-        return _convertToShares(netAssets, Math.Rounding.Floor);
+        return _convertToShares(assets, Math.Rounding.Floor);
     }
 
     /// @inheritdoc IERC4626
@@ -163,8 +162,7 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
             netAssets = _convertToAssets(shares, Math.Rounding.Ceil);
         }
 
-        // Compute the gross amount of assets that must be supplied so that `netAssets` remain after tax.
-        return _grossAssetsFromNet(netAssets);
+        return netAssets;
     }
 
     /// @dev Returns the value of the position in the vault
@@ -206,11 +204,7 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
     function _deposit(uint256 assets, uint256 shares, address receiver) internal {
         appToken.safeTransferFrom(msg.sender, address(this), assets);
         _mint(receiver, shares);
-
-        uint256 posValue = _increaseAmount(assets);
-        uint256 amountAfterTax = _netStakeAfterTax(assets);
-        require(posValue == amountAfterTax, "Position value mismatch");
-
+        _increaseAmount(assets);
         _harvest();
         emit Deposit(msg.sender, receiver, assets, shares);
     }
@@ -220,7 +214,6 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
         uint256 balance = appToken.balanceOf(address(this));
         uint256 rewards = staking.claimRewards(tokenId);
         _increaseAmount(rewards + balance);
-
         emit RewardsCompounded(rewards);
     }
 
@@ -240,33 +233,6 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
         val = amount - taxPaid;
 
         emit Staked(amount);
-    }
-
-    /// @dev Given a desired net stake (`netAssets`), returns the gross amount of tokens that must be supplied
-    /// to the vault such that, after paying streaming tax, exactly `netAssets` remain staked.
-    /// This maintains the same total tax burden as the old harberger tax system.
-    function _grossAssetsFromNet(uint256 netAssets) internal view returns (uint256) {
-        // factorDenominator = 1e8 (since we multiply two basis-points values of 1e4 each)
-        uint256 factorDenominator = 1e8;
-        uint256 taxRateBps = staking.variables().harbergerTaxRate; // out of 1e4
-        uint256 subFactor = (10_000 + buyoutPremiumBps) * taxRateBps; // still in 1e8 scale
-
-        // Prevent division by zero if subFactor >= 1e8 (not expected given current params)
-        require(subFactor < factorDenominator, "Invalid tax parameters");
-
-        uint256 factorNumerator = factorDenominator - subFactor; // scaled 1e8
-
-        // gross = ceil(net * denom / numerator)
-        return Math.mulDiv(netAssets, factorDenominator, factorNumerator, Math.Rounding.Ceil);
-    }
-
-    /// @dev Returns the net amount of assets that will remain staked after the streaming tax is calculated.
-    /// With streaming tax, no upfront tax is paid - tax is collected over time.
-    /// This function returns the full amount since no tax is deducted upfront.
-    function _netStakeAfterTax(uint256 assets) internal pure returns (uint256) {
-        // With streaming tax, no upfront tax is paid
-        // The full amount is staked and tax is collected over time
-        return assets;
     }
 
     /// @dev Computes the declared value given an `amount` of RZR being staked.

@@ -19,6 +19,7 @@ import "../../contracts/periphery/Staking4626.sol";
 import "../../contracts/periphery/LoyaltyList.sol";
 import "../../contracts/oracles/crosschain/TotalSupplyOracle.sol";
 import "../../contracts/oracles/crosschain/TotalReservesOracle.sol";
+import "../../contracts/periphery/bridge/BridgeL1.sol";
 
 contract BaseTest is Test {
     RebaseController public rebaseController;
@@ -48,6 +49,7 @@ contract BaseTest is Test {
 
     TotalReservesOracle public totalReservesOracle;
     TotalSupplyOracle public totalSupplyOracle;
+    BridgeL1 public bridgeL1;
 
     address public owner = makeAddr("owner");
     address public user1 = makeAddr("user1");
@@ -116,6 +118,20 @@ contract BaseTest is Test {
             address(app), address(staking), address(treasury), address(authority), address(loyaltyList)
         );
 
+        // Deploy BridgeL1
+        bridgeL1 = new BridgeL1();
+        bridgeL1.initialize(
+            address(lz),
+            owner,
+            address(authority),
+            address(staking),
+            address(staking4626),
+            address(app),
+            address(treasury),
+            address(totalReservesOracle),
+            address(totalSupplyOracle)
+        );
+
         sapp.setStakingContract(address(staking));
 
         // Deploy RebaseController
@@ -145,6 +161,7 @@ contract BaseTest is Test {
         authority.setOperationsTreasury(operationsTreasury);
         authority.setTreasury(address(treasury));
         authority.addReserveDepositor(address(bondDepository));
+        authority.setBridge(address(bridgeL1));
 
         vm.label(address(app), "RZR");
         vm.label(address(sapp), "sRZR");
@@ -165,5 +182,13 @@ contract BaseTest is Test {
         vm.label(address(mockOracle3), "Mock Oracle 3");
 
         vm.stopPrank();
+
+        _touchTotalSupplyOracle();
+    }
+
+    function _touchTotalSupplyOracle() internal {
+        uint256 totalSupply = app.totalSupply();
+        vm.prank(offchainUpdater);
+        totalSupplyOracle.updateTotalSupplyOffchain(totalSupply);
     }
 }

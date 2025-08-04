@@ -98,7 +98,6 @@ contract TotalSupplyOracle is AppAccessControlled, ITotalSupplyOracle {
     /// @inheritdoc ITotalSupplyOracle
     function overwriteCrosschainTotalSupply(uint256 eid, uint256 _crosschainTotalSupply) external onlyGovernor {
         require(enabledEids[eid], "Eid not enabled");
-        uint256 oldCrosschainTotalSupply = crosschainTotalSupply[eid];
         crosschainTotalSupply[eid] = _crosschainTotalSupply;
         emit CrosschainTotalSupplyUpdated(eid, _crosschainTotalSupply, block.timestamp);
     }

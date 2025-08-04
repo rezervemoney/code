@@ -109,7 +109,7 @@ contract RebaseInvariant is BaseTest {
     //////////////////////////////////////////////////////////////////////////*/
     function _snapshotState() internal {
         lastReserves = treasury.totalReservesUsd();
-        lastSupply = app.totalSupply();
+        lastSupply = app.totalSupply() - treasury.totalReservesRzr();
         lastBackingRatioE18 = rebaseController.currentBackingRatio();
     }
 }

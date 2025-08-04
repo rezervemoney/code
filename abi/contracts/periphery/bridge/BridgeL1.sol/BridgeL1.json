@@ -164,12 +164,6 @@
       },
       {
         "indexed": true,
-        "internalType": "bytes32",
-        "name": "peer",
-        "type": "bytes32"
-      },
-      {
-        "indexed": true,
         "internalType": "uint32",
         "name": "eid",
         "type": "uint32"
@@ -234,6 +228,19 @@
     ],
     "name": "StateSent",
     "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "MAINNET_EID",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "inputs": [
@@ -608,11 +615,24 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "rzr",
+    "outputs": [
+      {
+        "internalType": "contract IApp",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
-        "internalType": "uint32",
+        "internalType": "uint32[]",
         "name": "_dstEid",
-        "type": "uint32"
+        "type": "uint32[]"
       }
     ],
     "name": "sentStateToL2",
@@ -710,6 +730,13 @@
   },
   {
     "inputs": [],
+    "name": "syncMainnetReserves",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "totalReservesOracle",
     "outputs": [
       {
@@ -745,6 +772,19 @@
     "name": "transferOwnership",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "treasury",
+    "outputs": [
+      {
+        "internalType": "contract IAppTreasury",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {

@@ -42,27 +42,27 @@ contract BridgeL1 is OAppControlledProxy, IBridgeL1 {
     /// @inheritdoc IBridgeL1
     ITotalSupplyOracle public totalSupplyOracle;
 
-    constructor(address _lzEndpoint, address _delegate, address owner)
-        OAppControlledProxy(_lzEndpoint, _delegate, owner)
-    {}
-
     receive() external payable {
         // do nothing
     }
 
     /// @inheritdoc IBridgeL1
     function initialize(
+        address _lzEndpoint,
         address _delegate,
         address _authority,
         address _staking,
         address _staking4626,
+        address _rzr,
+        address _treasury,
         address _totalReservesOracle,
         address _totalSupplyOracle
     ) external initializer {
-        __OAppControlledProxy_init(_delegate, _authority);
+        __OAppControlledProxy_init(_lzEndpoint, _delegate, _authority);
         staking = IAppStaking(_staking);
         staking4626 = IStaking4626(_staking4626);
-
+        rzr = IApp(_rzr);
+        treasury = IAppTreasury(_treasury);
         totalReservesOracle = ITotalReservesOracle(_totalReservesOracle);
         totalSupplyOracle = ITotalSupplyOracle(_totalSupplyOracle);
     }

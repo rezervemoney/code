@@ -3,25 +3,6 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newCredit",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "oldCredit",
-        "type": "uint256"
-      }
-    ],
-    "name": "CreditReservesSet",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
         "indexed": true,
         "internalType": "address",
         "name": "token",
@@ -97,44 +78,6 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "cap",
-        "type": "uint256"
-      }
-    ],
-    "name": "ReserveCapSet",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "debt",
-        "type": "uint256"
-      }
-    ],
-    "name": "ReserveDebtSet",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
         "indexed": false,
         "internalType": "uint256",
         "name": "newFee",
@@ -157,12 +100,6 @@
         "indexed": true,
         "internalType": "uint256",
         "name": "totalReserves",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "creditReserves",
         "type": "uint256"
       },
       {
@@ -198,25 +135,6 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newUnbacked",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "oldUnbacked",
-        "type": "uint256"
-      }
-    ],
-    "name": "UnbackedSupplySet",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
         "indexed": true,
         "internalType": "address",
         "name": "token",
@@ -246,82 +164,12 @@
   },
   {
     "inputs": [],
-    "name": "BASIS_POINTS",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "basisPoints_",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "actualReserves",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "actualReserves_",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "actualSupply",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "actualSupply_",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "appOracle",
     "outputs": [
       {
         "internalType": "contract IAppOracle",
         "name": "appOracle_",
         "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "backingRatioE18",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "calculateActualReserves",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "usdReserves_",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "rzrReserves_",
-        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -339,19 +187,6 @@
       {
         "internalType": "uint256",
         "name": "rzrReserves_",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "creditReserves",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "credit_",
         "type": "uint256"
       }
     ],
@@ -446,19 +281,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "excessReserves",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -493,62 +315,6 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_recipient",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "mint",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_token",
-        "type": "address"
-      }
-    ],
-    "name": "reserveCaps",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "cap_",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_token",
-        "type": "address"
-      }
-    ],
-    "name": "reserveDebts",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "debt_",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "reserveFee",
     "outputs": [
@@ -565,55 +331,6 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_credit",
-        "type": "uint256"
-      }
-    ],
-    "name": "setCreditReserves",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_token",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_cap",
-        "type": "uint256"
-      }
-    ],
-    "name": "setReserveCap",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_token",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_debt",
-        "type": "uint256"
-      }
-    ],
-    "name": "setReserveDebt",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
         "name": "_reserveFee",
         "type": "uint256"
       }
@@ -624,22 +341,20 @@
     "type": "function"
   },
   {
-    "inputs": [
+    "inputs": [],
+    "name": "syncReserves",
+    "outputs": [
       {
         "internalType": "uint256",
-        "name": "_unbacked",
+        "name": "usdReserves",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "rzrReserves",
         "type": "uint256"
       }
     ],
-    "name": "setUnbackedSupply",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "syncReserves",
-    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -728,50 +443,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "totalSupply",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "totalSupply_",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "unbackedSupply",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "unbackedSupply_",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_amount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "_token",
-        "type": "address"
-      }
-    ],
-    "name": "withdraw",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   }
 ]

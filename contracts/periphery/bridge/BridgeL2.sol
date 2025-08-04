@@ -19,10 +19,6 @@ contract BridgeL2 is OAppControlledProxy, IBridgeL2 {
     IAppTreasury public treasury;
     IERC20 public rzr;
 
-    constructor(address _lzEndpoint, address _delegate, address owner)
-        OAppControlledProxy(_lzEndpoint, _delegate, owner)
-    {}
-
     receive() external payable {
         // do nothing
     }
@@ -31,6 +27,7 @@ contract BridgeL2 is OAppControlledProxy, IBridgeL2 {
     /// @param _delegate The address of the delegate
     /// @param _authority The address of the authority
     function initialize(
+        address _lzEndpoint,
         address _delegate,
         address _authority,
         uint32 _l1Eid,
@@ -39,7 +36,7 @@ contract BridgeL2 is OAppControlledProxy, IBridgeL2 {
         address _totalReservesOracle,
         address _totalSupplyOracle
     ) external initializer {
-        __OAppControlledProxy_init(_delegate, _authority);
+        __OAppControlledProxy_init(_lzEndpoint, _delegate, _authority);
         l1Eid = _l1Eid;
         liquidStaking = IStaking4626L2(_liquidStaking);
         treasury = IAppTreasury(_treasury);

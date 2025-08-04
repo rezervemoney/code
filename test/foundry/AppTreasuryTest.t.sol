@@ -80,6 +80,7 @@ contract AppTreasuryTest is BaseTest {
         uint256 profit = 100e18;
         treasury.deposit(depositAmount, address(mockQuoteToken), profit);
 
+        vm.prank(address(bridgeL1));
         treasury.syncReserves();
 
         assertEq(treasury.totalReservesUsd(), 1000e18, "Total reserves should be equal to deposit amount");
@@ -111,6 +112,7 @@ contract AppTreasuryTest is BaseTest {
         treasury.deposit(depositAmount, address(mockQuoteToken), profit);
 
         // Audit reserves
+        vm.prank(address(bridgeL1));
         treasury.syncReserves();
 
         // Verify reserves were calculated correctly

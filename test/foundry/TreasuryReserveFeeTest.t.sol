@@ -25,7 +25,7 @@ contract TreasuryReserveFeeTest is BaseTest {
         uint256 expectedDepositAfterFee = depositAmount - expectedFee;
         uint256 profit = 100e18;
 
-        treasury.setReserveFee(1000);
+        treasury.setReserveFee(0.1e18);
 
         // Mint tokens to owner
         mockQuoteToken.mint(owner, depositAmount);
@@ -38,6 +38,8 @@ contract TreasuryReserveFeeTest is BaseTest {
 
         // Perform deposit
         uint256 dreMinted = treasury.deposit(depositAmount, address(mockQuoteToken), profit);
+
+        bridgeL1.syncMainnetReserves();
 
         // Verify token transfers
         assertEq(
@@ -76,7 +78,7 @@ contract TreasuryReserveFeeTest is BaseTest {
         uint256 firstExpectedDepositAfterFee = firstDepositAmount - firstExpectedFee;
         uint256 firstProfit = 100e18;
 
-        treasury.setReserveFee(1000);
+        treasury.setReserveFee(0.1e18);
 
         mockQuoteToken.mint(owner, firstDepositAmount);
         mockQuoteToken.approve(address(treasury), firstDepositAmount);
@@ -117,7 +119,7 @@ contract TreasuryReserveFeeTest is BaseTest {
         mockQuoteToken.mint(owner, depositAmount);
         mockQuoteToken.approve(address(treasury), depositAmount);
 
-        treasury.setReserveFee(1000);
+        treasury.setReserveFee(0.1e18);
 
         uint256 dreMinted = treasury.deposit(depositAmount, address(mockQuoteToken), 0);
 

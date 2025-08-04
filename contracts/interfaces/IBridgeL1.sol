@@ -30,15 +30,20 @@ interface IBridgeL1 is IBridge {
     /// @param _authority The authority of the bridge
     /// @param _staking The staking contract
     /// @param _staking4626 The staking4626 contract
+    /// @param _rzr The rzr contract
+    /// @param _treasury The treasury contract
     /// @param _totalReservesOracle The total reserves oracle contract
     /// @param _totalSupplyOracle The total supply oracle contract
     /// @dev This function is used to initialize the bridge
     /// @dev This function is only callable by the governor
     function initialize(
+        address _lzEndpoint,
         address _delegate,
         address _authority,
         address _staking,
         address _staking4626,
+        address _rzr,
+        address _treasury,
         address _totalReservesOracle,
         address _totalSupplyOracle
     ) external;

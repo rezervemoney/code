@@ -21,7 +21,7 @@ contract OracleV2CL is IAggregatorV3 {
     }
 
     function getPrice() public view returns (int256 usd) {
-        (, uint256 usdAmount, uint256 lastUpdatedAt) = appOracle.getPriceForAmount(asset, amount);
+        (, uint256 usdAmount,) = appOracle.getPriceForAmount(asset, amount);
         (, uint256 rzrAmountInUsd,) = rzrSpotOracle.getPriceForAmount(amount);
         return int256(rzrAmountInUsd + usdAmount) / 1e10;
     }
@@ -71,9 +71,8 @@ contract OracleV2CL is IAggregatorV3 {
     /**
      * @notice Returns round data for a specific round
      * @dev For this implementation, returns the same as latestRoundData
-     * @param _roundId The round ID (unused in this implementation)
      */
-    function getRoundData(uint80 _roundId)
+    function getRoundData(uint80)
         external
         view
         override

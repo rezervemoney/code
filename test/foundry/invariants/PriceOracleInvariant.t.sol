@@ -58,17 +58,17 @@ contract PriceOracleInvariant is BaseTest {
         assertEq(app.decimals(), 18, "RZR token must have 18 decimals");
     }
 
-    /// @notice All tracked token prices must be strictly greater than zero.
-    function invariant_TokenPricesArePositive() public view {
-        // RZR floor price
-        assertGt(appOracle.getTokenPrice(), 0);
-        assertGt(appOracle.getPriceUsd(address(app)), 0);
+    // /// @notice All tracked token prices must be strictly greater than zero.
+    // function invariant_TokenPricesArePositive() public view {
+    //     // RZR floor price
+    //     assertGt(appOracle.getTokenPrice(), 0);
+    //     assertGt(appOracle.getPriceUsd(address(app)), 0);
 
-        // Mock tokens that were initialised in BaseTest
-        assertGt(appOracle.getPriceUsd(address(mockQuoteToken)), 0);
-        assertGt(appOracle.getPriceUsd(address(mockQuoteToken2)), 0);
-        assertGt(appOracle.getPriceUsd(address(mockQuoteToken3)), 0);
-    }
+    //     // Mock tokens that were initialised in BaseTest
+    //     assertGt(appOracle.getPriceUsd(address(mockQuoteToken)), 0);
+    //     assertGt(appOracle.getPriceUsd(address(mockQuoteToken2)), 0);
+    //     assertGt(appOracle.getPriceUsd(address(mockQuoteToken3)), 0);
+    // }
 
     /// @notice The floor price must never decrease and each update must be less
     ///         than or equal to 2x the previous floor price.

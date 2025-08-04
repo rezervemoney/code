@@ -32,12 +32,18 @@ contract RebaseControllerTest is BaseTest {
         treasury.syncReserves();
         vm.stopPrank();
 
+        _syncOracles();
+
         vm.startPrank(owner);
     }
 
-    function test_Initialization() public view {
+    function test_Initialization() public {
+        vm.stopPrank();
+        _syncOracles();
+        vm.startPrank(owner);
+
         assertEq(address(rebaseController.app()), address(app));
-        assertEq(address(rebaseController.appOracle()), address(mockOracle));
+        assertEq(address(rebaseController.appOracle()), address(appOracle));
         // TODO: Add totalSupplyOracle and totalReservesOracle to RebaseController implementation
         // assertEq(address(rebaseController.totalSupplyOracle()), address(totalSupplyOracle));
         // assertEq(address(rebaseController.totalReservesOracle()), address(totalReservesOracle));
@@ -53,6 +59,10 @@ contract RebaseControllerTest is BaseTest {
     function test_BackingRatioWithSupply() public {
         // Mint some RZR tokens to simulate supply
         app.mint(owner, 1_000_000e18);
+
+        vm.stopPrank();
+        _syncOracles();
+        vm.startPrank(owner);
 
         // Treasury has 1M quote tokens (1:1 price)
         uint256 backingRatio = rebaseController.currentBackingRatio();
@@ -72,6 +82,10 @@ contract RebaseControllerTest is BaseTest {
         // Mint RZR tokens to create supply
         app.mint(owner, 1_000_000e18);
 
+        vm.stopPrank();
+        _syncOracles();
+        vm.startPrank(owner);
+
         // Test with 1:1 backing (100%)
         (, uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 toBurner) =
             rebaseController.projectedEpochRate();
@@ -82,7 +96,10 @@ contract RebaseControllerTest is BaseTest {
 
         // Add more PCV to treasury to increase backing ratio
         mockQuoteToken.mint(address(treasury), 500_000e18);
-        treasury.syncReserves();
+
+        vm.stopPrank();
+        _syncOracles();
+        vm.startPrank(owner);
 
         // Test with 1.5:1 backing (150%)
         (, epochMint, toStakers, toOps, toBurner) = rebaseController.projectedEpochRate();
@@ -93,6 +110,12 @@ contract RebaseControllerTest is BaseTest {
     }
 
     function test_ExecuteEpochBeforeReady() public {
+        vm.stopPrank();
+        _syncOracles();
+        vm.startPrank(owner);
+
+        rebaseController.executeEpoch();
+
         vm.expectRevert("epoch not ready");
         rebaseController.executeEpoch();
     }
@@ -104,7 +127,10 @@ contract RebaseControllerTest is BaseTest {
 
         // Add PCV to treasury to ensure positive rebase
         mockQuoteToken.mint(address(treasury), 2_000_000e18);
-        treasury.syncReserves();
+
+        vm.stopPrank();
+        _syncOracles();
+        vm.startPrank(owner);
 
         // stake some tokens so that rewards can accumulate
         app.approve(address(staking), 100e18);
@@ -114,6 +140,10 @@ contract RebaseControllerTest is BaseTest {
         uint256 epochLength = rebaseController.EPOCH();
         vm.warp(block.timestamp + epochLength);
         mockOracle.touchTimestamp();
+
+        vm.stopPrank();
+        _syncOracles();
+        vm.startPrank(owner);
 
         // Get projected values
         (, uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 toBurner) =
@@ -145,6 +175,10 @@ contract RebaseControllerTest is BaseTest {
         uint256 epochLength = rebaseController.EPOCH();
         vm.warp(block.timestamp + epochLength);
         mockOracle.touchTimestamp();
+
+        vm.stopPrank();
+        _syncOracles();
+        vm.startPrank(owner);
 
         // Execute epoch should succeed but not mint rewards
         (, uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 toBurner) =

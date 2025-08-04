@@ -68,7 +68,7 @@ contract AccessControlTest is BaseTest {
                          Policy functions
     //////////////////////////////////////////////////////////////*/
     function test_PolicyCanMintAndSetReserveFee() external {
-        _touchTotalSupplyOracle();
+        _syncOracles();
 
         vm.prank(reserveDepositor);
         treasury.deposit(TEST_AMOUNT, address(mockQuoteToken), 0);
@@ -151,7 +151,7 @@ contract AccessControlTest is BaseTest {
         app.mint(address(burner), TEST_AMOUNT);
         vm.stopPrank();
 
-        _touchTotalSupplyOracle();
+        _syncOracles();
 
         vm.prank(address(bridgeL1));
         treasury.syncReserves();

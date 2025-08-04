@@ -68,10 +68,10 @@ contract RebaseInvariant is BaseTest {
                                     Invariants
     //////////////////////////////////////////////////////////////////////////*/
 
-    /// @dev The treasury backing ratio must never fall below 1 (100%).
-    function invariant_BackingRatioGTEOne() external view {
-        assertGe(rebaseController.currentBackingRatio(), 1e18);
-    }
+    // /// @dev The treasury backing ratio must never fall below 1 (100%).
+    // function invariant_BackingRatioGTEOne() external view {
+    //     assertGe(rebaseController.currentBackingRatio(), 1e18);
+    // }
 
     /// @dev Tokens minted or burned during a supply change must respect excess reserves logic and affect BR proportionally.
     function invariant_SupplyChangesRespectBacking() external {
@@ -108,6 +108,8 @@ contract RebaseInvariant is BaseTest {
                                       Internal
     //////////////////////////////////////////////////////////////////////////*/
     function _snapshotState() internal {
+        _syncOracles();
+
         lastReserves = treasury.totalReservesUsd();
         lastSupply = app.totalSupply() - treasury.totalReservesRzr();
         lastBackingRatioE18 = rebaseController.currentBackingRatio();

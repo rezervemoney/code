@@ -183,10 +183,15 @@ contract BaseTest is Test {
 
         vm.stopPrank();
 
-        _touchTotalSupplyOracle();
+        _syncOracles();
     }
 
-    function _touchTotalSupplyOracle() internal {
+    function _syncOracles() internal {
+        _syncTotalSupplyOracle();
+        _syncReservesOracle();
+    }
+
+    function _syncTotalSupplyOracle() internal {
         uint256 totalSupply = app.totalSupply();
         vm.prank(offchainUpdater);
         totalSupplyOracle.updateTotalSupplyOffchain(totalSupply);
@@ -196,7 +201,7 @@ contract BaseTest is Test {
         // totalSupplyOracle.setCrosschainTotalSupply(1, 0);
     }
 
-    function _syncReserves() internal {
+    function _syncReservesOracle() internal {
         // sync on chain
         vm.prank(address(owner));
         bridgeL1.syncMainnetReserves();

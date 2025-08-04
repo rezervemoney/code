@@ -58,6 +58,10 @@ contract AppBurnerTest is BaseTest {
         treasury.enable(address(mockQuoteToken));
         mockQuoteToken.mint(address(treasury), 10000e18);
 
+        vm.stopPrank();
+        _syncOracles();
+        vm.startPrank(owner);
+
         // Execute burn
         burner.burn();
 

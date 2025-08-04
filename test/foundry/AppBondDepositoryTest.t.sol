@@ -811,6 +811,8 @@ contract AppBondDepositoryTest is BaseTest {
         );
         vm.stopPrank();
 
+        _syncOracles();
+
         // Prepare depositor
         vm.startPrank(user1);
         mockQuoteToken.mint(user1, BOND_AMOUNT);
@@ -828,6 +830,10 @@ contract AppBondDepositoryTest is BaseTest {
         uint256 expectedReservesIncrease = BOND_AMOUNT; // 1:1 value in RZR terms since token price == RZR price
         uint256 expectedProfit = BOND_AMOUNT - payout; // Profit captured by treasury
 
+        vm.stopPrank();
+
+        _syncOracles();
+
         // Validate treasury state
         assertEq(
             treasury.totalReservesUsd(), initialTotalReserves + expectedReservesIncrease, "Incorrect reserve increase"
@@ -839,8 +845,6 @@ contract AppBondDepositoryTest is BaseTest {
             0.0001e18,
             "Treasury did not capture expected profit"
         );
-
-        vm.stopPrank();
     }
 
     function test_TreasuryProfitCaptured_ParPrice() public {
@@ -862,6 +866,8 @@ contract AppBondDepositoryTest is BaseTest {
         );
         vm.stopPrank();
 
+        _syncOracles();
+
         vm.startPrank(user1);
         mockQuoteToken.mint(user1, BOND_AMOUNT);
         mockQuoteToken.approve(address(bondDepository), BOND_AMOUNT);
@@ -870,11 +876,12 @@ contract AppBondDepositoryTest is BaseTest {
 
         // Deposit at par price
         bondDepository.deposit(bondId, BOND_AMOUNT, parPrice, 0, user1);
+        vm.stopPrank();
+
+        _syncOracles();
 
         // Since price equals oracle value, profit should be zero
         assertEq(rebaseController.excessReserves(), initialExcessReserves, "Unexpected profit captured at par price");
-
-        vm.stopPrank();
     }
 
     function test_TreasuryProfitCaptured_DiscountPrice() public {
@@ -906,6 +913,8 @@ contract AppBondDepositoryTest is BaseTest {
 
         vm.stopPrank();
 
+        _syncOracles();
+
         // Depositor actions
         vm.startPrank(user1);
         mockQuoteToken.mint(user1, BOND_AMOUNT);
@@ -916,13 +925,14 @@ contract AppBondDepositoryTest is BaseTest {
         // Expect no profit since payout > reserves value when price < oracle
         bondDepository.deposit(bondId, BOND_AMOUNT, currentPrice, 0, user1);
 
+        vm.stopPrank();
+        _syncOracles();
+
         assertEq(
             rebaseController.excessReserves(),
             initialExcessReserves,
             "Profit should be zero when depositing at discount price"
         );
-
-        vm.stopPrank();
     }
 
     function test_CompleteBondVesting() public {

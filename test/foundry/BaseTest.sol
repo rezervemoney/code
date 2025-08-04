@@ -142,8 +142,8 @@ contract BaseTest is Test {
             address(staking),
             address(authority),
             address(burner),
-            address(totalReservesOracle),
-            address(totalSupplyOracle)
+            address(totalSupplyOracle),
+            address(totalReservesOracle)
         );
         rebaseController.setTargetPcts(0.1e18, 0.15e18, 0.5e18, 0.5e18);
 
@@ -190,5 +190,21 @@ contract BaseTest is Test {
         uint256 totalSupply = app.totalSupply();
         vm.prank(offchainUpdater);
         totalSupplyOracle.updateTotalSupplyOffchain(totalSupply);
+
+        // // sync onchain total supply
+        // vm.prank(address(bridgeL1));
+        // totalSupplyOracle.setCrosschainTotalSupply(1, 0);
+    }
+
+    function _syncReserves() internal {
+        // sync on chain
+        vm.prank(address(owner));
+        bridgeL1.syncMainnetReserves();
+
+        (uint256 rzrReserves, uint256 usdReserves) = totalReservesOracle.getOnchainReserves();
+
+        // sync off chain
+        vm.prank(offchainUpdater);
+        totalReservesOracle.updateReservesOffchain(rzrReserves, usdReserves);
     }
 }

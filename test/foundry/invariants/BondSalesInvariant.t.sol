@@ -51,6 +51,9 @@ contract BondSalesInvariant is BaseTest {
 
         vm.stopPrank();
 
+        _touchTotalSupplyOracle();
+        _syncReserves();
+
         // Cache the current backing ratio for later comparisons.
         lastBackingRatioE18 = rebaseController.currentBackingRatio();
 

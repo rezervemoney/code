@@ -25,7 +25,14 @@ contract RebaseControllerTest is BaseTest {
 
         // Mint some quote tokens to treasury to simulate PCV
         mockQuoteToken.mint(address(treasury), 1_000_000e18);
+
+        vm.stopPrank();
+
+        vm.startPrank(address(bridgeL1));
         treasury.syncReserves();
+        vm.stopPrank();
+
+        vm.startPrank(owner);
     }
 
     function test_Initialization() public view {

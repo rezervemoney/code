@@ -82,18 +82,21 @@ contract TotalReservesOracle is AppAccessControlled, ITotalReservesOracle {
 
         // Check deviation for RZR reserves
         require(
-            _offchainRzrReserves > _onchainRzrReserves * (1e18 - maxDeviation) / 1e18, "RZR reserves deviation too high"
+            _offchainRzrReserves >= _onchainRzrReserves * (1e18 - maxDeviation) / 1e18,
+            "RZR reserves deviation too high"
         );
         require(
-            _offchainRzrReserves < _onchainRzrReserves * (1e18 + maxDeviation) / 1e18, "RZR reserves deviation too low"
+            _offchainRzrReserves <= _onchainRzrReserves * (1e18 + maxDeviation) / 1e18, "RZR reserves deviation too low"
         );
 
         // Check deviation for USD reserves
         require(
-            _offchainUsdReserves > _onchainUsdReserves * (1e18 - maxDeviation) / 1e18, "USD reserves deviation too high"
+            _offchainUsdReserves >= _onchainUsdReserves * (1e18 - maxDeviation) / 1e18,
+            "USD reserves deviation too high"
         );
         require(
-            _offchainUsdReserves < _onchainUsdReserves * (1e18 + maxDeviation) / 1e18, "USD reserves deviation too high"
+            _offchainUsdReserves <= _onchainUsdReserves * (1e18 + maxDeviation) / 1e18,
+            "USD reserves deviation too high"
         );
 
         _rzrReserves = _onchainRzrReserves + reservesCreditRzr;

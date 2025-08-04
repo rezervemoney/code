@@ -70,8 +70,8 @@ contract TotalSupplyOracle is AppAccessControlled, ITotalSupplyOracle {
     function getTotalSupply() external view returns (uint256 _totalSupply) {
         uint256 _onchainSupply = getOnchainTotalSupply();
         uint256 _offchainSupply = getOffchainTotalSupply();
-        require(_offchainSupply > _onchainSupply * (1e18 - maxDeviation) / 1e18, "deviation too high");
-        require(_offchainSupply < _onchainSupply * (1e18 + maxDeviation) / 1e18, "deviation too low");
+        require(_offchainSupply >= _onchainSupply * (1e18 - maxDeviation) / 1e18, "deviation too high");
+        require(_offchainSupply <= _onchainSupply * (1e18 + maxDeviation) / 1e18, "deviation too low");
         _totalSupply = _onchainSupply + totalSupplyCredit - totalSupplyUnbacked;
     }
 

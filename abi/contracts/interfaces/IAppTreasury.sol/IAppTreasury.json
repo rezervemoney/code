@@ -164,6 +164,19 @@
   },
   {
     "inputs": [],
+    "name": "app",
+    "outputs": [
+      {
+        "internalType": "contract IApp",
+        "name": "app_",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "appOracle",
     "outputs": [
       {

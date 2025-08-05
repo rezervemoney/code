@@ -1,0 +1,42 @@
+// SPDX-License-Identifier: AGPL-3.0
+pragma solidity 0.8.28;
+
+import "../../interfaces/IBridgeL2.sol";
+import "../../interfaces/IStaking4626L2.sol";
+import "../../interfaces/IAppTreasury.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+contract BridgeL2Reader is IBridgeL2 {
+    IStaking4626L2 public liquidStaking;
+    IAppTreasury public treasury;
+    IERC20 public rzr;
+
+    /// @notice Initialize the contract
+    /// @param _treasury The address of the treasury
+    /// @param _liquidStaking The address of the liquid staking
+    constructor(address _treasury, address _liquidStaking) {
+        liquidStaking = IStaking4626L2(_liquidStaking);
+        treasury = IAppTreasury(_treasury);
+        rzr = IERC20(liquidStaking.asset());
+    }
+
+    /// @inheritdoc IBridgeL2
+    function data() public view returns (bytes memory) {
+        State memory state = getCurrentState();
+        return abi.encode(state.rzrSupply, state.rzrReserves, state.usdReserves);
+    }
+
+    /// @inheritdoc IBridge
+    function getCurrentState() public view returns (State memory) {
+        (uint256 rzrReserves, uint256 usdReserves) = treasury.calculateReserves();
+        uint256 staking4626Rate = liquidStaking.convertToAssets(1e18);
+        return State({
+            staking4626Rate: staking4626Rate,
+            rzrReserves: rzrReserves,
+            usdReserves: usdReserves,
+            rzrSupply: rzr.totalSupply(),
+            lstRzrSupply: liquidStaking.totalSupply(),
+            updatedAt: block.timestamp
+        });
+    }
+}

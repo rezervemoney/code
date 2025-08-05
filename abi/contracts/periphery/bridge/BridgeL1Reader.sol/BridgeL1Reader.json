@@ -1,5 +1,31 @@
 [
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_endpoint",
+        "type": "address"
+      },
+      {
+        "internalType": "uint32",
+        "name": "_readChannel",
+        "type": "uint32"
+      },
+      {
+        "internalType": "uint32",
+        "name": "_targetEid",
+        "type": "uint32"
+      },
+      {
+        "internalType": "address",
+        "name": "_targetContractAddress",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
     "inputs": [],
     "name": "InvalidDelegate",
     "type": "error"
@@ -10,8 +36,14 @@
     "type": "error"
   },
   {
-    "inputs": [],
-    "name": "InvalidInitialization",
+    "inputs": [
+      {
+        "internalType": "bytes",
+        "name": "options",
+        "type": "bytes"
+      }
+    ],
+    "name": "InvalidOptions",
     "type": "error"
   },
   {
@@ -39,11 +71,6 @@
       }
     ],
     "name": "NotEnoughNative",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "NotInitializing",
     "type": "error"
   },
   {
@@ -98,6 +125,22 @@
   {
     "inputs": [
       {
+        "internalType": "uint8",
+        "name": "bits",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint256",
+        "name": "value",
+        "type": "uint256"
+      }
+    ],
+    "name": "SafeCastOverflowedUintDowncast",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "token",
         "type": "address"
@@ -110,26 +153,43 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
-        "internalType": "contract IAppAuthority",
-        "name": "authority",
-        "type": "address"
+        "indexed": false,
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
       }
     ],
-    "name": "AuthorityUpdated",
+    "name": "DataReceived",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
       {
+        "components": [
+          {
+            "internalType": "uint32",
+            "name": "eid",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint16",
+            "name": "msgType",
+            "type": "uint16"
+          },
+          {
+            "internalType": "bytes",
+            "name": "options",
+            "type": "bytes"
+          }
+        ],
         "indexed": false,
-        "internalType": "uint64",
-        "name": "version",
-        "type": "uint64"
+        "internalType": "struct EnforcedOptionParam[]",
+        "name": "_enforcedOptions",
+        "type": "tuple[]"
       }
     ],
-    "name": "Initialized",
+    "name": "EnforcedOptionSet",
     "type": "event"
   },
   {
@@ -171,6 +231,63 @@
     "type": "event"
   },
   {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "rzrSupply",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "lstRzrSupply",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "rzrReserves",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "usdReserves",
+        "type": "uint256"
+      }
+    ],
+    "name": "StateReceived",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "READ_CHANNEL",
+    "outputs": [
+      {
+        "internalType": "uint32",
+        "name": "",
+        "type": "uint32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "READ_TYPE",
+    "outputs": [
+      {
+        "internalType": "uint16",
+        "name": "",
+        "type": "uint16"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "components": [
@@ -207,13 +324,29 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "authority",
+    "inputs": [
+      {
+        "internalType": "uint32",
+        "name": "_eid",
+        "type": "uint32"
+      },
+      {
+        "internalType": "uint16",
+        "name": "_msgType",
+        "type": "uint16"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_extraOptions",
+        "type": "bytes"
+      }
+    ],
+    "name": "combineOptions",
     "outputs": [
       {
-        "internalType": "contract IAppAuthority",
+        "internalType": "bytes",
         "name": "",
-        "type": "address"
+        "type": "bytes"
       }
     ],
     "stateMutability": "view",
@@ -233,96 +366,27 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "getCurrentState",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "staking4626Rate",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "rzrSupply",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "lstRzrSupply",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "rzrReserves",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "usdReserves",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "updatedAt",
-            "type": "uint256"
-          }
-        ],
-        "internalType": "struct IBridge.State",
-        "name": "",
-        "type": "tuple"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_lzEndpoint",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_delegate",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_authority",
-        "type": "address"
-      },
-      {
         "internalType": "uint32",
-        "name": "_l1Eid",
+        "name": "eid",
         "type": "uint32"
       },
       {
-        "internalType": "address",
-        "name": "_treasury",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_liquidStaking",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_totalReservesOracle",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_totalSupplyOracle",
-        "type": "address"
+        "internalType": "uint16",
+        "name": "msgType",
+        "type": "uint16"
       }
     ],
-    "name": "initialize",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "name": "enforcedOptions",
+    "outputs": [
+      {
+        "internalType": "bytes",
+        "name": "enforcedOption",
+        "type": "bytes"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -366,32 +430,6 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "l1Eid",
-    "outputs": [
-      {
-        "internalType": "uint32",
-        "name": "",
-        "type": "uint32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "liquidStaking",
-    "outputs": [
-      {
-        "internalType": "contract IStaking4626L2",
-        "name": "",
-        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -522,20 +560,31 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "renounceOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "rzr",
+    "inputs": [
+      {
+        "internalType": "bytes",
+        "name": "_extraOptions",
+        "type": "bytes"
+      }
+    ],
+    "name": "quoteReadFee",
     "outputs": [
       {
-        "internalType": "contract IERC20",
-        "name": "",
-        "type": "address"
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "nativeFee",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "lzTokenFee",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct MessagingFee",
+        "name": "fee",
+        "type": "tuple"
       }
     ],
     "stateMutability": "view",
@@ -544,12 +593,54 @@
   {
     "inputs": [
       {
-        "internalType": "contract IAppAuthority",
-        "name": "_newAuthority",
-        "type": "address"
+        "internalType": "bytes",
+        "name": "_extraOptions",
+        "type": "bytes"
       }
     ],
-    "name": "setAuthority",
+    "name": "readData",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "guid",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint64",
+            "name": "nonce",
+            "type": "uint64"
+          },
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "nativeFee",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "lzTokenFee",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct MessagingFee",
+            "name": "fee",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct MessagingReceipt",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "renounceOwnership",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -570,17 +661,29 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "registry",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "projectID",
-        "type": "uint256"
+        "components": [
+          {
+            "internalType": "uint32",
+            "name": "eid",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint16",
+            "name": "msgType",
+            "type": "uint16"
+          },
+          {
+            "internalType": "bytes",
+            "name": "options",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct EnforcedOptionParam[]",
+        "name": "_enforcedOptions",
+        "type": "tuple[]"
       }
     ],
-    "name": "setFeeMProjectId",
+    "name": "setEnforcedOptions",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -604,25 +707,29 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "syncRzrToL1LiquidStaking",
+    "inputs": [
+      {
+        "internalType": "uint32",
+        "name": "_channelId",
+        "type": "uint32"
+      },
+      {
+        "internalType": "bool",
+        "name": "_active",
+        "type": "bool"
+      }
+    ],
+    "name": "setReadChannel",
     "outputs": [],
-    "stateMutability": "view",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [],
-    "name": "syncStateToL1",
-    "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "totalReservesOracle",
+    "name": "targetContractAddress",
     "outputs": [
       {
-        "internalType": "contract ITotalReservesOracle",
+        "internalType": "address",
         "name": "",
         "type": "address"
       }
@@ -632,12 +739,12 @@
   },
   {
     "inputs": [],
-    "name": "totalSupplyOracle",
+    "name": "targetEid",
     "outputs": [
       {
-        "internalType": "contract ITotalSupplyOracle",
+        "internalType": "uint32",
         "name": "",
-        "type": "address"
+        "type": "uint32"
       }
     ],
     "stateMutability": "view",
@@ -655,22 +762,5 @@
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "treasury",
-    "outputs": [
-      {
-        "internalType": "contract IAppTreasury",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "stateMutability": "payable",
-    "type": "receive"
   }
 ]

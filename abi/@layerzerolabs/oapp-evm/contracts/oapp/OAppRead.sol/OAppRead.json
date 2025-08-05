@@ -11,11 +11,6 @@
   },
   {
     "inputs": [],
-    "name": "InvalidInitialization",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "LzTokenUnavailable",
     "type": "error"
   },
@@ -39,11 +34,6 @@
       }
     ],
     "name": "NotEnoughNative",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "NotInitializing",
     "type": "error"
   },
   {
@@ -96,62 +86,6 @@
     "type": "error"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      }
-    ],
-    "name": "SafeERC20FailedOperation",
-    "type": "error"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "contract IAppAuthority",
-        "name": "authority",
-        "type": "address"
-      }
-    ],
-    "name": "AuthorityUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint64",
-        "name": "version",
-        "type": "uint64"
-      }
-    ],
-    "name": "Initialized",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "l2Bridge",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint32",
-        "name": "eid",
-        "type": "uint32"
-      }
-    ],
-    "name": "L2BridgeRegistered",
-    "type": "event"
-  },
-  {
     "anonymous": false,
     "inputs": [
       {
@@ -188,38 +122,6 @@
     ],
     "name": "PeerSet",
     "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint32",
-        "name": "dstEid",
-        "type": "uint32"
-      },
-      {
-        "indexed": false,
-        "internalType": "bytes",
-        "name": "message",
-        "type": "bytes"
-      }
-    ],
-    "name": "StateSent",
-    "type": "event"
-  },
-  {
-    "inputs": [],
-    "name": "MAINNET_EID",
-    "outputs": [
-      {
-        "internalType": "uint32",
-        "name": "",
-        "type": "uint32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
   },
   {
     "inputs": [
@@ -259,19 +161,6 @@
   },
   {
     "inputs": [],
-    "name": "authority",
-    "outputs": [
-      {
-        "internalType": "contract IAppAuthority",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "endpoint",
     "outputs": [
       {
@@ -281,104 +170,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getCurrentState",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "staking4626Rate",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "rzrSupply",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "lstRzrSupply",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "rzrReserves",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "usdReserves",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "updatedAt",
-            "type": "uint256"
-          }
-        ],
-        "internalType": "struct IBridge.State",
-        "name": "",
-        "type": "tuple"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_lzEndpoint",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_delegate",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_authority",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_staking",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_staking4626",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_rzr",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_treasury",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_totalReservesOracle",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_totalSupplyOracle",
-        "type": "address"
-      }
-    ],
-    "name": "initialize",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -422,25 +213,6 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint32",
-        "name": "eid",
-        "type": "uint32"
-      }
-    ],
-    "name": "l2Bridges",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "l2Bridge",
-        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -571,78 +343,8 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      }
-    ],
-    "name": "purge",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_l2Bridge",
-        "type": "address"
-      },
-      {
-        "internalType": "uint32",
-        "name": "_eid",
-        "type": "uint32"
-      }
-    ],
-    "name": "registerL2Bridge",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "renounceOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "rzr",
-    "outputs": [
-      {
-        "internalType": "contract IApp",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint32[]",
-        "name": "_dstEid",
-        "type": "uint32[]"
-      }
-    ],
-    "name": "sentStateToL2",
-    "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "contract IAppAuthority",
-        "name": "_newAuthority",
-        "type": "address"
-      }
-    ],
-    "name": "setAuthority",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -656,24 +358,6 @@
       }
     ],
     "name": "setDelegate",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "registry",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "projectID",
-        "type": "uint256"
-      }
-    ],
-    "name": "setFeeMProjectId",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -697,62 +381,21 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "staking",
-    "outputs": [
+    "inputs": [
       {
-        "internalType": "contract IAppStaking",
-        "name": "",
-        "type": "address"
+        "internalType": "uint32",
+        "name": "_channelId",
+        "type": "uint32"
+      },
+      {
+        "internalType": "bool",
+        "name": "_active",
+        "type": "bool"
       }
     ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "staking4626",
-    "outputs": [
-      {
-        "internalType": "contract IStaking4626",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "syncMainnetReserves",
+    "name": "setReadChannel",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "totalReservesOracle",
-    "outputs": [
-      {
-        "internalType": "contract ITotalReservesOracle",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "totalSupplyOracle",
-    "outputs": [
-      {
-        "internalType": "contract ITotalSupplyOracle",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -767,22 +410,5 @@
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "treasury",
-    "outputs": [
-      {
-        "internalType": "contract IAppTreasury",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "stateMutability": "payable",
-    "type": "receive"
   }
 ]

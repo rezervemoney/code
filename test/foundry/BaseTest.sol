@@ -148,7 +148,7 @@ contract BaseTest is Test {
         rebaseController.setTargetPcts(0.1e18, 0.15e18, 0.5e18, 0.5e18);
 
         staking4626 = new Staking4626();
-        staking4626.initialize("RZR Vault", "vRZR", address(staking), address(authority), address(lz), owner);
+        staking4626.initialize(address(staking), address(authority), address(lz), owner);
 
         authority.addPolicy(address(treasury));
         authority.addPolicy(address(rebaseController));

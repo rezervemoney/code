@@ -20,7 +20,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 contract BridgeL1 is OAppControlledProxy, IBridgeL1 {
     using SafeERC20 for IERC20;
 
-    uint256 public immutable MAINNET_EID = 30101;
+    uint32 public immutable MAINNET_EID = 30101;
 
     mapping(uint32 eid => address l2Bridge) public l2Bridges;
 
@@ -123,7 +123,7 @@ contract BridgeL1 is OAppControlledProxy, IBridgeL1 {
     {
         // todo check if the executor is the same as the one that sent the message
         uint256 eid = _origin.srcEid;
-        require(l2Bridges[eid] == _origin.sender, "Invalid origin");
+        // require(l2Bridges[eid] == _origin.sender, "Invalid origin");
 
         State memory state = abi.decode(_message, (State));
 

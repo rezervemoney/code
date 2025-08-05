@@ -1,0 +1,12 @@
+[
+  {
+    "inputs": [],
+    "name": "InvalidType",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidVersion",
+    "type": "error"
+  }
+]

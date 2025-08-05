@@ -50,7 +50,7 @@ contract Staking4626L2 is IStaking4626L2, ERC20Upgradeable, OFTProxy, AppAccessC
     /// @inheritdoc IStaking4626L2
     function flushToL1() external onlyExecutor {
         underlying.safeTransfer(authority.bridge(), underlying.balanceOf(address(this)));
-        IBridgeL2(authority.bridge()).syncRzrToL1LiquidStaking();
+        // IBridgeL2(authority.bridge()).syncRzrToL1LiquidStaking();
     }
 
     /// @inheritdoc IERC4626

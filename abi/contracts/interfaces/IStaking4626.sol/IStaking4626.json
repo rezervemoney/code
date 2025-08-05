@@ -321,16 +321,6 @@
   {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "name",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "symbol",
-        "type": "string"
-      },
-      {
         "internalType": "address",
         "name": "_staking",
         "type": "address"

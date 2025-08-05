@@ -12,20 +12,11 @@ interface IStaking4626 is IERC4626 {
     function initializePosition(uint256 amount) external;
 
     /// @notice Initialize the staking contract
-    /// @param name The name of the staking contract
-    /// @param symbol The symbol of the staking contract
     /// @param _staking The address of the staking contract
     /// @param _authority The address of the authority contract
     /// @param _lzEndpoint The address of the LayerZero endpoint
     /// @param _delegate The address of the delegate
-    function initialize(
-        string memory name,
-        string memory symbol,
-        address _staking,
-        address _authority,
-        address _lzEndpoint,
-        address _delegate
-    ) external;
+    function initialize(address _staking, address _authority, address _lzEndpoint, address _delegate) external;
 
     /// @notice Set the buyout premium
     /// @param _buyoutPremiumBps The new buyout premium

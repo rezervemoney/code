@@ -20,7 +20,7 @@ contract Staking4626Test is BaseTest {
         // Deploy the vault implementation and initialize it
         vm.startPrank(owner);
         vault = new Staking4626();
-        vault.initialize("RZR Vault", "vRZR", address(staking), address(authority), address(lz), owner);
+        vault.initialize(address(staking), address(authority), address(lz), owner);
 
         // Seed the vault with RZR so that it can create the initial staking position
         app.mint(owner, INITIAL_ASSETS);

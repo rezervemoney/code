@@ -14,10 +14,10 @@ contract BridgeL2Reader is IBridgeL2 {
     /// @notice Initialize the contract
     /// @param _treasury The address of the treasury
     /// @param _liquidStaking The address of the liquid staking
-    constructor(address _treasury, address _liquidStaking) {
+    constructor(address _treasury, address _liquidStaking, address _rzr) {
         liquidStaking = IStaking4626L2(_liquidStaking);
         treasury = IAppTreasury(_treasury);
-        rzr = IERC20(liquidStaking.asset());
+        rzr = IERC20(_rzr);
     }
 
     /// @inheritdoc IBridgeL2
@@ -28,14 +28,22 @@ contract BridgeL2Reader is IBridgeL2 {
 
     /// @inheritdoc IBridge
     function getCurrentState() public view returns (State memory) {
-        (uint256 rzrReserves, uint256 usdReserves) = treasury.calculateReserves();
-        uint256 staking4626Rate = liquidStaking.convertToAssets(1e18);
+        (uint256 rzrReserves, uint256 usdReserves, uint256 staking4626Rate, uint256 lstRzrSupply) = (0, 0, 0, 0);
+        if (address(treasury) != address(0)) {
+            (rzrReserves, usdReserves) = treasury.calculateReserves();
+        }
+
+        if (address(liquidStaking) != address(0)) {
+            staking4626Rate = liquidStaking.convertToAssets(1e18);
+            lstRzrSupply = liquidStaking.totalSupply();
+        }
+
         return State({
             staking4626Rate: staking4626Rate,
             rzrReserves: rzrReserves,
             usdReserves: usdReserves,
             rzrSupply: rzr.totalSupply(),
-            lstRzrSupply: liquidStaking.totalSupply(),
+            lstRzrSupply: lstRzrSupply,
             updatedAt: block.timestamp
         });
     }

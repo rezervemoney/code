@@ -10,6 +10,11 @@
         "internalType": "address",
         "name": "_liquidStaking",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_rzr",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",

@@ -2,28 +2,49 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_endpoint",
-        "type": "address"
-      },
-      {
         "internalType": "uint32",
         "name": "_readChannel",
         "type": "uint32"
       },
       {
-        "internalType": "uint32",
-        "name": "_targetEid",
-        "type": "uint32"
+        "internalType": "address",
+        "name": "_endpoint",
+        "type": "address"
       },
       {
         "internalType": "address",
-        "name": "_targetContractAddress",
+        "name": "_authority",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_totalSupplyOracle",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_totalReservesOracle",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_treasury",
         "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
     "type": "constructor"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint32",
+        "name": "eid",
+        "type": "uint32"
+      }
+    ],
+    "name": "BridgeNotRegistered",
+    "type": "error"
   },
   {
     "inputs": [],
@@ -33,6 +54,11 @@
   {
     "inputs": [],
     "name": "InvalidEndpointCall",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidInitialization",
     "type": "error"
   },
   {
@@ -71,6 +97,11 @@
       }
     ],
     "name": "NotEnoughNative",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotInitializing",
     "type": "error"
   },
   {
@@ -153,13 +184,32 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "bytes",
-        "name": "data",
-        "type": "bytes"
+        "indexed": true,
+        "internalType": "contract IAppAuthority",
+        "name": "authority",
+        "type": "address"
       }
     ],
-    "name": "DataReceived",
+    "name": "AuthorityUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint32",
+        "name": "eid",
+        "type": "uint32"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "bridgeL2Reader",
+        "type": "address"
+      }
+    ],
+    "name": "BridgeRegistered",
     "type": "event"
   },
   {
@@ -190,6 +240,19 @@
       }
     ],
     "name": "EnforcedOptionSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint64",
+        "name": "version",
+        "type": "uint64"
+      }
+    ],
+    "name": "Initialized",
     "type": "event"
   },
   {
@@ -235,14 +298,14 @@
     "inputs": [
       {
         "indexed": false,
-        "internalType": "uint256",
-        "name": "rzrSupply",
-        "type": "uint256"
+        "internalType": "uint32",
+        "name": "eid",
+        "type": "uint32"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "lstRzrSupply",
+        "name": "rzrSupply",
         "type": "uint256"
       },
       {
@@ -260,6 +323,19 @@
     ],
     "name": "StateReceived",
     "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "MAINNET_EID",
+    "outputs": [
+      {
+        "internalType": "uint32",
+        "name": "",
+        "type": "uint32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "inputs": [],
@@ -318,6 +394,38 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "authority",
+    "outputs": [
+      {
+        "internalType": "contract IAppAuthority",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint32",
+        "name": "eid",
+        "type": "uint32"
+      }
+    ],
+    "name": "bridgeL2Readers",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "bridgeL2Reader",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -562,6 +670,11 @@
   {
     "inputs": [
       {
+        "internalType": "uint32",
+        "name": "_eid",
+        "type": "uint32"
+      },
+      {
         "internalType": "bytes",
         "name": "_extraOptions",
         "type": "bytes"
@@ -593,54 +706,37 @@
   {
     "inputs": [
       {
-        "internalType": "bytes",
-        "name": "_extraOptions",
-        "type": "bytes"
-      }
-    ],
-    "name": "readData",
-    "outputs": [
+        "internalType": "uint32[]",
+        "name": "_eids",
+        "type": "uint32[]"
+      },
       {
-        "components": [
-          {
-            "internalType": "bytes32",
-            "name": "guid",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "uint64",
-            "name": "nonce",
-            "type": "uint64"
-          },
-          {
-            "components": [
-              {
-                "internalType": "uint256",
-                "name": "nativeFee",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint256",
-                "name": "lzTokenFee",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct MessagingFee",
-            "name": "fee",
-            "type": "tuple"
-          }
-        ],
-        "internalType": "struct MessagingReceipt",
-        "name": "",
-        "type": "tuple"
+        "internalType": "address[]",
+        "name": "_bridgeL2Readers",
+        "type": "address[]"
       }
     ],
-    "stateMutability": "payable",
+    "name": "registerBridges",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [],
     "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IAppAuthority",
+        "name": "_newAuthority",
+        "type": "address"
+      }
+    ],
+    "name": "setAuthority",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -691,6 +787,24 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "registry",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "projectID",
+        "type": "uint256"
+      }
+    ],
+    "name": "setFeeMProjectId",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint32",
         "name": "_eid",
         "type": "uint32"
@@ -725,11 +839,71 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "targetContractAddress",
+    "inputs": [
+      {
+        "internalType": "uint32",
+        "name": "eid",
+        "type": "uint32"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_extraOptions",
+        "type": "bytes"
+      }
+    ],
+    "name": "syncL2Reserves",
     "outputs": [
       {
-        "internalType": "address",
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "guid",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint64",
+            "name": "nonce",
+            "type": "uint64"
+          },
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "nativeFee",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "lzTokenFee",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct MessagingFee",
+            "name": "fee",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct MessagingReceipt",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "syncMainnetReserves",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalReservesOracle",
+    "outputs": [
+      {
+        "internalType": "contract ITotalReservesOracle",
         "name": "",
         "type": "address"
       }
@@ -739,12 +913,12 @@
   },
   {
     "inputs": [],
-    "name": "targetEid",
+    "name": "totalSupplyOracle",
     "outputs": [
       {
-        "internalType": "uint32",
+        "internalType": "contract ITotalSupplyOracle",
         "name": "",
-        "type": "uint32"
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -761,6 +935,19 @@
     "name": "transferOwnership",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "treasury",
+    "outputs": [
+      {
+        "internalType": "contract IAppTreasury",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   }
 ]

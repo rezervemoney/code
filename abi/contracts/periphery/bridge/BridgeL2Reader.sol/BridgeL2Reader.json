@@ -2,6 +2,11 @@
   {
     "inputs": [
       {
+        "internalType": "uint32",
+        "name": "_eid",
+        "type": "uint32"
+      },
+      {
         "internalType": "address",
         "name": "_treasury",
         "type": "address"
@@ -25,9 +30,37 @@
     "name": "data",
     "outputs": [
       {
-        "internalType": "bytes",
+        "internalType": "uint32",
         "name": "",
-        "type": "bytes"
+        "type": "uint32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "eid",
+    "outputs": [
+      {
+        "internalType": "uint32",
+        "name": "",
+        "type": "uint32"
       }
     ],
     "stateMutability": "view",

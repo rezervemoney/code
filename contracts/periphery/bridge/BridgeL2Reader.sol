@@ -7,6 +7,7 @@ import "../../interfaces/IAppTreasury.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract BridgeL2Reader is IBridgeL2 {
+    uint32 public immutable eid;
     IStaking4626L2 public liquidStaking;
     IAppTreasury public treasury;
     IERC20 public rzr;
@@ -14,16 +15,17 @@ contract BridgeL2Reader is IBridgeL2 {
     /// @notice Initialize the contract
     /// @param _treasury The address of the treasury
     /// @param _liquidStaking The address of the liquid staking
-    constructor(address _treasury, address _liquidStaking, address _rzr) {
+    constructor(uint32 _eid, address _treasury, address _liquidStaking, address _rzr) {
+        eid = _eid;
         liquidStaking = IStaking4626L2(_liquidStaking);
         treasury = IAppTreasury(_treasury);
         rzr = IERC20(_rzr);
     }
 
     /// @inheritdoc IBridgeL2
-    function data() public view returns (bytes memory) {
+    function data() public view returns (uint32, uint256, uint256, uint256) {
         State memory state = getCurrentState();
-        return abi.encode(state.rzrSupply, state.rzrReserves, state.usdReserves);
+        return (eid, state.rzrSupply, state.rzrReserves, state.usdReserves);
     }
 
     /// @inheritdoc IBridge

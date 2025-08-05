@@ -84,6 +84,19 @@
     "inputs": [
       {
         "indexed": true,
+        "internalType": "uint256",
+        "name": "maxDeviation",
+        "type": "uint256"
+      }
+    ],
+    "name": "MaxDeviationUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
         "internalType": "address",
         "name": "offchainUpdater",
         "type": "address"
@@ -417,6 +430,19 @@
       }
     ],
     "name": "setFeeMProjectId",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_maxDeviation",
+        "type": "uint256"
+      }
+    ],
+    "name": "setMaxDeviation",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

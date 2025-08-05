@@ -2,6 +2,10 @@
 pragma solidity 0.8.28;
 
 interface ITotalSupplyOracle {
+    /// @notice Emitted when the max deviation is updated
+    /// @param maxDeviation The max deviation
+    event MaxDeviationUpdated(uint256 indexed maxDeviation);
+
     /// @notice Emitted when the offchain total supply is updated
     /// @param offchainTotalSupply The offchain total supply
     /// @param lastUpdatedOffchainAt The last time the offchain total supply was updated
@@ -91,4 +95,8 @@ interface ITotalSupplyOracle {
     /// @notice Set the total supply unbacked
     /// @param _totalSupplyUnbacked The total supply unbacked
     function setTotalSupplyUnbacked(uint256 _totalSupplyUnbacked) external;
+
+    /// @notice Set the max deviation
+    /// @param _maxDeviation The max deviation
+    function setMaxDeviation(uint256 _maxDeviation) external;
 }

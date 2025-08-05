@@ -2,45 +2,38 @@
 pragma solidity ^0.8.20;
 
 // Import necessary interfaces and contracts
-import {AddressCast} from "@layerzerolabs/lz-evm-protocol-v2/contracts/libs/AddressCast.sol";
-import {
-    MessagingFee,
-    MessagingReceipt
-} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroEndpointV2.sol";
-import {Origin} from "@layerzerolabs/oapp-evm/contracts/oapp/OApp.sol";
-import {OAppOptionsType3} from "@layerzerolabs/oapp-evm/contracts/oapp/libs/OAppOptionsType3.sol";
-import {OAppRead} from "@layerzerolabs/oapp-evm/contracts/oapp/OAppRead.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {EVMCallRequestV1, ReadCodecV1} from "@layerzerolabs/oapp-evm/contracts/oapp/libs/ReadCodecV1.sol";
-import {IBridgeL2} from "../../interfaces/IBridgeL2.sol";
-import {AppAccessControlled} from "../../core/AppAccessControlled.sol";
-import {ITotalSupplyOracle} from "../../interfaces/ITotalSupplyOracle.sol";
-import {ITotalReservesOracle} from "../../interfaces/ITotalReservesOracle.sol";
-import {IAppTreasury} from "../../interfaces/IAppTreasury.sol";
+import "../../core/AppAccessControlled.sol";
+import "../../interfaces/IAppTreasury.sol";
+import "../../interfaces/IBridgeL1Reader.sol";
+import "../../interfaces/IBridgeL2.sol";
+import "../../interfaces/ITotalReservesOracle.sol";
+import "../../interfaces/ITotalSupplyOracle.sol";
+import "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroEndpointV2.sol";
+import "@layerzerolabs/lz-evm-protocol-v2/contracts/libs/AddressCast.sol";
+import "@layerzerolabs/oapp-evm/contracts/oapp/libs/OAppOptionsType3.sol";
+import "@layerzerolabs/oapp-evm/contracts/oapp/libs/ReadCodecV1.sol";
+import "@layerzerolabs/oapp-evm/contracts/oapp/OApp.sol";
+import "@layerzerolabs/oapp-evm/contracts/oapp/OAppRead.sol";
 
-contract BridgeL1Reader is AppAccessControlled, OAppRead, OAppOptionsType3 {
+contract BridgeL1Reader is AppAccessControlled, OAppRead, OAppOptionsType3, IBridgeL1Reader {
     uint32 public immutable MAINNET_EID = 30101;
 
-    /// @notice Emitted when cross-chain function data is successfully received
-    event StateReceived(uint32 eid, uint256 rzrSupply, uint256 rzrReserves, uint256 usdReserves);
-
-    /// @notice Emitted when a bridge is registered
-    event BridgeRegistered(uint32 eid, address bridgeL2Reader);
-
-    /// @notice Error thrown when a bridge is not registered
-    error BridgeNotRegistered(uint32 eid);
-
-    /// @notice LayerZero read channel ID for cross-chain data requests
+    /// @inheritdoc IBridgeL1Reader
     uint32 public READ_CHANNEL;
 
     /// @notice Message type identifier for read operations
     uint16 public constant READ_TYPE = 1;
 
-    /// @notice Target chain's LayerZero Endpoint ID (immutable after deployment)
+    /// @inheritdoc IBridgeL1Reader
     mapping(uint32 eid => address bridgeL2Reader) public bridgeL2Readers;
 
+    /// @inheritdoc IBridgeL1Reader
     ITotalSupplyOracle public totalSupplyOracle;
+
+    /// @inheritdoc IBridgeL1Reader
     ITotalReservesOracle public totalReservesOracle;
+
+    /// @inheritdoc IBridgeL1Reader
     IAppTreasury public treasury;
 
     /// @notice Initialize the cross-chain read contract
@@ -70,9 +63,7 @@ contract BridgeL1Reader is AppAccessControlled, OAppRead, OAppOptionsType3 {
         }
     }
 
-    /// @notice Register a bridge on the target chain
-    /// @param _eids The LayerZero endpoint IDs of the target chains
-    /// @param _bridgeL2Readers The addresses of the bridges on the target chains
+    /// @inheritdoc IBridgeL1Reader
     function registerBridges(uint32[] calldata _eids, address[] calldata _bridgeL2Readers) external onlyGovernor {
         for (uint256 i = 0; i < _eids.length; i++) {
             bridgeL2Readers[_eids[i]] = _bridgeL2Readers[i];
@@ -80,24 +71,19 @@ contract BridgeL1Reader is AppAccessControlled, OAppRead, OAppOptionsType3 {
         }
     }
 
-    /// @notice Configure the LayerZero read channel for this contract
-    /// @dev Owner-only function to activate/deactivate read channels
-    /// @param _channelId Read channel ID to configure
-    /// @param _active Whether to activate (true) or deactivate (false) the channel
-    function setReadChannel(uint32 _channelId, bool _active) public override onlyGovernor {
+    /// @inheritdoc OAppRead
+    function setReadChannel(uint32 _channelId, bool _active) public virtual override onlyGovernor {
         _setPeer(_channelId, _active ? AddressCast.toBytes32(address(this)) : bytes32(0));
         READ_CHANNEL = _channelId;
     }
 
-    /// @notice Sync the mainnet reserves to the total reserves oracle
+    /// @inheritdoc IBridgeL1Reader
     function syncMainnetReserves() external onlyExecutor {
         (uint256 usdReserves, uint256 rzrReserves) = treasury.syncReserves();
         totalReservesOracle.setCrosschainReserves(MAINNET_EID, rzrReserves, usdReserves);
     }
 
-    /// @notice Read data from a single bridge on the target chain
-    /// @param eid The LayerZero endpoint ID of the target chain
-    /// @return receipt LayerZero messaging receipt containing transaction details
+    /// @inheritdoc IBridgeL1Reader
     function syncL2Reserves(uint32 eid, bytes calldata _extraOptions)
         external
         payable
@@ -105,6 +91,17 @@ contract BridgeL1Reader is AppAccessControlled, OAppRead, OAppOptionsType3 {
         returns (MessagingReceipt memory)
     {
         return _readData(eid, msg.value, _extraOptions);
+    }
+
+    /// @inheritdoc IBridgeL1Reader
+    function quoteReadFee(uint32 _eid, bytes calldata _extraOptions) external view returns (MessagingFee memory fee) {
+        // Build the same command as readSum and quote its cost
+        return _quote(
+            READ_CHANNEL,
+            _getCmd(_eid, bridgeL2Readers[_eid]),
+            combineOptions(READ_CHANNEL, READ_TYPE, _extraOptions),
+            false
+        );
     }
 
     /// @notice Internal function to read data from a single bridge on the target chain
@@ -127,19 +124,6 @@ contract BridgeL1Reader is AppAccessControlled, OAppRead, OAppOptionsType3 {
             combineOptions(READ_CHANNEL, READ_TYPE, _extraOptions),
             MessagingFee(fee, 0),
             payable(msg.sender)
-        );
-    }
-
-    /// @notice Get estimated messaging fee for a cross-chain read operation
-    /// @param _eid The LayerZero endpoint ID of the target chain
-    /// @return fee Estimated LayerZero messaging fee structure
-    function quoteReadFee(uint32 _eid, bytes calldata _extraOptions) external view returns (MessagingFee memory fee) {
-        // Build the same command as readSum and quote its cost
-        return _quote(
-            READ_CHANNEL,
-            _getCmd(_eid, bridgeL2Readers[_eid]),
-            combineOptions(READ_CHANNEL, READ_TYPE, _extraOptions),
-            false
         );
     }
 

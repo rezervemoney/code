@@ -51,8 +51,14 @@ contract TotalSupplyOracle is AppAccessControlled, ITotalSupplyOracle {
         __AppAccessControlled_init(_authority);
         rzr = IApp(_rzr);
         offchainUpdater = _offchainUpdater;
-        maxDeviation = 0.01e18; // 1% max deviation (100 basis points)
+        maxDeviation = 0.05e18; // 1% max deviation (100 basis points)
         staleness = 24.5 hours; // 24.5 hours staleness
+    }
+
+    /// @inheritdoc ITotalSupplyOracle
+    function setMaxDeviation(uint256 _maxDeviation) external onlyGovernor {
+        maxDeviation = _maxDeviation;
+        emit MaxDeviationUpdated(maxDeviation);
     }
 
     /// @inheritdoc ITotalSupplyOracle

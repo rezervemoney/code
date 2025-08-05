@@ -29,7 +29,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, ReentrancyGuardUpgrad
     /// @inheritdoc IAppTreasury
     uint256 public reserveFee;
 
-    function initialize(address _app, address _appOracle, address _authority) public reinitializer(10) {
+    function initialize(address _app, address _appOracle, address _authority) public reinitializer(11) {
         require(_app != address(0), "Zero address: app");
         require(_appOracle != address(0), "Zero address: appOracle");
         app = IApp(_app);
@@ -109,9 +109,6 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, ReentrancyGuardUpgrad
     /// @inheritdoc IAppTreasury
     function enable(address _address) external onlyGovernor {
         require(_address != address(0), "Zero address");
-
-        // RZR should not be enabled as a reserve; as this creates a circular dependency
-        require(_address != address(app), "RZR address");
 
         // add token into tokens array if not already added
         if (!_tokens.contains(_address)) _tokens.add(_address);

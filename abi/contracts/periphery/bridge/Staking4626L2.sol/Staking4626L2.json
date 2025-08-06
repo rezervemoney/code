@@ -567,6 +567,19 @@
   },
   {
     "inputs": [],
+    "name": "MAINNET_EID",
+    "outputs": [
+      {
+        "internalType": "uint32",
+        "name": "",
+        "type": "uint32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "SEND",
     "outputs": [
       {
@@ -891,7 +904,7 @@
     "inputs": [],
     "name": "flushToL1",
     "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "payable",
     "type": "function"
   },
   {
@@ -2135,5 +2148,9 @@
     ],
     "stateMutability": "pure",
     "type": "function"
+  },
+  {
+    "stateMutability": "payable",
+    "type": "receive"
   }
 ]

@@ -295,7 +295,7 @@
     "inputs": [],
     "name": "flushToL1",
     "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "payable",
     "type": "function"
   },
   {

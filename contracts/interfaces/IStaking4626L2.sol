@@ -26,5 +26,5 @@ interface IStaking4626L2 is IERC4626 {
     /// @notice Flush the underlying token to the L1 bridge
     /// @dev This function is used to flush the underlying token to the L1 bridge
     /// @dev This function is only callable by the bridge
-    function flushToL1() external;
+    function flushToL1() external payable;
 }

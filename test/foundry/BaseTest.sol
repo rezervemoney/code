@@ -19,7 +19,7 @@ import "../../contracts/periphery/Staking4626.sol";
 import "../../contracts/periphery/LoyaltyList.sol";
 import "../../contracts/oracles/crosschain/TotalSupplyOracle.sol";
 import "../../contracts/oracles/crosschain/TotalReservesOracle.sol";
-import "../../contracts/periphery/bridge/BridgeL1.sol";
+import "../../contracts/periphery/bridge/BridgeL1Reader.sol";
 
 contract BaseTest is Test {
     RebaseController public rebaseController;
@@ -49,7 +49,7 @@ contract BaseTest is Test {
 
     TotalReservesOracle public totalReservesOracle;
     TotalSupplyOracle public totalSupplyOracle;
-    BridgeL1 public bridgeL1;
+    BridgeL1Reader public bridgeL1Reader;
 
     address public owner = makeAddr("owner");
     address public user1 = makeAddr("user1");
@@ -119,17 +119,13 @@ contract BaseTest is Test {
         );
 
         // Deploy BridgeL1
-        bridgeL1 = new BridgeL1();
-        bridgeL1.initialize(
+        bridgeL1Reader = new BridgeL1Reader(
+            1,
             address(lz),
-            owner,
             address(authority),
-            address(staking),
-            address(staking4626),
-            address(app),
-            address(treasury),
             address(totalReservesOracle),
-            address(totalSupplyOracle)
+            address(totalSupplyOracle),
+            address(treasury)
         );
 
         sapp.setStakingContract(address(staking));
@@ -161,7 +157,7 @@ contract BaseTest is Test {
         authority.setOperationsTreasury(operationsTreasury);
         authority.setTreasury(address(treasury));
         authority.addReserveDepositor(address(bondDepository));
-        authority.setBridge(address(bridgeL1));
+        authority.setBridge(address(bridgeL1Reader));
 
         vm.label(address(app), "RZR");
         vm.label(address(sapp), "sRZR");
@@ -204,7 +200,7 @@ contract BaseTest is Test {
     function _syncReservesOracle() internal {
         // sync on chain
         vm.prank(address(owner));
-        bridgeL1.syncMainnetReserves();
+        bridgeL1Reader.syncMainnetReserves();
 
         (uint256 rzrReserves, uint256 usdReserves) = totalReservesOracle.getOnchainReserves();
 

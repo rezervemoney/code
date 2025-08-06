@@ -4,16 +4,19 @@ pragma solidity 0.8.28;
 import "../../core/AppAccessControlled.sol";
 import "../../interfaces/IBridgeL2.sol";
 import "../../interfaces/IStaking4626L2.sol";
+import "../oft-proxy/OFTProxy.sol";
+import "@layerzerolabs/oft-evm/contracts/interfaces/IOFT.sol";
 import "@layerzerolabs/oft-evm/contracts/OFT.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@layerzerolabs/oft-evm/contracts/OFTCore.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../oft-proxy/OFTProxy.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract Staking4626L2 is IStaking4626L2, ERC20Upgradeable, OFTProxy, AppAccessControlled {
     using SafeERC20 for IERC20;
+
+    uint32 public immutable MAINNET_EID = 30101;
 
     /// @notice The rate of the staking
     uint256 public rate;
@@ -33,6 +36,8 @@ contract Staking4626L2 is IStaking4626L2, ERC20Upgradeable, OFTProxy, AppAccessC
         if (rate == 0) rate = 1e18;
     }
 
+    receive() external payable {}
+
     function _checkOwner() internal view virtual override {
         if (!authority.isGovernor(_msgSender())) {
             revert OwnableUnauthorizedAccount(_msgSender());
@@ -48,9 +53,21 @@ contract Staking4626L2 is IStaking4626L2, ERC20Upgradeable, OFTProxy, AppAccessC
     }
 
     /// @inheritdoc IStaking4626L2
-    function flushToL1() external onlyExecutor {
-        underlying.safeTransfer(authority.bridge(), underlying.balanceOf(address(this)));
-        // IBridgeL2(authority.bridge()).syncRzrToL1LiquidStaking();
+    function flushToL1() external payable onlyExecutor {
+        uint256 balance = underlying.balanceOf(address(this));
+        IOFT(address(underlying)).send{value: msg.value}(
+            SendParam({
+                dstEid: MAINNET_EID,
+                to: bytes32(uint256(uint160(address(this)))),
+                amountLD: balance,
+                minAmountLD: 0,
+                extraOptions: "",
+                composeMsg: "",
+                oftCmd: ""
+            }),
+            MessagingFee({nativeFee: msg.value, lzTokenFee: 0}),
+            authority.bridge()
+        );
     }
 
     /// @inheritdoc IERC4626

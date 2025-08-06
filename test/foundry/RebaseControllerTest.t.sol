@@ -27,13 +27,7 @@ contract RebaseControllerTest is BaseTest {
         mockQuoteToken.mint(address(treasury), 1_000_000e18);
 
         vm.stopPrank();
-
-        vm.startPrank(address(bridgeL1));
-        treasury.syncReserves();
-        vm.stopPrank();
-
-        _syncOracles();
-
+        _syncReservesOracle();
         vm.startPrank(owner);
     }
 

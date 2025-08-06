@@ -135,7 +135,7 @@ contract AccessControlTest is BaseTest {
     //////////////////////////////////////////////////////////////*/
     function test_ExecutorCanSyncReserves() external {
         vm.prank(executor);
-        bridgeL1.syncMainnetReserves();
+        bridgeL1Reader.syncMainnetReserves();
     }
 
     function test_NonExecutorCannotSyncReserves() external {
@@ -153,7 +153,7 @@ contract AccessControlTest is BaseTest {
 
         _syncOracles();
 
-        vm.prank(address(bridgeL1));
+        vm.prank(address(bridgeL1Reader));
         treasury.syncReserves();
 
         vm.prank(executor);

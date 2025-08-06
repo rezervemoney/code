@@ -81,9 +81,7 @@ contract AppTreasuryTest is BaseTest {
         treasury.deposit(depositAmount, address(mockQuoteToken), profit);
 
         vm.stopPrank();
-
-        vm.startPrank(address(bridgeL1));
-        treasury.syncReserves();
+        _syncReservesOracle();
         vm.stopPrank();
 
         vm.startPrank(owner);
@@ -119,8 +117,7 @@ contract AppTreasuryTest is BaseTest {
         vm.stopPrank();
 
         // Audit reserves
-        vm.prank(address(bridgeL1));
-        treasury.syncReserves();
+        _syncReservesOracle();
         vm.startPrank(owner);
 
         // Verify reserves were calculated correctly

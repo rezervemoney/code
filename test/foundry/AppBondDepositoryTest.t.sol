@@ -605,8 +605,7 @@ contract AppBondDepositoryTest is BaseTest {
         mockQuoteToken3.mint(address(treasury), initialReserve3);
 
         vm.stopPrank();
-        vm.prank(address(bridgeL1));
-        treasury.syncReserves();
+        _syncReservesOracle();
         vm.startPrank(owner);
 
         // Calculate initial treasury value
@@ -624,8 +623,7 @@ contract AppBondDepositoryTest is BaseTest {
         mockOracle3.setPrice(0, 0.75e18); // 50% increase
 
         vm.stopPrank();
-        vm.prank(address(bridgeL1));
-        treasury.syncReserves();
+        _syncReservesOracle();
         vm.startPrank(owner);
 
         // Calculate new treasury value
@@ -645,8 +643,7 @@ contract AppBondDepositoryTest is BaseTest {
         mockOracle3.setPrice(0, 0.25e18); // 50% decrease from initial
 
         vm.stopPrank();
-        vm.prank(address(bridgeL1));
-        treasury.syncReserves();
+        _syncReservesOracle();
         vm.startPrank(owner);
 
         // Calculate final treasury value

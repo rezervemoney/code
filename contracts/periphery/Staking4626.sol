@@ -26,9 +26,11 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
 
     mapping(uint256 => bool) public unstakingTokenId;
 
+    uint256 public rate;
+
     function initialize(address _staking, address _authority, address _lzEndpoint, address _delegate)
         external
-        reinitializer(6)
+        reinitializer(7)
     {
         __OFTProxy_init("Liquid Staked Rezerve.money", "lstRZR", _lzEndpoint, _delegate);
         __AppAccessControlled_init(_authority);
@@ -39,10 +41,21 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
         buyoutPremiumBps = 3_000; // 30%
     }
 
+    function _checkOwner() internal view virtual override {
+        if (!authority.isGovernor(_msgSender())) {
+            revert OwnableUnauthorizedAccount(_msgSender());
+        }
+    }
+
     /// @inheritdoc IStaking4626
     function setBuyoutPremiumBps(uint256 _buyoutPremiumBps) external onlyGovernor {
         buyoutPremiumBps = _buyoutPremiumBps;
         emit BuyoutPremiumBpsUpdated(buyoutPremiumBps);
+    }
+
+    function overwriteRate(uint256 _rate) external onlyGovernor {
+        rate = _rate;
+        emit RateUpdated(rate);
     }
 
     /// @inheritdoc IStaking4626
@@ -54,7 +67,7 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
     }
 
     /// @inheritdoc IStaking4626
-    function harvest() external {
+    function harvest() external onlyExecutor {
         _harvest();
     }
 
@@ -79,7 +92,6 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
         require(assets > 0, "ZERO_ASSETS");
         shares = previewDeposit(assets);
         require(shares > 0, "ZERO_SHARES");
-
         _deposit(assets, shares, receiver);
     }
 
@@ -88,7 +100,6 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
         require(shares > 0, "ZERO_SHARES");
         assets = previewMint(shares);
         require(assets > 0, "ZERO_ASSETS");
-
         _deposit(assets, shares, receiver);
     }
 
@@ -101,11 +112,7 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
     {
         require(assets > 0, "ZERO_ASSETS");
         shares = previewWithdraw(assets);
-
-        if (msg.sender != owner) {
-            _spendAllowance(owner, msg.sender, shares);
-        }
-
+        if (msg.sender != owner) _spendAllowance(owner, msg.sender, shares);
         _withdraw(assets, shares, receiver, owner);
     }
 
@@ -118,20 +125,13 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
     {
         require(shares > 0, "ZERO_SHARES");
         assets = previewRedeem(shares);
-
-        if (msg.sender != owner) {
-            _spendAllowance(owner, msg.sender, shares);
-        }
-
+        if (msg.sender != owner) _spendAllowance(owner, msg.sender, shares);
         _withdraw(assets, shares, receiver, owner);
     }
 
     /// @inheritdoc IERC4626
     function totalAssets() public view override returns (uint256 totalManagedAssets) {
-        require(tokenId != 0, "No position");
-        require(staking.ownerOf(tokenId) == address(this), "Not owner");
-        IAppStaking.Position memory position = staking.positions(tokenId);
-        totalManagedAssets = position.amount + staking.earned(tokenId) - initialAmount;
+        totalManagedAssets = totalSupply() * rate / 1e18;
     }
 
     // -----------------------------------------------------------------------
@@ -200,8 +200,6 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
     function _deposit(uint256 assets, uint256 shares, address receiver) internal {
         appToken.safeTransferFrom(msg.sender, address(this), assets);
         _mint(receiver, shares);
-        _increaseAmount(assets);
-        _harvest();
         emit Deposit(msg.sender, receiver, assets, shares);
     }
 
@@ -211,6 +209,9 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
         uint256 rewards = staking.claimRewards(tokenId);
         _increaseAmount(rewards + balance);
         emit RewardsCompounded(rewards);
+
+        rate = _positionValue() * 1e18 / totalSupply();
+        emit RateUpdated(rate);
     }
 
     /// @dev Increase the amount of the position by `amount`
@@ -290,21 +291,22 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
         return _convertToAssets(shares, Math.Rounding.Floor);
     }
 
+    function execute(address _to, uint256 _value, bytes calldata _data) external onlyGovernor {
+        (bool success,) = _to.call{value: _value}(_data);
+        require(success, "Staking4626: execute failed");
+    }
+
     // -----------------------------------------------------------------------
     // Internal conversion helpers (replicating OZ math)
     // -----------------------------------------------------------------------
 
     function _convertToShares(uint256 assets, Math.Rounding rounding) internal view returns (uint256) {
-        if (totalSupply() == 0) {
-            return assets; // 1:1 after tax already handled by caller when supply = 0
-        }
+        if (totalSupply() == 0) return assets; // 1:1 after tax already handled by caller when supply = 0
         return assets.mulDiv(totalSupply(), totalAssets() + 1, rounding);
     }
 
     function _convertToAssets(uint256 shares, Math.Rounding rounding) internal view returns (uint256) {
-        if (totalSupply() == 0) {
-            return shares;
-        }
+        if (totalSupply() == 0) return shares;
         return shares.mulDiv(totalAssets() + 1, totalSupply(), rounding);
     }
 }

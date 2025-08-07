@@ -189,13 +189,13 @@ contract AppUIHelperWrite is AppUIHelperBase {
     /// @param token The token to purge
     function _purge(address token) internal {
         if (token == address(0)) {
-            (bool success,) = msg.sender.call{value: address(this).balance}("");
-            require(success, "Failed to send ETH");
+            if (address(this).balance > 0) {
+                (bool success,) = msg.sender.call{value: address(this).balance}("");
+                require(success, "Failed to send ETH");
+            }
         } else {
             uint256 balance = IERC20(token).balanceOf(address(this));
-            if (balance > 0) {
-                IERC20(token).safeTransfer(msg.sender, balance);
-            }
+            if (balance > 0) IERC20(token).safeTransfer(msg.sender, balance);
         }
     }
 

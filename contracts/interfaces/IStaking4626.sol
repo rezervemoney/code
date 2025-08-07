@@ -30,6 +30,10 @@ interface IStaking4626 is IERC4626 {
     /// @notice Recreate the position
     function recreatePosition() external;
 
+    /// @notice Emitted when the rate is updated
+    /// @param rate The new rate
+    event RateUpdated(uint256 rate);
+
     /// @notice Emitted when rewards are compounded into the position
     /// @param amount The amount of rewards compounded
     event RewardsCompounded(uint256 amount);

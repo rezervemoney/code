@@ -123,8 +123,8 @@ contract BaseTest is Test {
             1,
             address(lz),
             address(authority),
-            address(totalReservesOracle),
             address(totalSupplyOracle),
+            address(totalReservesOracle),
             address(treasury)
         );
 
@@ -201,6 +201,10 @@ contract BaseTest is Test {
         // sync on chain
         vm.prank(address(owner));
         bridgeL1Reader.syncMainnetReserves();
+
+        mockOracle.touchTimestamp();
+        mockOracle2.touchTimestamp();
+        mockOracle3.touchTimestamp();
 
         (uint256 rzrReserves, uint256 usdReserves) = totalReservesOracle.getOnchainReserves();
 

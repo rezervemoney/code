@@ -30,7 +30,7 @@ contract TotalSupplyOracleTest is BaseTest {
         assertEq(address(totalSupplyOracle.authority()), address(authority));
         assertEq(totalSupplyOracle.offchainUpdater(), offchainUpdater);
         assertEq(address(totalSupplyOracle.rzr()), address(app));
-        assertEq(totalSupplyOracle.maxDeviation(), 1e16); // 1% (100 basis points)
+        assertEq(totalSupplyOracle.maxDeviation(), 0.05e18); // 5%
         assertEq(totalSupplyOracle.staleness(), 24.5 hours);
     }
 

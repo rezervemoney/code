@@ -39,7 +39,9 @@ contract TreasuryReserveFeeTest is BaseTest {
         // Perform deposit
         uint256 dreMinted = treasury.deposit(depositAmount, address(mockQuoteToken), profit);
 
+        vm.stopPrank();
         _syncReservesOracle();
+        vm.startPrank(owner);
 
         // Verify token transfers
         assertEq(

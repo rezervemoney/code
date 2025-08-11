@@ -16,13 +16,7 @@ contract AppUIHelperRead is AppUIHelperBase {
         external
         view
         returns (
-            uint256 tvl,
-            uint256 totalSupply,
-            uint256 totalStaked,
-            uint256 totalRewards,
-            uint256 currentAPR,
-            uint256 currentSpotPrice,
-            uint256 unbackedSupply,
+            ProtocolInfo memory protocolInfo,
             bytes8 referralCode,
             TokenInfo[] memory tokenInfos,
             StakingPositionInfo[] memory stakingPositions,
@@ -31,28 +25,51 @@ contract AppUIHelperRead is AppUIHelperBase {
         )
     {
         // Get protocol-wide stats
-        totalSupply = totalSupplyOracle.getTotalSupply();
-        totalStaked = staking.totalStaked();
-        totalRewards = staking.rewardPerToken();
-        currentAPR = calculateAPRRaw(totalStaked);
-        currentSpotPrice = getSpotPrice();
-        projectedEpochRate = getProjectedEpochRate();
-        tokenInfos = getTokenInfos(user, bondTokens);
-        stakingPositions = getStakingPositions(user);
         bondPositions = getBondPositions(user);
-        unbackedSupply = totalSupplyOracle.totalSupplyUnbacked();
+        projectedEpochRate = getProjectedEpochRate();
+        protocolInfo = getProtocolInfo();
         referralCode = referrals.referrerCodes(user);
-        tvl = getTvl();
+        stakingPositions = getStakingPositions(user);
+        tokenInfos = getTokenInfos(user, bondTokens);
     }
 
-    function getTvl() internal view returns (uint256) {
-        (uint256 rzrReserves, uint256 usdReserves) = totalReservesOracle.getTotalReserves();
-        return usdReserves + rzrReserves * getSpotPrice() / 1e18;
+    function getProtocolInfo() internal view returns (ProtocolInfo memory protocolInfo) {
+        if (address(totalReservesOracle) != address(0)) {
+            (uint256 rzrReserves, uint256 usdReserves) = totalReservesOracle.getTotalReserves();
+            protocolInfo.tvlRzr = rzrReserves;
+            protocolInfo.tvlUsd = usdReserves;
+        }
+
+        if (address(staking) != address(0)) {
+            protocolInfo.totalStaked = staking.totalStaked();
+            protocolInfo.totalRewards = staking.rewardPerToken();
+        }
+
+        if (address(totalSupplyOracle) != address(0)) {
+            protocolInfo.totalSupply = totalSupplyOracle.getTotalSupply();
+            // protocolInfo.totalSupplyUnbacked = totalSupplyOracle.totalSupplyUnbacked();
+            protocolInfo.unbackedSupply = totalSupplyOracle.totalSupplyUnbacked();
+        }
+
+        protocolInfo.currentAPR = calculateAPR();
+        protocolInfo.currentSpotPrice = getSpotPrice();
+        protocolInfo.currentEthPrice = getEthPrice();
     }
 
     function getSpotPrice() internal view returns (uint256) {
-        (, uint256 spotPrice,) = spotOracle.getPriceForAmount(1e18);
-        return spotPrice;
+        if (address(spotOracle) != address(0)) {
+            (, uint256 spotPrice,) = spotOracle.getPriceForAmount(1e18);
+            return spotPrice;
+        }
+        return 0;
+    }
+
+    function getEthPrice() internal view returns (uint256) {
+        if (address(ethOracle) != address(0)) {
+            (, uint256 ethPrice,) = ethOracle.getPriceForAmount(1e18);
+            return ethPrice;
+        }
+        return 0;
     }
 
     function getTokenInfos(address user, address[] memory bondTokens)
@@ -127,6 +144,8 @@ contract AppUIHelperRead is AppUIHelperBase {
     }
 
     function getStakingPositions(address user) internal view returns (StakingPositionInfo[] memory stakingPositions) {
+        if (address(staking) == address(0)) return stakingPositions;
+
         uint256 stakingBalance = staking.balanceOf(user);
         stakingPositions = new StakingPositionInfo[](stakingBalance);
 
@@ -157,6 +176,8 @@ contract AppUIHelperRead is AppUIHelperBase {
     }
 
     function getBondPositions(address user) internal view returns (BondPositionInfo[] memory bondPositions) {
+        if (address(bondDepository) == address(0)) return bondPositions;
+
         uint256 bondBalance = bondDepository.balanceOf(user);
         bondPositions = new BondPositionInfo[](bondBalance);
 
@@ -185,6 +206,8 @@ contract AppUIHelperRead is AppUIHelperBase {
         view
         returns (BondPositionInfo[] memory bondPositions)
     {
+        if (address(bondDepository) == address(0)) return bondPositions;
+
         endIndex = endIndex > bondDepository.totalSupply() ? bondDepository.totalSupply() : endIndex;
         bondPositions = new BondPositionInfo[](endIndex - startIndex);
 
@@ -208,6 +231,7 @@ contract AppUIHelperRead is AppUIHelperBase {
     }
 
     function getProjectedEpochRate() internal view returns (ProjectedEpochRate memory projectedEpochRate) {
+        if (address(rebaseController) == address(0)) return projectedEpochRate;
         (uint256 apr, uint256 epochRate, uint256 toStakers, uint256 toOps, uint256 toBurner) =
             rebaseController.projectedEpochRate();
         projectedEpochRate =
@@ -217,10 +241,12 @@ contract AppUIHelperRead is AppUIHelperBase {
     /// @notice Calculate the current APR
     /// @return The current APR as a percentage (e.g., 1000 = 10%)
     function calculateAPR() public view returns (uint256) {
+        if (address(staking) == address(0)) return 0;
         return calculateAPRRaw(staking.totalStaked());
     }
 
     function calculateAPRRaw(uint256 totalStaked) public view returns (uint256) {
+        if (address(rebaseController) == address(0)) return 0;
         (,, uint256 toStakers,,) = rebaseController.projectedEpochRate();
         return toStakers * 1e18 * 365 * 4 / totalStaked;
     }
@@ -231,6 +257,7 @@ contract AppUIHelperRead is AppUIHelperBase {
         returns (StakingPositionInfo[] memory)
     {
         StakingPositionInfo[] memory positions = new StakingPositionInfo[](endingIndex - startingIndex);
+        if (address(staking) == address(0)) return positions;
 
         for (uint256 i = startingIndex; i < endingIndex; i++) {
             IAppStaking.Position memory position = staking.positions(i);
@@ -265,6 +292,7 @@ contract AppUIHelperRead is AppUIHelperBase {
         view
         returns (IAppBondDepository.Bond[] memory bonds, uint256[] memory currentPrices)
     {
+        if (address(bondDepository) == address(0)) return (bonds, currentPrices);
         bonds = new IAppBondDepository.Bond[](bondIds.length);
         currentPrices = new uint256[](bondIds.length);
 

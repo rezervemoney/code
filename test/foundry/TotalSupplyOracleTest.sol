@@ -45,7 +45,7 @@ contract TotalSupplyOracleTest is BaseTest {
         uint256 rzrSupply = 500e18;
 
         vm.prank(owner);
-        totalSupplyOracle.overwriteOnchainTotalSupply(l2chainSupply);
+        totalSupplyOracle.overwriteCrosschainTotalSupply(1, l2chainSupply);
 
         // Mint some RZR tokens
         vm.prank(owner);
@@ -83,7 +83,7 @@ contract TotalSupplyOracleTest is BaseTest {
         uint256 rzrSupply = 500e18;
 
         vm.prank(owner);
-        totalSupplyOracle.overwriteOnchainTotalSupply(l2chainSupply);
+        totalSupplyOracle.overwriteCrosschainTotalSupply(1, l2chainSupply);
 
         vm.prank(owner);
         app.mint(address(this), rzrSupply);
@@ -114,7 +114,7 @@ contract TotalSupplyOracleTest is BaseTest {
         uint256 rzrSupply = 500e18;
 
         vm.prank(owner);
-        totalSupplyOracle.overwriteOnchainTotalSupply(l2chainSupply);
+        totalSupplyOracle.overwriteCrosschainTotalSupply(1, l2chainSupply);
 
         vm.prank(owner);
         app.mint(address(this), rzrSupply);
@@ -133,19 +133,19 @@ contract TotalSupplyOracleTest is BaseTest {
         uint256 eid = 1;
 
         // Initially disabled
-        assertEq(totalSupplyOracle.enabledEids(eid), false);
+        assertEq(totalSupplyOracle.isEidEnabled(eid), false);
 
         vm.prank(owner);
         totalSupplyOracle.toggleEid(eid);
 
         // Now enabled
-        assertEq(totalSupplyOracle.enabledEids(eid), true);
+        assertEq(totalSupplyOracle.isEidEnabled(eid), true);
 
         vm.prank(owner);
         totalSupplyOracle.toggleEid(eid);
 
         // Back to disabled
-        assertEq(totalSupplyOracle.enabledEids(eid), false);
+        assertEq(totalSupplyOracle.isEidEnabled(eid), false);
     }
 
     function test_ToggleEid_RevertIfNotGovernor() public {
@@ -196,25 +196,6 @@ contract TotalSupplyOracleTest is BaseTest {
         assertEq(totalSupplyOracle.crosschainTotalSupply(eid), crosschainSupply);
     }
 
-    function test_OverwriteCrosschainTotalSupply_RevertIfNotGovernor() public {
-        vm.expectRevert("UNAUTHORIZED");
-        totalSupplyOracle.overwriteCrosschainTotalSupply(1, 1000e18);
-    }
-
-    function test_OverwriteOnchainTotalSupply() public {
-        uint256 onchainSupply = 1200e18;
-
-        vm.prank(owner);
-        totalSupplyOracle.overwriteOnchainTotalSupply(onchainSupply);
-
-        assertEq(totalSupplyOracle.l2chainTotalSupply(), onchainSupply);
-    }
-
-    function test_OverwriteOnchainTotalSupply_RevertIfNotGovernor() public {
-        vm.expectRevert("UNAUTHORIZED");
-        totalSupplyOracle.overwriteOnchainTotalSupply(1000e18);
-    }
-
     function test_SetTotalSupplyCredit() public {
         uint256 credit = 200e18;
 
@@ -256,16 +237,11 @@ contract TotalSupplyOracleTest is BaseTest {
         vm.prank(owner);
         totalSupplyOracle.overwriteCrosschainTotalSupply(eid, oldSupply);
 
-        // Set initial l2chain total supply
-        vm.prank(owner);
-        totalSupplyOracle.overwriteOnchainTotalSupply(oldSupply);
-
         // Update via bridge
         vm.prank(bridge);
         totalSupplyOracle.setCrosschainTotalSupply(eid, newSupply);
 
         assertEq(totalSupplyOracle.crosschainTotalSupply(eid), newSupply);
-        assertEq(totalSupplyOracle.l2chainTotalSupply(), oldSupply - oldSupply + newSupply);
     }
 
     function test_SetCrosschainTotalSupply_RevertIfNotBridge() public {
@@ -295,12 +271,6 @@ contract TotalSupplyOracleTest is BaseTest {
         vm.prank(owner);
         totalSupplyOracle.overwriteCrosschainTotalSupply(1, 500e18);
 
-        // Test TotalSupplyOnchainUpdated event
-        vm.expectEmit(true, false, false, false);
-        emit ITotalSupplyOracle.TotalSupplyOnchainUpdated(1000e18);
-        vm.prank(owner);
-        totalSupplyOracle.overwriteOnchainTotalSupply(1000e18);
-
         // Test TotalSupplyCreditUpdated event
         vm.expectEmit(true, false, false, false);
         emit ITotalSupplyOracle.TotalSupplyCreditUpdated(200e18);
@@ -329,7 +299,7 @@ contract TotalSupplyOracleTest is BaseTest {
 
         // Set onchain supply
         vm.prank(owner);
-        totalSupplyOracle.overwriteOnchainTotalSupply(l2chainSupply);
+        totalSupplyOracle.overwriteCrosschainTotalSupply(1, l2chainSupply);
 
         // Mint RZR tokens
         vm.prank(owner);
@@ -351,7 +321,7 @@ contract TotalSupplyOracleTest is BaseTest {
         // Set crosschain supplies
         totalSupplyOracle.overwriteCrosschainTotalSupply(1, 300e18);
         totalSupplyOracle.overwriteCrosschainTotalSupply(2, 200e18);
-        totalSupplyOracle.overwriteOnchainTotalSupply(500e18);
+        totalSupplyOracle.overwriteCrosschainTotalSupply(3, 500e18);
         vm.stopPrank();
 
         // Update via bridge
@@ -359,8 +329,8 @@ contract TotalSupplyOracleTest is BaseTest {
         totalSupplyOracle.setCrosschainTotalSupply(1, 350e18);
 
         // Verify final state
-        assertEq(totalSupplyOracle.enabledEids(1), true);
-        assertEq(totalSupplyOracle.enabledEids(2), true);
+        assertEq(totalSupplyOracle.isEidEnabled(1), true);
+        assertEq(totalSupplyOracle.isEidEnabled(2), true);
         assertEq(totalSupplyOracle.crosschainTotalSupply(1), 350e18);
         assertEq(totalSupplyOracle.crosschainTotalSupply(2), 200e18);
         assertEq(totalSupplyOracle.getTotalSupply(), l2chainSupply + rzrSupply + credit - unbacked);

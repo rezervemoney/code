@@ -4,6 +4,7 @@ pragma solidity 0.8.28;
 import "../../interfaces/ITotalSupplyOracle.sol";
 import "../../interfaces/IApp.sol";
 import "../../core/AppAccessControlled.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 /**
  * @title TotalSupplyOracle
@@ -13,6 +14,10 @@ import "../../core/AppAccessControlled.sol";
  * the need for a single point of failure. The max deviation is set to 1% to avoid any issues with the oracle.
  */
 contract TotalSupplyOracle is AppAccessControlled, ITotalSupplyOracle {
+    using EnumerableSet for EnumerableSet.UintSet;
+
+    EnumerableSet.UintSet private _enabledEids;
+
     /// @notice The maximum deviation from the onchain total supply
     uint256 public maxDeviation;
 
@@ -25,17 +30,11 @@ contract TotalSupplyOracle is AppAccessControlled, ITotalSupplyOracle {
     /// @notice The last time the offchain total supply was updated
     uint256 public lastUpdatedOffchainAt;
 
-    /// @notice The onchain total supply across all other chains
-    uint256 public l2chainTotalSupply;
-
     /// @notice The address of the offchain updater
     address public offchainUpdater;
 
     /// @notice The crosschain total supply for each chain
     mapping(uint256 eid => uint256 totalSupply) public crosschainTotalSupply;
-
-    /// @notice The enabled status for each chain
-    mapping(uint256 eid => bool enabled) public enabledEids;
 
     /// @notice The RZR token
     IApp public rzr;
@@ -47,7 +46,7 @@ contract TotalSupplyOracle is AppAccessControlled, ITotalSupplyOracle {
     uint256 public totalSupplyUnbacked;
 
     /// @inheritdoc ITotalSupplyOracle
-    function initialize(address _authority, address _offchainUpdater, address _rzr) external initializer {
+    function initialize(address _authority, address _offchainUpdater, address _rzr) external reinitializer(2) {
         __AppAccessControlled_init(_authority);
         rzr = IApp(_rzr);
         offchainUpdater = _offchainUpdater;
@@ -63,6 +62,13 @@ contract TotalSupplyOracle is AppAccessControlled, ITotalSupplyOracle {
 
     /// @inheritdoc ITotalSupplyOracle
     function getOnchainTotalSupply() public view returns (uint256 _onchainTotalSupply) {
+        uint256 l2chainTotalSupply = 0;
+        uint256 eidCount = _enabledEids.length();
+        for (uint256 i = 0; i < eidCount; i++) {
+            uint256 eid = _enabledEids.at(i);
+            if (eid == 30101) continue; // ignore mainnet
+            l2chainTotalSupply += crosschainTotalSupply[eid];
+        }
         _onchainTotalSupply = l2chainTotalSupply + rzr.totalSupply();
     }
 
@@ -83,8 +89,22 @@ contract TotalSupplyOracle is AppAccessControlled, ITotalSupplyOracle {
 
     /// @inheritdoc ITotalSupplyOracle
     function toggleEid(uint256 eid) external onlyGovernor {
-        enabledEids[eid] = !enabledEids[eid];
-        emit EidToggled(eid, enabledEids[eid]);
+        if (_enabledEids.contains(eid)) {
+            _enabledEids.remove(eid);
+        } else {
+            _enabledEids.add(eid);
+        }
+        emit EidToggled(eid, _enabledEids.contains(eid));
+    }
+
+    /// @inheritdoc ITotalSupplyOracle
+    function getEnabledEids() external view returns (uint256[] memory) {
+        return _enabledEids.values();
+    }
+
+    /// @inheritdoc ITotalSupplyOracle
+    function isEidEnabled(uint256 eid) external view returns (bool) {
+        return _enabledEids.contains(eid);
     }
 
     /// @inheritdoc ITotalSupplyOracle
@@ -103,15 +123,9 @@ contract TotalSupplyOracle is AppAccessControlled, ITotalSupplyOracle {
 
     /// @inheritdoc ITotalSupplyOracle
     function overwriteCrosschainTotalSupply(uint256 eid, uint256 _crosschainTotalSupply) external onlyGovernor {
-        require(enabledEids[eid], "Eid not enabled");
+        require(_enabledEids.contains(eid), "Eid not enabled");
         crosschainTotalSupply[eid] = _crosschainTotalSupply;
         emit CrosschainTotalSupplyUpdated(eid, _crosschainTotalSupply, block.timestamp);
-    }
-
-    /// @inheritdoc ITotalSupplyOracle
-    function overwriteOnchainTotalSupply(uint256 _onchainTotalSupply) external onlyGovernor {
-        l2chainTotalSupply = _onchainTotalSupply;
-        emit TotalSupplyOnchainUpdated(l2chainTotalSupply);
     }
 
     /// @inheritdoc ITotalSupplyOracle
@@ -128,12 +142,9 @@ contract TotalSupplyOracle is AppAccessControlled, ITotalSupplyOracle {
 
     /// @inheritdoc ITotalSupplyOracle
     function setCrosschainTotalSupply(uint256 eid, uint256 _crosschainTotalSupply) external onlyBridge {
-        require(enabledEids[eid], "Eid not enabled");
+        require(_enabledEids.contains(eid), "Eid not enabled");
         uint256 oldCrosschainTotalSupply = crosschainTotalSupply[eid];
         crosschainTotalSupply[eid] = _crosschainTotalSupply;
         emit CrosschainTotalSupplyUpdated(eid, oldCrosschainTotalSupply, _crosschainTotalSupply);
-
-        l2chainTotalSupply = l2chainTotalSupply - oldCrosschainTotalSupply + _crosschainTotalSupply;
-        emit TotalSupplyOnchainUpdated(l2chainTotalSupply);
     }
 }

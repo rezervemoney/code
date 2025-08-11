@@ -1,0 +1,72 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "amount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "declaredValue",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "rewardPerTokenPaid",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "rewards",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "withdrawCooldownEnd",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "withdrawCooldownStart",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "buyCooldownEnd",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "taxPerSecond",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "taxCredit",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "lastTaxCollectionTime",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct IAppStaking.Position",
+        "name": "position",
+        "type": "tuple"
+      }
+    ],
+    "name": "mint",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]

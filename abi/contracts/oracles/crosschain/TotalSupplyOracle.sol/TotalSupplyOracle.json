@@ -143,19 +143,6 @@
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "onchainTotalSupply",
-        "type": "uint256"
-      }
-    ],
-    "name": "TotalSupplyOnchainUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
         "name": "totalSupplyUnbacked",
         "type": "uint256"
       }
@@ -196,19 +183,13 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "eid",
-        "type": "uint256"
-      }
-    ],
-    "name": "enabledEids",
+    "inputs": [],
+    "name": "getEnabledEids",
     "outputs": [
       {
-        "internalType": "bool",
-        "name": "enabled",
-        "type": "bool"
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
       }
     ],
     "stateMutability": "view",
@@ -277,13 +258,19 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "l2chainTotalSupply",
-    "outputs": [
+    "inputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "eid",
         "type": "uint256"
+      }
+    ],
+    "name": "isEidEnabled",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -355,19 +342,6 @@
       }
     ],
     "name": "overwriteCrosschainTotalSupply",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_onchainTotalSupply",
-        "type": "uint256"
-      }
-    ],
-    "name": "overwriteOnchainTotalSupply",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

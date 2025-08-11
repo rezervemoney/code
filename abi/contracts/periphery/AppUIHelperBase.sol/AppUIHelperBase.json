@@ -59,6 +59,19 @@
   },
   {
     "inputs": [],
+    "name": "ethOracle",
+    "outputs": [
+      {
+        "internalType": "contract IOracleV2",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "odos",
     "outputs": [
       {

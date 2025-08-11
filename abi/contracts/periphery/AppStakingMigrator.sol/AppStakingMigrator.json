@@ -1,0 +1,212 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_staking",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_authority",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidInitialization",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotInitializing",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "contract IAppAuthority",
+        "name": "authority",
+        "type": "address"
+      }
+    ],
+    "name": "AuthorityUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint64",
+        "name": "version",
+        "type": "uint64"
+      }
+    ],
+    "name": "Initialized",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "authority",
+    "outputs": [
+      {
+        "internalType": "contract IAppAuthority",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          },
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "declaredValue",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "rewardPerTokenPaid",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "rewards",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "withdrawCooldownEnd",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "withdrawCooldownStart",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "buyCooldownEnd",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "taxPerSecond",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "taxCredit",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "lastTaxCollectionTime",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct IAppStaking.Position",
+            "name": "position",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct AppStakingMigrator.Migration[]",
+        "name": "migrations",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "migratePositions",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "migrated",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IAppAuthority",
+        "name": "_newAuthority",
+        "type": "address"
+      }
+    ],
+    "name": "setAuthority",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "registry",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "projectID",
+        "type": "uint256"
+      }
+    ],
+    "name": "setFeeMProjectId",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "staking",
+    "outputs": [
+      {
+        "internalType": "contract IAppStakingMigrator",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

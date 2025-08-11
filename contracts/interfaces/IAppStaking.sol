@@ -56,6 +56,27 @@ interface IAppStaking is IERC721Enumerable {
     /// @param declaredValue The self-declared value for harberger tax
     event PositionCreated(uint256 indexed tokenId, address indexed owner, uint256 amount, uint256 declaredValue);
 
+    /// @notice Emitted when a position is migrated
+    /// @param tokenId The ID of the migrated position NFT
+    /// @param owner The address of the position owner
+    /// @param amount The amount of RZR tokens staked
+    /// @param declaredValue The self-declared value for harberger tax
+    event PositionMigrated(uint256 indexed tokenId, address indexed owner, uint256 amount, uint256 declaredValue);
+
+    /// @notice Emitted when variables are overwritten
+    /// @param periodFinish The timestamp when the reward period finishes
+    /// @param rewardRate The reward rate
+    /// @param lastUpdateTime The timestamp of the last reward update
+    /// @param rewardPerTokenStored The reward per token stored
+    /// @param totalStaked The total amount of tokens staked
+    event VariablesOverwritten(
+        uint256 periodFinish,
+        uint256 rewardRate,
+        uint256 lastUpdateTime,
+        uint256 rewardPerTokenStored,
+        uint256 totalStaked
+    );
+
     /// @notice Emitted when a staking position is sold
     /// @param tokenId The ID of the position NFT
     /// @param seller The address of the seller

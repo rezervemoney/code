@@ -45,6 +45,11 @@
           },
           {
             "internalType": "address",
+            "name": "ethOracle",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
             "name": "odos",
             "type": "address"
           },
@@ -262,6 +267,19 @@
       }
     ],
     "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "ethOracle",
+    "outputs": [
+      {
+        "internalType": "contract IOracleV2",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {

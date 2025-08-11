@@ -17,6 +17,18 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 /// @title RZR UI Helper
 /// @author RZR Protocol
 abstract contract AppUIHelperBase {
+    struct ProtocolInfo {
+        uint256 tvlRzr;
+        uint256 tvlUsd;
+        uint256 totalSupply;
+        uint256 totalStaked;
+        uint256 totalRewards;
+        uint256 currentAPR;
+        uint256 currentSpotPrice;
+        uint256 currentEthPrice;
+        uint256 unbackedSupply;
+    }
+
     struct TokenInfo {
         address token;
         string name;
@@ -73,17 +85,6 @@ abstract contract AppUIHelperBase {
         uint256 currentPrice; // current price in quote token
     }
 
-    struct ProtocolInfo {
-        uint256 tvl;
-        uint256 totalSupply;
-        uint256 totalStaked;
-        uint256 totalRewards;
-        uint256 currentAPR;
-        mapping(address => TokenInfo) tokenBalances;
-        StakingPositionInfo[] stakingPositions;
-        BondPositionInfo[] bondPositions;
-    }
-
     struct ProjectedEpochRate {
         uint256 apr;
         uint256 epochRate;
@@ -101,6 +102,7 @@ abstract contract AppUIHelperBase {
     IERC20 public appToken;
     IERC20 public stakingToken;
     IOracleV2 public spotOracle;
+    IOracleV2 public ethOracle;
     IRebaseController public rebaseController;
     IStaking4626 public staking4626;
     IAppReferrals public referrals;
@@ -119,6 +121,7 @@ abstract contract AppUIHelperBase {
         address rebaseController;
         address appOracle;
         address spotOracle;
+        address ethOracle;
         address odos;
         address staking4626;
         address referrals;
@@ -134,6 +137,7 @@ abstract contract AppUIHelperBase {
         stakingToken = IERC20(params.stakingToken);
         appOracle = IAppOracle(params.appOracle);
         spotOracle = IOracleV2(params.spotOracle);
+        ethOracle = IOracleV2(params.ethOracle);
         rebaseController = IRebaseController(params.rebaseController);
         odos = params.odos;
         staking4626 = IStaking4626(params.staking4626);
@@ -141,6 +145,12 @@ abstract contract AppUIHelperBase {
         totalSupplyOracle = ITotalSupplyOracle(params.totalSupplyOracle);
         totalReservesOracle = ITotalReservesOracle(params.totalReservesOracle);
 
-        appToken.approve(address(staking), type(uint256).max);
+        if (address(staking) != address(0)) {
+            appToken.approve(address(staking), type(uint256).max);
+        }
+
+        if (address(bondDepository) != address(0)) {
+            appToken.approve(address(bondDepository), type(uint256).max);
+        }
     }
 }

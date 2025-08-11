@@ -51,6 +51,7 @@ contract AppUIHelperWriteTest is BaseTest {
                 rebaseController: address(rebaseController),
                 appOracle: address(appOracle),
                 spotOracle: address(0),
+                ethOracle: address(0),
                 odos: ODOS,
                 staking4626: address(staking4626),
                 referrals: address(referrals),

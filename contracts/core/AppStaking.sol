@@ -9,15 +9,13 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-import "forge-std/console.sol";
-
 /// @title AppStaking
 /// @notice Implementation of the staking system that allows users to stake RZR tokens and earn rewards
 /// @dev This contract handles staking positions as NFTs, with harberger tax and reward distribution
 contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeERC20 for IERC20;
 
-    uint256 public immutable EPOCH_DURATION = 24 hours;
+    uint256 public immutable EPOCH_DURATION = 23.5 hours;
 
     IERC20 public override appToken;
 
@@ -56,7 +54,7 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
         address _authority,
         address _burner,
         address _totalSupplyOracle
-    ) public reinitializer(1) {
+    ) public reinitializer(2) {
         if (lastId == 0) lastId = 1;
 
         __ERC721_init("RZR Staking Position", "RZR-POS");
@@ -487,6 +485,30 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
     /// @inheritdoc IAppStaking
     function setUpfrontTaxCredit(uint256 tokenId, uint256 creditAmount) external override onlyExecutor {
         _setUpfrontTaxCreditInternal(tokenId, creditAmount);
+    }
+
+    function mint(address to, IAppStaking.Position memory position) external onlyPolicy {
+        // mints a position but does not pull any tokens from the user
+        uint256 tokenId = lastId++;
+        _positions[tokenId] = position;
+        _mint(to, tokenId);
+        trackingToken.mint(to, position.amount);
+        emit PositionMigrated(tokenId, to, position.amount, position.declaredValue);
+    }
+
+    function overwriteVariables(
+        uint256 _periodFinish,
+        uint256 _rewardRate,
+        uint256 _lastUpdateTime,
+        uint256 _rewardPerTokenStored,
+        uint256 _totalStaked
+    ) external onlyGovernor {
+        periodFinish = _periodFinish;
+        rewardRate = _rewardRate;
+        lastUpdateTime = _lastUpdateTime;
+        rewardPerTokenStored = _rewardPerTokenStored;
+        totalStaked = _totalStaked;
+        emit VariablesOverwritten(_periodFinish, _rewardRate, _lastUpdateTime, _rewardPerTokenStored, _totalStaked);
     }
 
     /// @notice Executes a call to an address with a value and data

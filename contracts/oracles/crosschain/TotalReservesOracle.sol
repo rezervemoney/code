@@ -3,6 +3,7 @@ pragma solidity 0.8.28;
 
 import "../../interfaces/ITotalReservesOracle.sol";
 import "../../core/AppAccessControlled.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 /**
  * @title TotalReservesOracle
@@ -13,6 +14,8 @@ import "../../core/AppAccessControlled.sol";
  * This oracle captures reserves data in the style of IOracleV2 which provides both RZR and USD asset amounts.
  */
 contract TotalReservesOracle is AppAccessControlled, ITotalReservesOracle {
+    using EnumerableSet for EnumerableSet.UintSet;
+
     /// @notice The maximum deviation from the onchain reserves (1% = 0.01e18)
     uint256 public maxDeviation;
 
@@ -28,12 +31,6 @@ contract TotalReservesOracle is AppAccessControlled, ITotalReservesOracle {
     /// @notice The last time the offchain reserves were updated
     uint256 public lastUpdatedOffchainAt;
 
-    /// @notice The total RZR reserves across all other chains
-    uint256 public l2chainRzrReserves;
-
-    /// @notice The total USD reserves across all other chains
-    uint256 public l2chainUsdReserves;
-
     /// @notice The address of the offchain updater
     address public offchainUpdater;
 
@@ -47,6 +44,9 @@ contract TotalReservesOracle is AppAccessControlled, ITotalReservesOracle {
     /// @dev Mapping from chain eid to a struct containing RZR and USD reserves
     mapping(uint256 eid => ChainReserves) public crosschainReserves;
 
+    /// @notice The eids of the chains that are supported
+    EnumerableSet.UintSet internal _eids;
+
     /// @notice Struct to store reserves for a specific chain
     struct ChainReserves {
         uint256 rzrReserves;
@@ -55,17 +55,32 @@ contract TotalReservesOracle is AppAccessControlled, ITotalReservesOracle {
     }
 
     /// @inheritdoc ITotalReservesOracle
-    function initialize(address _authority, address _offchainUpdater) external initializer {
+    function initialize(address _authority, address _offchainUpdater) external reinitializer(2) {
         __AppAccessControlled_init(_authority);
         offchainUpdater = _offchainUpdater;
         maxDeviation = 1e16; // 1% max deviation (100 basis points)
-        staleness = 1 days; // 1 day staleness
+        staleness = 25 hours; // 1 day staleness
     }
 
     /// @inheritdoc ITotalReservesOracle
     function getOnchainReserves() public view returns (uint256 _rzrReserves, uint256 _usdReserves) {
-        _rzrReserves = l2chainRzrReserves;
-        _usdReserves = l2chainUsdReserves;
+        uint256 length = _eids.length();
+        for (uint256 i = 0; i < length; i++) {
+            uint256 eid = _eids.at(i);
+            ChainReserves storage chainReserves = crosschainReserves[eid];
+            _rzrReserves += chainReserves.rzrReserves;
+            _usdReserves += chainReserves.usdReserves;
+            require(chainReserves.lastUpdatedAt > block.timestamp - staleness, "Crosschain reserves are stale");
+        }
+    }
+
+    function getEids() external view returns (uint256[] memory) {
+        return _eids.values();
+    }
+
+    function toggleEid(uint256 eid) external onlyGovernor {
+        if (_eids.contains(eid)) _eids.remove(eid);
+        else _eids.add(eid);
     }
 
     /// @inheritdoc ITotalReservesOracle
@@ -131,13 +146,6 @@ contract TotalReservesOracle is AppAccessControlled, ITotalReservesOracle {
     }
 
     /// @inheritdoc ITotalReservesOracle
-    function overwriteOnchainReserves(uint256 _rzrReserves, uint256 _usdReserves) external onlyGovernor {
-        l2chainRzrReserves = _rzrReserves;
-        l2chainUsdReserves = _usdReserves;
-        emit ReservesOnchainUpdated(l2chainRzrReserves, l2chainUsdReserves);
-    }
-
-    /// @inheritdoc ITotalReservesOracle
     function setReservesCreditUsd(uint256 _reservesCreditUsd) external onlyGovernor {
         reservesCreditUsd = _reservesCreditUsd;
         emit ReservesCreditUsdUpdated(reservesCreditUsd);
@@ -159,11 +167,6 @@ contract TotalReservesOracle is AppAccessControlled, ITotalReservesOracle {
         chainReserves.usdReserves = _usdReserves;
         chainReserves.lastUpdatedAt = block.timestamp;
         emit CrosschainReservesUpdated(eid, _rzrReserves, _usdReserves, block.timestamp);
-
-        // Update the total cross-chain reserves
-        l2chainRzrReserves = l2chainRzrReserves - oldRzrReserves + _rzrReserves;
-        l2chainUsdReserves = l2chainUsdReserves - oldUsdReserves + _usdReserves;
-        emit ReservesOnchainUpdated(l2chainRzrReserves, l2chainUsdReserves);
     }
 
     /// @inheritdoc ITotalReservesOracle

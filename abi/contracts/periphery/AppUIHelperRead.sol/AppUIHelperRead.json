@@ -45,6 +45,11 @@
           },
           {
             "internalType": "address",
+            "name": "ethOracle",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
             "name": "odos",
             "type": "address"
           },
@@ -162,6 +167,19 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "ethOracle",
+    "outputs": [
+      {
+        "internalType": "contract IOracleV2",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -446,39 +464,56 @@
     "name": "getProtocolInfo",
     "outputs": [
       {
-        "internalType": "uint256",
-        "name": "tvl",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "totalSupply",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "totalStaked",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "totalRewards",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "currentAPR",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "currentSpotPrice",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "unbackedSupply",
-        "type": "uint256"
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "tvlRzr",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tvlUsd",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalSupply",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalStaked",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalRewards",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "currentAPR",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "currentSpotPrice",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "currentEthPrice",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "unbackedSupply",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct AppUIHelperBase.ProtocolInfo",
+        "name": "protocolInfo",
+        "type": "tuple"
       },
       {
         "internalType": "bytes8",

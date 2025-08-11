@@ -23,10 +23,6 @@ interface ITotalSupplyOracle {
         uint256 indexed eid, uint256 indexed crosschainTotalSupply, uint256 indexed lastUpdatedAt
     );
 
-    /// @notice Emitted when the onchain total supply is updated
-    /// @param onchainTotalSupply The onchain total supply
-    event TotalSupplyOnchainUpdated(uint256 indexed onchainTotalSupply);
-
     /// @notice Emitted when the total supply credit is updated
     /// @param totalSupplyCredit The total supply credit
     event TotalSupplyCreditUpdated(uint256 indexed totalSupplyCredit);
@@ -45,6 +41,15 @@ interface ITotalSupplyOracle {
     /// @param _offchainUpdater The address of the offchain updater
     /// @param _rzr The address of the RZR token
     function initialize(address _authority, address _offchainUpdater, address _rzr) external;
+
+    /// @notice Get the enabled eids
+    /// @return _enabledEids The enabled eids
+    function getEnabledEids() external view returns (uint256[] memory _enabledEids);
+
+    /// @notice Check if an eid is enabled
+    /// @param eid The eid of the chain
+    /// @return _enabled The enabled status
+    function isEidEnabled(uint256 eid) external view returns (bool _enabled);
 
     /// @notice Get the onchain total supply
     /// @return _onchainTotalSupply The onchain total supply
@@ -78,10 +83,6 @@ interface ITotalSupplyOracle {
     /// @param eid The eid of the chain
     /// @param _crosschainTotalSupply The crosschain total supply
     function overwriteCrosschainTotalSupply(uint256 eid, uint256 _crosschainTotalSupply) external;
-
-    /// @notice Overwrite the onchain total supply
-    /// @param _onchainTotalSupply The onchain total supply
-    function overwriteOnchainTotalSupply(uint256 _onchainTotalSupply) external;
 
     /// @notice Set the crosschain total supply
     /// @param eid The eid of the chain

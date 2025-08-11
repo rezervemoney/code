@@ -71,11 +71,6 @@ interface ITotalReservesOracle {
     /// @param _usdReserves The USD reserves for the chain
     function overwriteCrosschainReserves(uint256 eid, uint256 _rzrReserves, uint256 _usdReserves) external;
 
-    /// @notice Overwrite the onchain total reserves
-    /// @param _rzrReserves The total RZR reserves across all chains
-    /// @param _usdReserves The total USD reserves across all chains
-    function overwriteOnchainReserves(uint256 _rzrReserves, uint256 _usdReserves) external;
-
     /// @notice Set the crosschain reserves for a specific chain (bridge permission)
     /// @param eid The eid of the chain
     /// @param _rzrReserves The RZR reserves for the chain

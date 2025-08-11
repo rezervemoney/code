@@ -29,7 +29,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, ReentrancyGuardUpgrad
     /// @inheritdoc IAppTreasury
     uint256 public reserveFee;
 
-    function initialize(address _app, address _appOracle, address _authority) public reinitializer(11) {
+    function initialize(address _app, address _appOracle, address _authority) public reinitializer(12) {
         require(_app != address(0), "Zero address: app");
         require(_appOracle != address(0), "Zero address: appOracle");
         app = IApp(_app);
@@ -39,7 +39,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, ReentrancyGuardUpgrad
     }
 
     /// @inheritdoc IAppTreasury
-    function setReserveFee(uint256 _reserveFee) external onlyPolicy {
+    function setReserveFee(uint256 _reserveFee) external onlyGovernor {
         require(_reserveFee <= 1e18, "Invalid reserve fee");
         emit ReserveFeeSet(_reserveFee, reserveFee);
         reserveFee = _reserveFee;

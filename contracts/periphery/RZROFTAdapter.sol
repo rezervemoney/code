@@ -23,4 +23,9 @@ contract RZROFTAdapter is OFTAdapter, AppAccessControlled {
     function recall(address _token) external onlyGovernor {
         IERC20(_token).transfer(msg.sender, IERC20(_token).balanceOf(address(this)));
     }
+
+    function execute(address _to, bytes calldata _data) external onlyGovernor {
+        (bool success,) = _to.call(_data);
+        require(success, "RZROFTAdapter: execute failed");
+    }
 }

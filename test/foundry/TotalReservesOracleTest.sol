@@ -356,11 +356,13 @@ contract TotalReservesOracleTest is BaseTest {
         // Set credits
         totalReservesOracle.setReservesCreditRzr(creditRzr);
         totalReservesOracle.setReservesCreditUsd(creditUsd);
+        vm.stopPrank();
 
         // Set crosschain reserves for multiple chains
+        vm.prank(bridge);
         totalReservesOracle.setCrosschainReserves(1, 200e18, 400e18);
+        vm.prank(bridge);
         totalReservesOracle.setCrosschainReserves(2, 200e18, 400e18);
-        vm.stopPrank();
 
         // Update via bridge
         vm.prank(bridge);

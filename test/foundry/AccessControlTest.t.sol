@@ -73,7 +73,7 @@ contract AccessControlTest is BaseTest {
         vm.prank(reserveDepositor);
         treasury.deposit(TEST_AMOUNT, address(mockQuoteToken), 0);
 
-        vm.prank(policy);
+        vm.prank(governor);
         treasury.setReserveFee(0.05e18); // 5%
     }
 

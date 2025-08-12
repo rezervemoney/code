@@ -32,7 +32,7 @@ contract BridgeL2Reader is IBridgeL2 {
     function getCurrentState() public view returns (State memory) {
         (uint256 rzrReserves, uint256 usdReserves, uint256 staking4626Rate, uint256 lstRzrSupply) = (0, 0, 0, 0);
         if (address(treasury) != address(0)) {
-            (rzrReserves, usdReserves) = treasury.calculateReserves();
+            (usdReserves, rzrReserves) = treasury.calculateReserves();
         }
 
         if (address(liquidStaking) != address(0)) {

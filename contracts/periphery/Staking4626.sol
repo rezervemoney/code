@@ -30,7 +30,7 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
 
     function initialize(address _staking, address _authority, address _lzEndpoint, address _delegate)
         external
-        reinitializer(7)
+        reinitializer(8)
     {
         __OFTProxy_init("Liquid Staked Rezerve.money", "lstRZR", _lzEndpoint, _delegate);
         __AppAccessControlled_init(_authority);
@@ -199,6 +199,7 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
     /// @param receiver The address to mint the shares to
     function _deposit(uint256 assets, uint256 shares, address receiver) internal {
         appToken.safeTransferFrom(msg.sender, address(this), assets);
+        _increaseAmount(assets);
         _mint(receiver, shares);
         emit Deposit(msg.sender, receiver, assets, shares);
     }
@@ -210,7 +211,7 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
         _increaseAmount(rewards + balance);
         emit RewardsCompounded(rewards);
 
-        rate = _positionValue() * 1e18 / totalSupply();
+        rate = positionValue() * 1e18 / totalSupply();
         emit RateUpdated(rate);
     }
 

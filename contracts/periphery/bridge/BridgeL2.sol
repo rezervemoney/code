@@ -33,10 +33,10 @@ contract BridgeL2 is AppAccessControlled, OAppRead, OAppOptionsType3, IBridgeL2 
     /// @notice Initialize the contract
     /// @param _eid The EID of the L2 chain
     /// @param _authority The address of the authority
-    /// @param _treasury The address of the treasury
     /// @param _liquidStaking The address of the liquid staking
-    // constructor(uint32 _eid, address _authority, address _treasury, address _liquidStaking)
-
+    /// @param _treasury The address of the treasury
+    /// @param _endpoint The endpoint to use
+    /// @param _readChannel The read channel to use
     constructor(
         uint32 _eid,
         uint32 _readChannel,
@@ -59,8 +59,8 @@ contract BridgeL2 is AppAccessControlled, OAppRead, OAppOptionsType3, IBridgeL2 
             revert OwnableUnauthorizedAccount(_msgSender());
         }
     }
-    /// @inheritdoc OAppRead
 
+    /// @inheritdoc OAppRead
     function setReadChannel(uint32 _channelId, bool _active) public virtual override onlyGovernor {
         _setPeer(_channelId, _active ? AddressCast.toBytes32(address(this)) : bytes32(0));
         READ_CHANNEL = _channelId;
@@ -121,9 +121,7 @@ contract BridgeL2 is AppAccessControlled, OAppRead, OAppOptionsType3, IBridgeL2 
     /// @inheritdoc IBridgeL2
     function data() public view returns (uint32 _eid, uint256 _rzrReserves, uint256 _usdReserves) {
         _eid = eid;
-        if (address(treasury) != address(0)) {
-            (_usdReserves, _rzrReserves) = treasury.calculateReserves();
-        }
+        (_usdReserves, _rzrReserves) = treasury.calculateReserves();
     }
 
     /// @notice Internal function to process the received data from the target chain

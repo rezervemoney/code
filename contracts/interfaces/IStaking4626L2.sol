@@ -9,8 +9,24 @@ interface IStaking4626L2 is IERC4626 {
     /// @param oldRate The old rate
     event RateUpdated(uint256 rate, uint256 oldRate);
 
+    /// @notice Emitted when the deposit fee is updated
+    /// @param depositFee The new deposit fee
+    event DepositFeeUpdated(uint256 depositFee);
+
+    /// @notice Emitted when a deposit fee is collected
+    /// @param user The user who paid the fee
+    /// @param feeAmount The amount of fee collected
+    event DepositFeeCollected(address indexed user, uint256 feeAmount);
+
     /// @notice The rate of the staking
     function rate() external view returns (uint256);
+
+    /// @notice The deposit fee
+    function depositFee() external view returns (uint256);
+
+    /// @notice Set the deposit fee
+    /// @param _depositFee The new deposit fee
+    function setDepositFee(uint256 _depositFee) external;
 
     /// @notice Initialize the staking contract
     /// @param _authority The address of the authority contract
@@ -22,9 +38,4 @@ interface IStaking4626L2 is IERC4626 {
     /// @notice Set the rate of the staking
     /// @param _rate The new rate of the staking
     function setRate(uint256 _rate) external;
-
-    /// @notice Flush the underlying token to the L1 bridge
-    /// @dev This function is used to flush the underlying token to the L1 bridge
-    /// @dev This function is only callable by the bridge
-    function flushToL1() external payable;
 }

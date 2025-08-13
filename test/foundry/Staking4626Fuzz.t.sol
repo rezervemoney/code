@@ -579,7 +579,7 @@ contract Staking4626FuzzTest is BaseTest {
     }
 
     /// @notice Fuzz test with random addresses
-    function testFuzz_RandomAddresses(address user) public {
+    function testFuzz_RandomAddresses(address user) public view {
         // Skip zero address and contract addresses
         vm.assume(user != address(0) && user.code.length == 0);
 

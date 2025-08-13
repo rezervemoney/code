@@ -26,6 +26,7 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
 
     mapping(uint256 => bool) public unstakingTokenId;
 
+    /// @notice The rate of the staking
     uint256 public rate;
 
     function initialize(address _staking, address _authority, address _lzEndpoint, address _delegate)

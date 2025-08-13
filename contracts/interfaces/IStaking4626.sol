@@ -7,6 +7,10 @@ interface IStaking4626 is IERC4626 {
     /// @notice Harvest rewards and compound them into the position
     function harvest() external;
 
+    /// @notice Get the rate of the staking
+    /// @return rate The rate of the staking
+    function rate() external view returns (uint256 rate);
+
     /// @notice Initialize a new position with an initial amount of assets
     /// @param amount The amount of assets to initialize the position with
     function initializePosition(uint256 amount) external;

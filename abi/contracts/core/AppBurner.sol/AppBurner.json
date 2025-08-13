@@ -133,6 +133,29 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "_to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_value",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_data",
+        "type": "bytes"
+      }
+    ],
+    "name": "execute",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "_appOracle",
         "type": "address"
       },
@@ -144,11 +167,6 @@
       {
         "internalType": "address",
         "name": "_authority",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_totalSupplyOracle",
         "type": "address"
       }
     ],
@@ -204,19 +222,6 @@
     "name": "setFeeMProjectId",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "totalSupplyOracle",
-    "outputs": [
-      {
-        "internalType": "contract ITotalSupplyOracle",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   }
 ]

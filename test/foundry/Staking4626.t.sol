@@ -84,8 +84,6 @@ contract Staking4626Test is BaseTest {
 
         vm.warp(block.timestamp + 4 hours);
 
-        uint256 rateBefore = vault.rate();
-
         vm.startPrank(owner);
         vault.harvest();
         vm.stopPrank();

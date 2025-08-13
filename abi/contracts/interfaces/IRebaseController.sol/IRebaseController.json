@@ -193,11 +193,6 @@
       },
       {
         "internalType": "address",
-        "name": "_totalSupplyOracle",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
         "name": "_totalReservesOracle",
         "type": "address"
       }
@@ -377,19 +372,6 @@
     "outputs": [
       {
         "internalType": "contract ITotalReservesOracle",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "totalSupplyOracle",
-    "outputs": [
-      {
-        "internalType": "contract ITotalSupplyOracle",
         "name": "",
         "type": "address"
       }

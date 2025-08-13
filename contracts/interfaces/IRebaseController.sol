@@ -5,14 +5,12 @@ import "./IApp.sol";
 import "./IAppTreasury.sol";
 import "./IAppStaking.sol";
 import "./IAppOracle.sol";
-import "./ITotalSupplyOracle.sol";
 import "./ITotalReservesOracle.sol";
 
 interface IRebaseController {
     // --- State Variables -----------------------------------------------------
     function app() external view returns (IApp);
     function appOracle() external view returns (IAppOracle);
-    function totalSupplyOracle() external view returns (ITotalSupplyOracle);
     function totalReservesOracle() external view returns (ITotalReservesOracle);
     function staking() external view returns (IAppStaking);
     function EPOCH() external view returns (uint256);
@@ -30,7 +28,6 @@ interface IRebaseController {
     /// @param _staking The address of the staking contract
     /// @param _authority The address of the authority contract
     /// @param _burner The address of the burner contract
-    /// @param _totalSupplyOracle The address of the total supply oracle contract
     /// @param _totalReservesOracle The address of the total reserves oracle contract
     function initialize(
         address _rzr,
@@ -38,7 +35,6 @@ interface IRebaseController {
         address _staking,
         address _authority,
         address _burner,
-        address _totalSupplyOracle,
         address _totalReservesOracle
     ) external;
 

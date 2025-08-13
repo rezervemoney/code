@@ -3,13 +3,11 @@ pragma solidity 0.8.28;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "../interfaces/IApp.sol";
-import "../interfaces/IAppTreasury.sol";
 import "../interfaces/IAppStaking.sol";
 import "../interfaces/IRebaseController.sol";
 import "../libraries/StakingDistributionLogic.sol";
 import "../libraries/YieldLogic.sol";
 import "./AppAccessControlled.sol";
-import "../interfaces/ITotalSupplyOracle.sol";
 import "../interfaces/ITotalReservesOracle.sol";
 
 /**
@@ -21,15 +19,15 @@ import "../interfaces/ITotalReservesOracle.sol";
  *      ─ Exposes view helpers for front-end gauges
  */
 contract RebaseController is AppAccessControlled, IRebaseController {
+    uint256 public immutable EPOCH = 23 hours;
+
     IApp public app; // RZR token (decimals = 18)
     IAppOracle public appOracle;
-    ITotalSupplyOracle public totalSupplyOracle;
     ITotalReservesOracle public totalReservesOracle;
     IAppStaking public staking; // staking contract or escrow
     address public burner; // burner contract
 
     // --- Epoch params --------------------------------------------------------
-    uint256 public immutable EPOCH = 23 hours;
     uint256 public lastEpochTime;
 
     uint256 public targetOpsPct; // ideally 10%
@@ -51,23 +49,25 @@ contract RebaseController is AppAccessControlled, IRebaseController {
         address _staking,
         address _authority,
         address _burner,
-        address _totalSupplyOracle,
         address _totalReservesOracle
-    ) public reinitializer(3) {
+    ) public reinitializer(4) {
         app = IApp(_rzr);
         appOracle = IAppOracle(_appOracle);
         staking = IAppStaking(_staking);
         burner = _burner;
-
-        totalSupplyOracle = ITotalSupplyOracle(_totalSupplyOracle);
         totalReservesOracle = ITotalReservesOracle(_totalReservesOracle);
 
         __AppAccessControlled_init(_authority);
 
         floorApr = 500; // 500% APR
-        ceilApr = 2000; // 2000% APR
+        ceilApr = 400; // 2000% APR
         k1 = 10; // rises 0->500% over β 1-1.5
         k2 = 1500; // rises 500->2000% over β 1.5-2.5
+
+        targetOpsPct = 0.1e18; // 10%
+        minFloorPct = 0.15e18; // 15%
+        maxFloorPct = 0.5e18; // 50%
+        floorSlope = 0.45e18; // 45%
 
         app.approve(address(staking), type(uint256).max);
     }
@@ -128,7 +128,7 @@ contract RebaseController is AppAccessControlled, IRebaseController {
     function currentBackingRatio() external view returns (uint256) {
         (uint256 rzrReserves, uint256 usdReserves) = totalReservesOracle.getTotalReserves();
         uint256 pcv = usdReserves;
-        uint256 supply = totalSupplyOracle.getTotalSupply() - rzrReserves;
+        uint256 supply = app.totalSupply() - rzrReserves;
         return (supply == 0) ? 0 : (pcv * 1e18) / supply; // 1e18 == β=1
     }
 
@@ -136,7 +136,7 @@ contract RebaseController is AppAccessControlled, IRebaseController {
     function excessReserves() public view returns (uint256) {
         (uint256 rzrReserves, uint256 usdReserves) = totalReservesOracle.getTotalReserves();
         uint256 floorPrice = appOracle.getTokenPrice();
-        uint256 rzrSupplyInFloor = (totalSupplyOracle.getTotalSupply() - rzrReserves) * floorPrice / 1e18;
+        uint256 rzrSupplyInFloor = (app.totalSupply() - rzrReserves) * floorPrice / 1e18;
         return usdReserves - rzrSupplyInFloor;
     }
 
@@ -152,7 +152,7 @@ contract RebaseController is AppAccessControlled, IRebaseController {
         // this is important. we need to subtract the RZR reserves from the total supply because the
         // reserves oracle splits what we hold in assets (in USD terms) and what we hold in RZR (in RZR terms).
         // otherwise the supply would get inflated.
-        uint256 supply = totalSupplyOracle.getTotalSupply() - rzrReserves;
+        uint256 supply = app.totalSupply() - rzrReserves;
         return projectedEpochRateRaw(pcv, supply, staking.totalStaked());
     }
 

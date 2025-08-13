@@ -10,7 +10,6 @@ import "../interfaces/IAppOracle.sol";
 import "../interfaces/IOracleV2.sol";
 import "../interfaces/IStaking4626.sol";
 import "../interfaces/IAppReferrals.sol";
-import "../interfaces/ITotalSupplyOracle.sol";
 import "../interfaces/ITotalReservesOracle.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -106,7 +105,6 @@ abstract contract AppUIHelperBase {
     IRebaseController public rebaseController;
     IStaking4626 public staking4626;
     IAppReferrals public referrals;
-    ITotalSupplyOracle public totalSupplyOracle;
     ITotalReservesOracle public totalReservesOracle;
 
     // Events
@@ -125,7 +123,6 @@ abstract contract AppUIHelperBase {
         address odos;
         address staking4626;
         address referrals;
-        address totalSupplyOracle;
         address totalReservesOracle;
     }
 
@@ -142,7 +139,6 @@ abstract contract AppUIHelperBase {
         odos = params.odos;
         staking4626 = IStaking4626(params.staking4626);
         referrals = IAppReferrals(params.referrals);
-        totalSupplyOracle = ITotalSupplyOracle(params.totalSupplyOracle);
         totalReservesOracle = ITotalReservesOracle(params.totalReservesOracle);
 
         if (address(staking) != address(0)) {

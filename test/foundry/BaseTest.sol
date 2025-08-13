@@ -98,7 +98,7 @@ contract BaseTest is Test {
 
         // Deploy Burner
         burner = new AppBurner();
-        burner.initialize(address(appOracle), address(app), address(authority), address(totalSupplyOracle));
+        burner.initialize(address(appOracle), address(app), address(authority));
 
         // Deploy Treasury
         treasury = new AppTreasury();
@@ -138,7 +138,6 @@ contract BaseTest is Test {
             address(staking),
             address(authority),
             address(burner),
-            address(totalSupplyOracle),
             address(totalReservesOracle)
         );
         rebaseController.setTargetPcts(0.1e18, 0.15e18, 0.5e18, 0.5e18);

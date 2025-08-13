@@ -45,12 +45,7 @@ contract AppUIHelperRead is AppUIHelperBase {
             protocolInfo.totalRewards = staking.rewardPerToken();
         }
 
-        if (address(totalSupplyOracle) != address(0)) {
-            protocolInfo.totalSupply = totalSupplyOracle.getTotalSupply();
-            // protocolInfo.totalSupplyUnbacked = totalSupplyOracle.totalSupplyUnbacked();
-            protocolInfo.unbackedSupply = totalSupplyOracle.totalSupplyUnbacked();
-        }
-
+        protocolInfo.totalSupply = appToken.totalSupply();
         protocolInfo.currentAPR = calculateAPR();
         protocolInfo.currentSpotPrice = getSpotPrice();
         protocolInfo.currentEthPrice = getEthPrice();

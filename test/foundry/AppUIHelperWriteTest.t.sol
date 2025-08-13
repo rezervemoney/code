@@ -55,7 +55,6 @@ contract AppUIHelperWriteTest is BaseTest {
                 odos: ODOS,
                 staking4626: address(staking4626),
                 referrals: address(referrals),
-                totalSupplyOracle: address(totalSupplyOracle),
                 totalReservesOracle: address(totalReservesOracle)
             })
         );

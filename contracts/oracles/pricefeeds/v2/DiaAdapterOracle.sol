@@ -20,12 +20,12 @@ contract DiaAdapterOracle is IOracleV2, IAggregatorV3 {
         asset = IERC20Metadata(_asset);
     }
 
-    function description() external view returns (string memory) {
+    function description() external pure returns (string memory) {
         return "IAggregatorV3 implementation for a Dia price feed";
     }
 
     /// @inheritdoc IAggregatorV3
-    function version() external view returns (uint256) {
+    function version() external pure returns (uint256) {
         return 1;
     }
 
@@ -49,7 +49,7 @@ contract DiaAdapterOracle is IOracleV2, IAggregatorV3 {
     }
 
     /// @inheritdoc IAggregatorV3
-    function decimals() external view returns (uint8) {
+    function decimals() external pure returns (uint8) {
         return 8;
     }
 

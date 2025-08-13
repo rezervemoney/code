@@ -322,7 +322,6 @@ contract Staking4626PrecisionAndTaxTest is BaseTest {
     /// @notice Test that tax collection reduces position amount correctly
     function test_TaxCollectionReducesPositionAmount() public {
         uint256 depositAmount = 100 ether;
-        uint256 declaredValue = 100 ether;
 
         vm.startPrank(owner);
         app.mint(user1, depositAmount);
@@ -359,7 +358,6 @@ contract Staking4626PrecisionAndTaxTest is BaseTest {
     /// @notice Test that tax collection updates total staked amount correctly
     function test_TaxCollectionUpdatesTotalStaked() public {
         uint256 depositAmount = 100 ether;
-        uint256 declaredValue = 100 ether;
 
         vm.startPrank(owner);
         app.mint(user1, depositAmount);
@@ -395,7 +393,6 @@ contract Staking4626PrecisionAndTaxTest is BaseTest {
     /// @notice Test that tax collection burns tracking tokens correctly
     function test_TaxCollectionBurnsTrackingTokens() public {
         uint256 depositAmount = 100 ether;
-        uint256 declaredValue = 100 ether;
 
         vm.startPrank(owner);
         app.mint(user1, depositAmount);
@@ -520,7 +517,6 @@ contract Staking4626PrecisionAndTaxTest is BaseTest {
     /// @notice Test that tax collection events are emitted correctly
     function test_TaxCollectionEvents() public {
         uint256 depositAmount = 100 ether;
-        uint256 declaredValue = 100 ether;
 
         vm.startPrank(owner);
         app.mint(user1, depositAmount);
@@ -678,7 +674,7 @@ contract Staking4626PrecisionAndTaxTest is BaseTest {
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Test that zero amount operations maintain precision
-    function test_ZeroAmountPrecision() public {
+    function test_ZeroAmountPrecision() public view {
         // Test zero deposit
         uint256 zeroShares = vault.previewDeposit(0);
         assertEq(zeroShares, 0, "Zero deposit should return zero shares");

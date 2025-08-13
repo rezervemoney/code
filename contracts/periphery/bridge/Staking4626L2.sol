@@ -13,11 +13,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract Staking4626L2 is IStaking4626L2, ERC20Upgradeable, OFTProxy, AppAccessControlled {
+contract Staking4626L2 is IStaking4626L2, OFTProxy, AppAccessControlled {
     using SafeERC20 for IERC20;
-
-    uint32 public immutable MAINNET_EID = 30101;
-    address public immutable MAINNET_STAKING = 0xB33f4B9C6f0624EdeAE8881c97381837760D52CB;
 
     /// @notice The rate of the staking
     uint256 public rate;
@@ -35,12 +32,14 @@ contract Staking4626L2 is IStaking4626L2, ERC20Upgradeable, OFTProxy, AppAccessC
     /// @inheritdoc IStaking4626L2
     function initialize(address _authority, address _lzEndpoint, address _delegate, address _underlying)
         external
-        initializer
+        reinitializer(10)
     {
         __AppAccessControlled_init(_authority);
         __OFTProxy_init("Liquid Staked Rezerve.money", "lstRZR", _lzEndpoint, _delegate);
         underlying = IERC20(_underlying);
         if (rate == 0) rate = 1e18;
+
+        depositFee = 0.01e18; // 1%
 
         _mint(address(this), 1e18);
         _burn(address(this), 1e18);
@@ -55,7 +54,7 @@ contract Staking4626L2 is IStaking4626L2, ERC20Upgradeable, OFTProxy, AppAccessC
     }
 
     /// @inheritdoc IStaking4626L2
-    function setRate(uint256 _rate) external onlyBridge {
+    function setRate(uint256 _rate) external onlyBridgeOrGovernor {
         uint256 oldRate = rate;
         rate = _rate;
         require(rate >= oldRate, "Rate must be greater than or equal to the old rate");

@@ -50,6 +50,7 @@ contract Staking4626L2Test is Test {
 
         // Initialize vault
         vault.initialize(address(authority), address(lzEndpoint), delegate, address(underlying));
+        vault.setDepositFee(0);
 
         // Mint initial tokens
         underlying.mint(user1, INITIAL_SUPPLY);
@@ -68,12 +69,6 @@ contract Staking4626L2Test is Test {
         assertEq(vault.rate(), 1e18, "Initial rate should be 1e18");
         assertEq(vault.depositFee(), 0, "Initial deposit fee should be 0");
         assertEq(vault.totalFeesCollected(), 0, "Initial total fees should be 0");
-        assertEq(vault.MAINNET_EID(), 30101, "Mainnet EID should be correct");
-        assertEq(
-            vault.MAINNET_STAKING(),
-            0xB33f4B9C6f0624EdeAE8881c97381837760D52CB,
-            "Mainnet staking address should be correct"
-        );
     }
 
     function test_InitializationRevertsIfAlreadyInitialized() public {

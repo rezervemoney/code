@@ -95,6 +95,13 @@ abstract contract AppAccessControlled is Initializable {
         _;
     }
 
+    /// @notice Modifier to check if the caller is a bridge
+    /// @dev This modifier is only callable by the bridge
+    modifier onlyBridgeOrGovernor() {
+        require(authority.isGovernor(msg.sender) || authority.bridge() == msg.sender, "UNAUTHORIZED");
+        _;
+    }
+
     /// @notice Modifier to check if the contract is not paused
     /// @dev This modifier is only callable if the contract is not paused
     modifier whenNotPaused() {

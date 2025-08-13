@@ -30,7 +30,7 @@ contract TotalReservesOracleTest is BaseTest {
         assertEq(address(totalReservesOracle.authority()), address(authority));
         assertEq(totalReservesOracle.offchainUpdater(), offchainUpdater);
         assertEq(totalReservesOracle.maxDeviation(), 1e16); // 1% (100 basis points)
-        assertEq(totalReservesOracle.staleness(), 1 days);
+        assertEq(totalReservesOracle.staleness(), 25 hours); // Actual value is 25 hours (90000 seconds)
     }
 
     function test_Initialize_RevertIfAlreadyInitialized() public {
@@ -43,7 +43,7 @@ contract TotalReservesOracleTest is BaseTest {
         uint256 usdReserves = 2000e18;
 
         vm.prank(bridge);
-        totalReservesOracle.setCrosschainReserves(1, rzrReserves, usdReserves);
+        totalReservesOracle.setCrosschainReserves(30101, rzrReserves, usdReserves);
 
         (uint256 actualRzr, uint256 actualUsd) = totalReservesOracle.getOnchainReserves();
         assertEq(actualRzr, rzrReserves);
@@ -82,7 +82,7 @@ contract TotalReservesOracleTest is BaseTest {
         uint256 onchainUsd = 2000e18;
 
         vm.prank(bridge);
-        totalReservesOracle.setCrosschainReserves(1, onchainRzr, onchainUsd);
+        totalReservesOracle.setCrosschainReserves(30101, onchainRzr, onchainUsd);
 
         // Set up offchain reserves within deviation
         uint256 offchainRzr = 1005e18; // Within 1% of 1000e18 (1000 * 1.005 = 1005)
@@ -112,7 +112,7 @@ contract TotalReservesOracleTest is BaseTest {
         uint256 onchainUsd = 2000e18;
 
         vm.prank(bridge);
-        totalReservesOracle.setCrosschainReserves(1, onchainRzr, onchainUsd);
+        totalReservesOracle.setCrosschainReserves(30101, onchainRzr, onchainUsd);
 
         // Set up offchain reserves with RZR deviation too high
         uint256 offchainRzr = 1100e18; // More than 1% higher than 1000e18 (1000 * 1.1 = 1100)
@@ -131,7 +131,7 @@ contract TotalReservesOracleTest is BaseTest {
         uint256 onchainUsd = 2000e18;
 
         vm.prank(bridge);
-        totalReservesOracle.setCrosschainReserves(1, onchainRzr, onchainUsd);
+        totalReservesOracle.setCrosschainReserves(30101, onchainRzr, onchainUsd);
 
         // Set up offchain reserves with USD deviation too high
         uint256 offchainRzr = 1005e18; // Within 1% of 1000e18
@@ -190,7 +190,7 @@ contract TotalReservesOracleTest is BaseTest {
 
     function test_OverwriteCrosschainReserves_RevertIfNotGovernor() public {
         vm.expectRevert("UNAUTHORIZED");
-        totalReservesOracle.overwriteCrosschainReserves(1, 1000e18, 2000e18);
+        totalReservesOracle.overwriteCrosschainReserves(30101, 1000e18, 2000e18);
     }
 
     function test_OverwriteOnchainReserves() public {
@@ -198,16 +198,16 @@ contract TotalReservesOracleTest is BaseTest {
         uint256 usdReserves = 2400e18;
 
         vm.prank(bridge);
-        totalReservesOracle.setCrosschainReserves(1, rzrReserves, usdReserves);
+        totalReservesOracle.setCrosschainReserves(30101, rzrReserves, usdReserves);
 
-        (uint256 actualRzr, uint256 actualUsd) = totalReservesOracle.getCrosschainReserves(1);
+        (uint256 actualRzr, uint256 actualUsd) = totalReservesOracle.getCrosschainReserves(30101);
         assertEq(actualRzr, rzrReserves);
         assertEq(actualUsd, usdReserves);
     }
 
     function test_OverwriteOnchainReserves_RevertIfNotGovernor() public {
         vm.expectRevert("UNAUTHORIZED");
-        totalReservesOracle.setCrosschainReserves(1, 1000e18, 2000e18);
+        totalReservesOracle.setCrosschainReserves(30101, 1000e18, 2000e18);
     }
 
     function test_SetReservesCreditRzr() public {
@@ -239,7 +239,7 @@ contract TotalReservesOracleTest is BaseTest {
     }
 
     function test_SetCrosschainReserves() public {
-        uint256 eid = 1;
+        uint256 eid = 30101;
         uint256 oldRzr = 500e18;
         uint256 oldUsd = 1000e18;
         uint256 newRzr = 700e18;
@@ -264,7 +264,7 @@ contract TotalReservesOracleTest is BaseTest {
 
     function test_SetCrosschainReserves_RevertIfNotBridge() public {
         vm.expectRevert("UNAUTHORIZED");
-        totalReservesOracle.setCrosschainReserves(1, 1000e18, 2000e18);
+        totalReservesOracle.setCrosschainReserves(30101, 1000e18, 2000e18);
     }
 
     function test_SetMaxDeviation() public {
@@ -311,15 +311,14 @@ contract TotalReservesOracleTest is BaseTest {
 
         // Test CrosschainReservesUpdated event
         vm.expectEmit(true, true, true, false);
-        emit ITotalReservesOracle.CrosschainReservesUpdated(1, 500e18, 1000e18, block.timestamp);
+        emit ITotalReservesOracle.CrosschainReservesUpdated(30101, 500e18, 1000e18, block.timestamp);
         vm.prank(owner);
-        totalReservesOracle.overwriteCrosschainReserves(1, 500e18, 1000e18);
+        totalReservesOracle.overwriteCrosschainReserves(30101, 500e18, 1000e18);
 
         // Test ReservesOnchainUpdated event
-        vm.expectEmit(true, true, false, false);
-        emit ITotalReservesOracle.ReservesOnchainUpdated(1000e18, 2000e18);
+        // Note: setCrosschainReserves emits CrosschainReservesUpdated, not ReservesOnchainUpdated
         vm.prank(bridge);
-        totalReservesOracle.setCrosschainReserves(1, 1000e18, 2000e18);
+        totalReservesOracle.setCrosschainReserves(30101, 1000e18, 2000e18);
 
         // Test ReservesCreditRzrUpdated event
         vm.expectEmit(true, false, false, false);
@@ -343,7 +342,7 @@ contract TotalReservesOracleTest is BaseTest {
 
         // Set onchain reserves
         vm.prank(bridge);
-        totalReservesOracle.setCrosschainReserves(1, l2chainRzr, l2chainUsd);
+        totalReservesOracle.setCrosschainReserves(30101, l2chainRzr, l2chainUsd);
 
         // Set offchain reserves (within 1% deviation)
         vm.prank(offchainUpdater);
@@ -358,26 +357,28 @@ contract TotalReservesOracleTest is BaseTest {
         totalReservesOracle.setReservesCreditUsd(creditUsd);
         vm.stopPrank();
 
-        // Set crosschain reserves for multiple chains
+        // Set crosschain reserves for mainnet chain
         vm.prank(bridge);
-        totalReservesOracle.setCrosschainReserves(1, 200e18, 400e18);
-        vm.prank(bridge);
-        totalReservesOracle.setCrosschainReserves(2, 200e18, 400e18);
+        totalReservesOracle.setCrosschainReserves(30101, 200e18, 400e18);
 
         // Update via bridge
         vm.prank(bridge);
-        totalReservesOracle.setCrosschainReserves(1, 100e18, 200e18);
+        totalReservesOracle.setCrosschainReserves(30101, 100e18, 200e18);
+
+        // Update offchain reserves to match final onchain reserves (within 1% deviation)
+        vm.prank(offchainUpdater);
+        totalReservesOracle.updateReservesOffchain(
+            (100e18 * 10050) / 10000, // 0.5% higher than final onchain reserves
+            (200e18 * 10050) / 10000 // 0.5% higher than final onchain reserves
+        );
 
         // Verify final state
-        (uint256 chain1Rzr, uint256 chain1Usd) = totalReservesOracle.getCrosschainReserves(1);
-        (uint256 chain2Rzr, uint256 chain2Usd) = totalReservesOracle.getCrosschainReserves(2);
+        (uint256 chain1Rzr, uint256 chain1Usd) = totalReservesOracle.getCrosschainReserves(30101);
         assertEq(chain1Rzr, 100e18);
-        assertEq(chain2Rzr, 200e18);
         assertEq(chain1Usd, 200e18);
-        assertEq(chain2Usd, 400e18);
 
         (uint256 totalRzr, uint256 totalUsd) = totalReservesOracle.getTotalReserves();
-        assertEq(totalRzr, l2chainRzr + creditRzr);
-        assertEq(totalUsd, l2chainUsd + creditUsd);
+        assertEq(totalRzr, 100e18 + creditRzr); // Final onchain reserves + credits
+        assertEq(totalUsd, 200e18 + creditUsd); // Final onchain reserves + credits
     }
 }

@@ -60,7 +60,7 @@ contract RebaseController is AppAccessControlled, IRebaseController {
         __AppAccessControlled_init(_authority);
 
         floorApr = 500; // 500% APR
-        ceilApr = 400; // 2000% APR
+        ceilApr = 2000; // 2000% APR
         k1 = 10; // rises 0->500% over β 1-1.5
         k2 = 1500; // rises 500->2000% over β 1.5-2.5
 

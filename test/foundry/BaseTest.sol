@@ -83,6 +83,7 @@ contract BaseTest is Test {
         // Deploy TotalReservesOracle
         totalReservesOracle = new TotalReservesOracle();
         totalReservesOracle.initialize(address(authority), offchainUpdater);
+        totalReservesOracle.toggleEid(30101);
 
         appOracle = new AppOracle();
         appOracle.initialize(address(authority), address(app));
@@ -144,6 +145,8 @@ contract BaseTest is Test {
         authority.setTreasury(address(treasury));
         authority.addReserveDepositor(address(bondDepository));
         authority.setBridge(address(bridgeL1));
+        // Add owner as executor for bridge to allow syncMainnetReserves calls
+        authority.addExecutor(address(bridgeL1));
 
         vm.label(address(app), "RZR");
         vm.label(address(sapp), "sRZR");

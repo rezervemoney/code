@@ -602,15 +602,7 @@ contract Staking4626Test is BaseTest {
         vault.harvest();
         vm.stopPrank();
 
-        // Debug: check what the values are after harvest
-        uint256 rateAfterHarvest = vault.rate();
-        uint256 totalAssetsAfterHarvest = vault.totalAssets();
-        uint256 totalSupplyAfterHarvest = vault.totalSupply();
-        uint256 userSharesAfterHarvest = vault.balanceOf(user1);
-        console.log("Rate after harvest:", rateAfterHarvest);
-        console.log("Total Assets after harvest:", totalAssetsAfterHarvest);
-        console.log("Total Supply after harvest:", totalSupplyAfterHarvest);
-        console.log("User shares after harvest:", userSharesAfterHarvest);
+
 
         // Perform an extra tiny deposit so vault will retain some shares after user1 redeems
         uint256 extraAssets = 10 ether;
@@ -792,7 +784,6 @@ contract Staking4626Test is BaseTest {
 
         // totalAssets should still work even after position is bought out
         // It will return 0 if the rate is 0, or the calculated value based on stored rate
-        uint256 totalAssetsAfterBuyout = vault.totalAssets();
         // The rate might be 0 or very low after buyout, so totalAssets could be 0
 
         // Recreate position

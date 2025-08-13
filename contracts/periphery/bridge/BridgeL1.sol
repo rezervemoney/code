@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 // Import necessary interfaces and contracts
 import "../../core/AppAccessControlled.sol";
 import "../../interfaces/IAppTreasury.sol";
-import "../../interfaces/IBridgeL1Reader.sol";
+import "../../interfaces/IBridgeL1.sol";
 import "../../interfaces/IBridgeL2.sol";
 import "../../interfaces/ITotalReservesOracle.sol";
 import "../../interfaces/ITotalSupplyOracle.sol";
@@ -15,25 +15,22 @@ import "@layerzerolabs/oapp-evm/contracts/oapp/libs/ReadCodecV1.sol";
 import "@layerzerolabs/oapp-evm/contracts/oapp/OApp.sol";
 import "@layerzerolabs/oapp-evm/contracts/oapp/OAppRead.sol";
 
-contract BridgeL1Reader is AppAccessControlled, OAppRead, OAppOptionsType3, IBridgeL1Reader {
+contract BridgeL1 is AppAccessControlled, OAppRead, OAppOptionsType3, IBridgeL1 {
     uint32 public immutable MAINNET_EID = 30101;
 
-    /// @inheritdoc IBridgeL1Reader
+    /// @inheritdoc IBridgeL1
     uint32 public READ_CHANNEL;
 
     /// @notice Message type identifier for read operations
     uint16 public constant READ_TYPE = 1;
 
-    /// @inheritdoc IBridgeL1Reader
+    /// @inheritdoc IBridgeL1
     mapping(uint32 eid => address bridgeL2Reader) public bridgeL2Readers;
 
-    /// @inheritdoc IBridgeL1Reader
-    ITotalSupplyOracle public totalSupplyOracle;
-
-    /// @inheritdoc IBridgeL1Reader
+    /// @inheritdoc IBridgeL1
     ITotalReservesOracle public totalReservesOracle;
 
-    /// @inheritdoc IBridgeL1Reader
+    /// @inheritdoc IBridgeL1
     IAppTreasury public treasury;
 
     /// @notice Initialize the cross-chain read contract
@@ -44,7 +41,6 @@ contract BridgeL1Reader is AppAccessControlled, OAppRead, OAppOptionsType3, IBri
         uint32 _readChannel,
         address _endpoint,
         address _authority,
-        address _totalSupplyOracle,
         address _totalReservesOracle,
         address _treasury
     ) OAppRead(_endpoint, msg.sender) Ownable(msg.sender) {
@@ -52,7 +48,6 @@ contract BridgeL1Reader is AppAccessControlled, OAppRead, OAppOptionsType3, IBri
         _setPeer(READ_CHANNEL, AddressCast.toBytes32(address(this)));
         __AppAccessControlled_init(_authority);
         _transferOwnership(address(0));
-        totalSupplyOracle = ITotalSupplyOracle(_totalSupplyOracle);
         totalReservesOracle = ITotalReservesOracle(_totalReservesOracle);
         treasury = IAppTreasury(_treasury);
     }
@@ -63,7 +58,7 @@ contract BridgeL1Reader is AppAccessControlled, OAppRead, OAppOptionsType3, IBri
         }
     }
 
-    /// @inheritdoc IBridgeL1Reader
+    /// @inheritdoc IBridgeL1
     function registerBridges(uint32[] calldata _eids, address[] calldata _bridgeL2Readers) external onlyGovernor {
         for (uint256 i = 0; i < _eids.length; i++) {
             bridgeL2Readers[_eids[i]] = _bridgeL2Readers[i];
@@ -77,13 +72,13 @@ contract BridgeL1Reader is AppAccessControlled, OAppRead, OAppOptionsType3, IBri
         READ_CHANNEL = _channelId;
     }
 
-    /// @inheritdoc IBridgeL1Reader
+    /// @inheritdoc IBridgeL1
     function syncMainnetReserves() external onlyExecutor {
         (uint256 usdReserves, uint256 rzrReserves) = treasury.syncReserves();
         totalReservesOracle.setCrosschainReserves(MAINNET_EID, rzrReserves, usdReserves);
     }
 
-    /// @inheritdoc IBridgeL1Reader
+    /// @inheritdoc IBridgeL1
     function syncL2Reserves(uint32 eid, bytes calldata _extraOptions)
         external
         payable
@@ -93,7 +88,7 @@ contract BridgeL1Reader is AppAccessControlled, OAppRead, OAppOptionsType3, IBri
         return _readData(eid, msg.value, _extraOptions);
     }
 
-    /// @inheritdoc IBridgeL1Reader
+    /// @inheritdoc IBridgeL1
     function quoteReadFee(uint32 _eid, bytes calldata _extraOptions) external view returns (MessagingFee memory fee) {
         // Build the same command as readSum and quote its cost
         return _quote(
@@ -164,13 +159,10 @@ contract BridgeL1Reader is AppAccessControlled, OAppRead, OAppOptionsType3, IBri
         // require(_message.length == 32, "Invalid message length");
 
         // 2. Decode the returned data (matches target function return type)
-        (uint32 eid, uint256 rzrSupply, uint256 rzrReserves, uint256 usdReserves) =
-            abi.decode(_message, (uint32, uint256, uint256, uint256));
+        (uint32 eid, uint256 rzrReserves, uint256 usdReserves) = abi.decode(_message, (uint32, uint256, uint256));
 
         // 3. Process the result (emit event, update state, trigger logic, etc.)
-        emit StateReceived(eid, rzrSupply, rzrReserves, usdReserves);
-
-        totalSupplyOracle.setCrosschainTotalSupply(eid, rzrSupply);
+        emit StateReceived(eid, rzrReserves, usdReserves);
         totalReservesOracle.setCrosschainReserves(eid, rzrReserves, usdReserves);
     }
 }

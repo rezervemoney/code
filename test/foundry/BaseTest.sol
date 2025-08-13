@@ -17,9 +17,8 @@ import "../../contracts/core/AppOracle.sol";
 import "../../contracts/core/AppBurner.sol";
 import "../../contracts/periphery/Staking4626.sol";
 import "../../contracts/periphery/LoyaltyList.sol";
-import "../../contracts/oracles/crosschain/TotalSupplyOracle.sol";
 import "../../contracts/oracles/crosschain/TotalReservesOracle.sol";
-import "../../contracts/periphery/bridge/BridgeL1Reader.sol";
+import "../../contracts/periphery/bridge/BridgeL1.sol";
 
 contract BaseTest is Test {
     RebaseController public rebaseController;
@@ -48,8 +47,7 @@ contract BaseTest is Test {
     Staking4626 public staking4626;
 
     TotalReservesOracle public totalReservesOracle;
-    TotalSupplyOracle public totalSupplyOracle;
-    BridgeL1Reader public bridgeL1Reader;
+    BridgeL1 public bridgeL1;
 
     address public owner = makeAddr("owner");
     address public user1 = makeAddr("user1");
@@ -82,10 +80,6 @@ contract BaseTest is Test {
         // Deploy sRZR token
         sapp = new sRZR(address(authority));
 
-        // Deploy TotalSupplyOracle
-        totalSupplyOracle = new TotalSupplyOracle();
-        totalSupplyOracle.initialize(address(authority), offchainUpdater, address(app));
-
         // Deploy TotalReservesOracle
         totalReservesOracle = new TotalReservesOracle();
         totalReservesOracle.initialize(address(authority), offchainUpdater);
@@ -107,7 +101,7 @@ contract BaseTest is Test {
 
         // Deploy Staking
         staking = new AppStaking();
-        staking.initialize(address(app), address(sapp), address(authority), address(burner), address(totalSupplyOracle));
+        staking.initialize(address(app), address(sapp), address(authority), address(burner));
 
         // Deploy LoyaltyList
         loyaltyList = new LoyaltyList(address(authority));
@@ -119,14 +113,7 @@ contract BaseTest is Test {
         );
 
         // Deploy BridgeL1
-        bridgeL1Reader = new BridgeL1Reader(
-            1,
-            address(lz),
-            address(authority),
-            address(totalSupplyOracle),
-            address(totalReservesOracle),
-            address(treasury)
-        );
+        bridgeL1 = new BridgeL1(1, address(lz), address(authority), address(totalReservesOracle), address(treasury));
 
         sapp.setStakingContract(address(staking));
 
@@ -156,7 +143,7 @@ contract BaseTest is Test {
         authority.setOperationsTreasury(operationsTreasury);
         authority.setTreasury(address(treasury));
         authority.addReserveDepositor(address(bondDepository));
-        authority.setBridge(address(bridgeL1Reader));
+        authority.setBridge(address(bridgeL1));
 
         vm.label(address(app), "RZR");
         vm.label(address(sapp), "sRZR");
@@ -182,24 +169,13 @@ contract BaseTest is Test {
     }
 
     function _syncOracles() internal {
-        _syncTotalSupplyOracle();
         _syncReservesOracle();
-    }
-
-    function _syncTotalSupplyOracle() internal {
-        uint256 totalSupply = app.totalSupply();
-        vm.prank(offchainUpdater);
-        totalSupplyOracle.updateTotalSupplyOffchain(totalSupply);
-
-        // // sync onchain total supply
-        // vm.prank(address(bridgeL1));
-        // totalSupplyOracle.setCrosschainTotalSupply(1, 0);
     }
 
     function _syncReservesOracle() internal {
         // sync on chain
         vm.prank(address(owner));
-        bridgeL1Reader.syncMainnetReserves();
+        bridgeL1.syncMainnetReserves();
 
         mockOracle.touchTimestamp();
         mockOracle2.touchTimestamp();

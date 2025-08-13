@@ -602,8 +602,6 @@ contract Staking4626Test is BaseTest {
         vault.harvest();
         vm.stopPrank();
 
-
-
         // Perform an extra tiny deposit so vault will retain some shares after user1 redeems
         uint256 extraAssets = 10 ether;
         vm.startPrank(owner);

@@ -1,82 +1,57 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.28;
 
-import "./IBridge.sol";
-import "./IAppStaking.sol";
-import "./IStaking4626.sol";
-import "./ITotalReservesOracle.sol";
-import "./IAppTreasury.sol";
-import "./IApp.sol";
-import "./ITotalSupplyOracle.sol";
+import {ITotalSupplyOracle} from "./ITotalSupplyOracle.sol";
+import {ITotalReservesOracle} from "./ITotalReservesOracle.sol";
+import {IAppTreasury} from "./IAppTreasury.sol";
+import {
+    MessagingFee,
+    MessagingReceipt
+} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroEndpointV2.sol";
 
-interface IBridgeL1 is IBridge {
-    event L2BridgeRegistered(address indexed l2Bridge, uint32 indexed eid);
-    event StateSent(uint32 indexed dstEid, bytes message);
+interface IBridgeL1 {
+    /// @notice Emitted when cross-chain function data is successfully received
+    event StateReceived(uint32 eid, uint256 rzrReserves, uint256 usdReserves);
 
-    /// @notice Get the staking contract
-    function staking() external view returns (IAppStaking);
+    /// @notice Emitted when a bridge is registered
+    event BridgeRegistered(uint32 eid, address bridgeL2Reader);
 
-    /// @notice Get the staking4626 contract
-    function staking4626() external view returns (IStaking4626);
+    /// @notice Error thrown when a bridge is not registered
+    error BridgeNotRegistered(uint32 eid);
 
-    /// @notice Get the treasury contract
-    function treasury() external view returns (IAppTreasury);
+    /// @notice The read channel
+    function READ_CHANNEL() external view returns (uint32);
 
-    /// @notice Get the rzr contract
-    function rzr() external view returns (IApp);
+    /// @notice The mainnet eid
+    function MAINNET_EID() external view returns (uint32);
 
-    /// @notice Initialize the bridge
-    /// @param _delegate The delegate of the bridge
-    /// @param _authority The authority of the bridge
-    /// @param _staking The staking contract
-    /// @param _staking4626 The staking4626 contract
-    /// @param _rzr The rzr contract
-    /// @param _treasury The treasury contract
-    /// @param _totalReservesOracle The total reserves oracle contract
-    /// @param _totalSupplyOracle The total supply oracle contract
-    /// @dev This function is used to initialize the bridge
-    /// @dev This function is only callable by the governor
-    function initialize(
-        address _lzEndpoint,
-        address _delegate,
-        address _authority,
-        address _staking,
-        address _staking4626,
-        address _rzr,
-        address _treasury,
-        address _totalReservesOracle,
-        address _totalSupplyOracle
-    ) external;
+    /// @notice The bridge L2 readers
+    function bridgeL2Readers(uint32 eid) external view returns (address);
 
-    /// @notice Register an L2 bridge
-    /// @param _l2Bridge The address of the L2 bridge
-    /// @param _eid The eid of the L2 bridge
-    /// @dev This function is used to register an L2 bridge
-    /// @dev This function is only callable by the governor
-    function registerL2Bridge(address _l2Bridge, uint32 _eid) external;
-
-    /// @notice Send the current protocol state to an L2 bridge
-    /// @param _dstEid The eid of the L2 bridge to send the state to
-    /// @dev This function is used to send the current protocol state to all L2s
-    /// @dev This function is only callable by the executor
-    function sentStateToL2(uint32[] calldata _dstEid) external payable;
-
-    /// @notice Sync the mainnet reserves to the total reserves oracle
-    /// @dev This function is used to sync the mainnet reserves to the total reserves oracle
-    /// @dev This function is only callable by the executor
-    function syncMainnetReserves() external;
-
-    /// @notice Purge the given token
-    /// @param token The token to purge
-    /// @dev This function is used to purge the given token
-    /// @dev This function is only callable by the governor
-    function purge(address token) external;
-
-    /// @notice Get the total reserves oracle
-    /// @return _totalReservesOracle The total reserves oracle
+    /// @notice The total reserves oracle
     function totalReservesOracle() external view returns (ITotalReservesOracle);
 
-    /// @notice Get the total supply oracle
-    /// @return _totalSupplyOracle The total supply oracle
-    function totalSupplyOracle() external view returns (ITotalSupplyOracle);
+    /// @notice The treasury
+    function treasury() external view returns (IAppTreasury);
+
+    /// @notice Register a bridge on the target chain
+    /// @param _eids The LayerZero endpoint IDs of the target chains
+    /// @param _bridgeL2Readers The addresses of the bridges on the target chains
+    function registerBridges(uint32[] calldata _eids, address[] calldata _bridgeL2Readers) external;
+
+    /// @notice Sync the mainnet reserves to the total reserves oracle
+    function syncMainnetReserves() external;
+
+    /// @notice Read data from a single bridge on the target chain
+    /// @param eid The LayerZero endpoint ID of the target chain
+    /// @return receipt LayerZero messaging receipt containing transaction details
+    function syncL2Reserves(uint32 eid, bytes calldata _extraOptions)
+        external
+        payable
+        returns (MessagingReceipt memory);
+
+    /// @notice Get estimated messaging fee for a cross-chain read operation
+    /// @param _eid The LayerZero endpoint ID of the target chain
+    /// @return fee Estimated LayerZero messaging fee structure
+    function quoteReadFee(uint32 _eid, bytes calldata _extraOptions) external view returns (MessagingFee memory fee);
 }

@@ -184,17 +184,7 @@ interface IAppStaking is IERC721Enumerable {
     /// @param _trackingToken The address of the tracking token
     /// @param _authority The address of the authority contract
     /// @param _burner The address of the burner contract
-    function initialize(
-        address _appToken,
-        address _trackingToken,
-        address _authority,
-        address _burner,
-        address _totalSupplyOracle
-    ) external;
-
-    /// @notice Gets the total supply oracle
-    /// @return The total supply oracle
-    function totalSupplyOracle() external view returns (ITotalSupplyOracle);
+    function initialize(address _appToken, address _trackingToken, address _authority, address _burner) external;
 
     /// @notice Sets the variables
     /// @param _variables The new variables

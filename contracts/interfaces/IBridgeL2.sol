@@ -3,8 +3,8 @@ pragma solidity 0.8.28;
 
 import "./IBridge.sol";
 
-interface IBridgeL2 is IBridge {
+interface IBridgeL2 {
     /// @notice Get the state of the bridge
     /// @dev This function is used to get the state of the bridge
-    function data() external view returns (uint32, uint256, uint256, uint256);
+    function data() external view returns (uint32, uint256, uint256);
 }

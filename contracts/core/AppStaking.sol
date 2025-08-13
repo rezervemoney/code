@@ -45,16 +45,11 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
     mapping(uint256 => Position) private _positions;
     Variables private _variables;
 
-    ITotalSupplyOracle public totalSupplyOracle;
-
     /// @inheritdoc IAppStaking
-    function initialize(
-        address _appToken,
-        address _trackingToken,
-        address _authority,
-        address _burner,
-        address _totalSupplyOracle
-    ) public reinitializer(2) {
+    function initialize(address _appToken, address _trackingToken, address _authority, address _burner)
+        public
+        reinitializer(2)
+    {
         if (lastId == 0) lastId = 1;
 
         __ERC721_init("RZR Staking Position", "RZR-POS");
@@ -67,7 +62,6 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
         appToken = IERC20(_appToken);
         trackingToken = IPermissionedERC20(_trackingToken);
         burner = _burner;
-        totalSupplyOracle = ITotalSupplyOracle(_totalSupplyOracle);
 
         _setVariables(
             Variables({
@@ -99,7 +93,7 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
 
     /// @notice Returns the current demand ratio as basis points (0…BASIS_POINTS)
     function getStakingRatio() public view returns (uint256) {
-        uint256 supply = totalSupplyOracle.getTotalSupply();
+        uint256 supply = appToken.totalSupply();
         if (supply == 0 || totalStaked == 0) return 0;
         return (totalStaked * 1e18) / supply;
     }

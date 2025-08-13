@@ -1,6 +1,45 @@
 [
   {
     "inputs": [],
+    "name": "LIQUID_STAKING_MAINNET",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MAINNET_EID",
+    "outputs": [
+      {
+        "internalType": "uint32",
+        "name": "",
+        "type": "uint32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "READ_CHANNEL",
+    "outputs": [
+      {
+        "internalType": "uint32",
+        "name": "",
+        "type": "uint32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "data",
     "outputs": [
       {
@@ -17,59 +56,88 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
       }
     ],
     "stateMutability": "view",
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "getCurrentState",
+    "inputs": [
+      {
+        "internalType": "bytes",
+        "name": "_extraOptions",
+        "type": "bytes"
+      }
+    ],
+    "name": "quoteReadFee",
     "outputs": [
       {
         "components": [
           {
             "internalType": "uint256",
-            "name": "staking4626Rate",
+            "name": "nativeFee",
             "type": "uint256"
           },
           {
             "internalType": "uint256",
-            "name": "rzrSupply",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "lstRzrSupply",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "rzrReserves",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "usdReserves",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "updatedAt",
+            "name": "lzTokenFee",
             "type": "uint256"
           }
         ],
-        "internalType": "struct IBridge.State",
-        "name": "",
+        "internalType": "struct MessagingFee",
+        "name": "fee",
         "type": "tuple"
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes",
+        "name": "_extraOptions",
+        "type": "bytes"
+      }
+    ],
+    "name": "syncRate",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "guid",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint64",
+            "name": "nonce",
+            "type": "uint64"
+          },
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "nativeFee",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "lzTokenFee",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct MessagingFee",
+            "name": "fee",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct MessagingReceipt",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "payable",
     "type": "function"
   }
 ]

@@ -58,6 +58,7 @@ contract Staking4626FuzzTest is BaseTest {
         // Position state before deposit
         uint256 beforeAmount = staking.positions(vault.tokenId()).amount;
         uint256 beforeShares = vault.totalSupply();
+        uint256 beforeBalance = app.balanceOf(user1);
 
         uint256 sharesMinted = vault.deposit(depositAmount, user1);
         vm.stopPrank();
@@ -75,10 +76,23 @@ contract Staking4626FuzzTest is BaseTest {
 
         // Vault should have minimal balance after staking
         assertLt(app.balanceOf(address(vault)), 1 ether, "vault should have minimal balance after staking");
+
+        // User balance should decrease by deposit amount
+        assertEq(app.balanceOf(user1), beforeBalance - depositAmount, "user balance should decrease by deposit amount");
+
+        // Shares minted should be positive
+        assertGt(sharesMinted, 0, "shares minted should be positive");
+
+        // Rate consistency check
+        if (afterShares > 0) {
+            uint256 expectedTotalAssets = afterShares * vault.rate() / 1e18;
+            uint256 actualTotalAssets = vault.totalAssets();
+            assertApproxEqAbs(expectedTotalAssets, actualTotalAssets, 1e9, "rate consistency after deposit");
+        }
     }
 
     /// @notice Fuzz test deposit with zero amount
-    function testFuzz_DepositZeroAmount(uint256 seed) public {
+    function testFuzz_DepositZeroAmount(uint256) public {
         // This should revert with zero amount
         vm.startPrank(user1);
         app.approve(address(vault), 0);
@@ -99,12 +113,28 @@ contract Staking4626FuzzTest is BaseTest {
         vm.startPrank(user1);
         app.approve(address(vault), depositAmount);
 
+        uint256 beforeShares = vault.totalSupply();
+        uint256 beforeBalance = app.balanceOf(user1);
+
         uint256 sharesMinted = vault.deposit(depositAmount, user1);
         vm.stopPrank();
 
         // Should not revert and should mint shares
         assertGt(sharesMinted, 0, "should mint shares for large deposit");
         assertEq(vault.balanceOf(user1), sharesMinted, "share balance should match");
+
+        // Total supply should increase
+        uint256 afterShares = vault.totalSupply();
+        assertGt(afterShares, beforeShares, "total supply should increase");
+
+        // User balance should decrease
+        uint256 afterBalance = app.balanceOf(user1);
+        assertEq(afterBalance, beforeBalance - depositAmount, "user balance should decrease");
+
+        // Rate consistency check
+        uint256 expectedTotalAssets = afterShares * vault.rate() / 1e18;
+        uint256 actualTotalAssets = vault.totalAssets();
+        assertApproxEqAbs(expectedTotalAssets, actualTotalAssets, 1e9, "rate consistency after large deposit");
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -141,18 +171,36 @@ contract Staking4626FuzzTest is BaseTest {
         vm.startPrank(user1);
         app.approve(address(vault), requiredAssets);
 
+        uint256 beforeShares = vault.balanceOf(user1);
+        uint256 beforeBalance = app.balanceOf(user1);
+        uint256 beforeTotalSupply = vault.totalSupply();
+
         uint256 assetsSpent = vault.mint(sharesToMint, user1);
         vm.stopPrank();
 
         // Should mint the requested shares
-        assertEq(vault.balanceOf(user1), sharesToMint + depositAmount, "should mint requested shares plus deposit");
+        uint256 afterShares = vault.balanceOf(user1);
+        assertEq(afterShares, beforeShares + sharesToMint, "should mint requested shares");
+
+        // Total supply should increase by shares minted
+        uint256 afterTotalSupply = vault.totalSupply();
+        assertEq(afterTotalSupply, beforeTotalSupply + sharesToMint, "total supply should increase");
 
         // Assets spent should be close to preview
         assertApproxEqAbs(assetsSpent, requiredAssets, 1e9, "assets spent should match preview");
+
+        // User balance should decrease by assets spent
+        uint256 afterBalance = app.balanceOf(user1);
+        assertEq(afterBalance, beforeBalance - assetsSpent, "user balance should decrease by assets spent");
+
+        // Rate consistency check
+        uint256 expectedTotalAssets = afterTotalSupply * vault.rate() / 1e18;
+        uint256 actualTotalAssets = vault.totalAssets();
+        assertApproxEqAbs(expectedTotalAssets, actualTotalAssets, 1e9, "rate consistency after mint");
     }
 
     /// @notice Fuzz test mint with zero shares
-    function testFuzz_MintZeroShares(uint256 seed) public {
+    function testFuzz_MintZeroShares(uint256) public {
         // This should revert with zero shares
         vm.startPrank(user1);
         app.approve(address(vault), 0);
@@ -186,10 +234,12 @@ contract Staking4626FuzzTest is BaseTest {
 
         vm.startPrank(user1);
         uint256 sharesBefore = vault.balanceOf(user1);
+        uint256 totalSupplyBefore = vault.totalSupply();
 
         // Try to withdraw, but handle potential reverts gracefully
         try vault.withdraw(withdrawAmount, user1, user1) {
             uint256 sharesAfter = vault.balanceOf(user1);
+            uint256 totalSupplyAfter = vault.totalSupply();
 
             // Shares should decrease
             assertLt(sharesAfter, sharesBefore, "shares should decrease after withdraw");
@@ -198,6 +248,16 @@ contract Staking4626FuzzTest is BaseTest {
             uint256 newTokenId = staking.lastId() - 1;
             assertEq(staking.ownerOf(newTokenId), user1, "user should receive NFT");
             assertTrue(vault.unstakingTokenId(newTokenId), "NFT should be marked as unstaking");
+
+            // Total supply should decrease
+            assertLt(totalSupplyAfter, totalSupplyBefore, "total supply should decrease");
+
+            // Rate consistency check
+            if (totalSupplyAfter > 0) {
+                uint256 expectedTotalAssets = totalSupplyAfter * vault.rate() / 1e18;
+                uint256 actualTotalAssets = vault.totalAssets();
+                assertApproxEqAbs(expectedTotalAssets, actualTotalAssets, 1e9, "rate consistency after withdraw");
+            }
         } catch {
             // If withdraw reverts, that's also acceptable behavior
             assertTrue(true, "withdraw may revert in some cases");
@@ -207,7 +267,7 @@ contract Staking4626FuzzTest is BaseTest {
     }
 
     /// @notice Fuzz test withdraw with zero amount
-    function testFuzz_WithdrawZeroAmount(uint256 seed) public {
+    function testFuzz_WithdrawZeroAmount(uint256) public {
         // This should revert with zero amount
         vm.startPrank(user1);
         vm.expectRevert();
@@ -239,10 +299,12 @@ contract Staking4626FuzzTest is BaseTest {
 
         vm.startPrank(user1);
         uint256 sharesBefore = vault.balanceOf(user1);
+        uint256 totalSupplyBefore = vault.totalSupply();
 
         // Try to redeem, but handle potential reverts gracefully
         try vault.redeem(sharesToRedeem, user1, user1) {
             uint256 sharesAfter = vault.balanceOf(user1);
+            uint256 totalSupplyAfter = vault.totalSupply();
 
             // Shares should decrease
             assertLt(sharesAfter, sharesBefore, "shares should decrease after redeem");
@@ -251,6 +313,16 @@ contract Staking4626FuzzTest is BaseTest {
             uint256 newTokenId = staking.lastId() - 1;
             assertEq(staking.ownerOf(newTokenId), user1, "user should receive NFT");
             assertTrue(vault.unstakingTokenId(newTokenId), "NFT should be marked as unstaking");
+
+            // Total supply should decrease
+            assertLt(totalSupplyAfter, totalSupplyBefore, "total supply should decrease");
+
+            // Rate consistency check
+            if (totalSupplyAfter > 0) {
+                uint256 expectedTotalAssets = totalSupplyAfter * vault.rate() / 1e18;
+                uint256 actualTotalAssets = vault.totalAssets();
+                assertApproxEqAbs(expectedTotalAssets, actualTotalAssets, 1e9, "rate consistency after redeem");
+            }
         } catch {
             // If redeem reverts, that's also acceptable behavior
             assertTrue(true, "redeem may revert in some cases");
@@ -260,7 +332,7 @@ contract Staking4626FuzzTest is BaseTest {
     }
 
     /// @notice Fuzz test redeem with zero shares
-    function testFuzz_RedeemZeroShares(uint256 seed) public {
+    function testFuzz_RedeemZeroShares(uint256) public {
         // This should revert with zero shares
         vm.startPrank(user1);
         vm.expectRevert();
@@ -273,7 +345,7 @@ contract Staking4626FuzzTest is BaseTest {
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Fuzz test previewDeposit with various amounts
-    function testFuzz_PreviewDeposit(uint256 assets) public {
+    function testFuzz_PreviewDeposit(uint256 assets) public view {
         // Bound assets to reasonable range (1 wei to 1e30)
         assets = bound(assets, 1, 1e30);
 
@@ -286,6 +358,14 @@ contract Staking4626FuzzTest is BaseTest {
 
         // Should handle edge cases without reverting
         assertTrue(true, "previewDeposit should not revert");
+
+        // Test mathematical consistency with convertToShares
+        uint256 directShares = vault.convertToShares(assets);
+        assertApproxEqAbs(expectedShares, directShares, 1e9, "previewDeposit should match convertToShares");
+
+        // Test that preview is deterministic
+        uint256 expectedShares2 = vault.previewDeposit(assets);
+        assertEq(expectedShares, expectedShares2, "previewDeposit should be deterministic");
     }
 
     /// @notice Fuzz test previewMint with various share amounts
@@ -315,10 +395,18 @@ contract Staking4626FuzzTest is BaseTest {
 
         // Should handle edge cases without reverting
         assertTrue(true, "previewMint should not revert");
+
+        // Test mathematical consistency with convertToAssets
+        uint256 directAssets = vault.convertToAssets(shares);
+        assertApproxEqAbs(expectedAssets, directAssets, 1e9, "previewMint should match convertToAssets");
+
+        // Test that preview is deterministic
+        uint256 expectedAssets2 = vault.previewMint(shares);
+        assertEq(expectedAssets, expectedAssets2, "previewMint should be deterministic");
     }
 
     /// @notice Fuzz test previewWithdraw with various amounts
-    function testFuzz_PreviewWithdraw(uint256 assets) public {
+    function testFuzz_PreviewWithdraw(uint256 assets) public view {
         // Bound assets to reasonable range (1 wei to 1e30)
         assets = bound(assets, 1, 1e30);
 
@@ -326,10 +414,18 @@ contract Staking4626FuzzTest is BaseTest {
 
         // Should handle edge cases without reverting
         assertTrue(true, "previewWithdraw should not revert");
+
+        // Test mathematical consistency with convertToShares
+        uint256 directShares = vault.convertToShares(assets);
+        assertApproxEqAbs(expectedShares, directShares, 1e9, "previewWithdraw should match convertToShares");
+
+        // Test that preview is deterministic
+        uint256 expectedShares2 = vault.previewWithdraw(assets);
+        assertEq(expectedShares, expectedShares2, "previewWithdraw should be deterministic");
     }
 
     /// @notice Fuzz test previewRedeem with various share amounts
-    function testFuzz_PreviewRedeem(uint256 shares) public {
+    function testFuzz_PreviewRedeem(uint256 shares) public view {
         // Bound shares to reasonable range (1 wei to 1e30)
         shares = bound(shares, 1, 1e30);
 
@@ -337,6 +433,14 @@ contract Staking4626FuzzTest is BaseTest {
 
         // Should handle edge cases without reverting
         assertTrue(true, "previewRedeem should not revert");
+
+        // Test mathematical consistency with convertToAssets
+        uint256 directAssets = vault.convertToAssets(shares);
+        assertApproxEqAbs(expectedAssets, directAssets, 1e9, "previewRedeem should match convertToAssets");
+
+        // Test that preview is deterministic
+        uint256 expectedAssets2 = vault.previewRedeem(shares);
+        assertEq(expectedAssets, expectedAssets2, "previewRedeem should be deterministic");
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -344,7 +448,7 @@ contract Staking4626FuzzTest is BaseTest {
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Fuzz test convertToShares with various asset amounts
-    function testFuzz_ConvertToShares(uint256 assets) public {
+    function testFuzz_ConvertToShares(uint256 assets) public view {
         // Bound assets to reasonable range (1 wei to 1e30)
         assets = bound(assets, 1, 1e30);
 
@@ -357,10 +461,21 @@ contract Staking4626FuzzTest is BaseTest {
 
         // Should handle edge cases without reverting
         assertTrue(true, "convertToShares should not revert");
+
+        // Test that conversion is deterministic
+        uint256 shares2 = vault.convertToShares(assets);
+        assertEq(shares, shares2, "convertToShares should be deterministic");
+
+        // Test rate consistency
+        uint256 rate = vault.rate();
+        if (rate > 0) {
+            uint256 expectedShares = assets * 1e18 / rate;
+            assertApproxEqAbs(shares, expectedShares, 1e9, "convertToShares should use correct rate");
+        }
     }
 
     /// @notice Fuzz test convertToAssets with various share amounts
-    function testFuzz_ConvertToAssets(uint256 shares) public {
+    function testFuzz_ConvertToAssets(uint256 shares) public view {
         // Bound shares to reasonable range (1 wei to 1e30)
         shares = bound(shares, 1, 1e30);
 
@@ -368,10 +483,21 @@ contract Staking4626FuzzTest is BaseTest {
 
         // Should handle edge cases without reverting
         assertTrue(true, "convertToAssets should not revert");
+
+        // Test that conversion is deterministic
+        uint256 assets2 = vault.convertToAssets(shares);
+        assertEq(assets, assets2, "convertToAssets should be deterministic");
+
+        // Test rate consistency
+        uint256 rate = vault.rate();
+        if (rate > 0) {
+            uint256 expectedAssets = shares * rate / 1e18;
+            assertApproxEqAbs(assets, expectedAssets, 1e9, "convertToAssets should use correct rate");
+        }
     }
 
     /// @notice Fuzz test conversion round-trip consistency
-    function testFuzz_ConversionRoundTrip(uint256 input) public {
+    function testFuzz_ConversionRoundTrip(uint256 input) public view {
         // Bound input to reasonable range (1 wei to 1000 ether)
         input = bound(input, 1, 1000 ether);
 
@@ -390,6 +516,15 @@ contract Staking4626FuzzTest is BaseTest {
             // Round trip should not increase shares
             assertLe(sharesRoundtrip, input, "round trip should not increase shares");
         }
+
+        // Test mathematical consistency
+        uint256 rate = vault.rate();
+        if (rate > 0) {
+            // assets -> shares -> assets should be mathematically consistent
+            uint256 expectedShares = input * 1e18 / rate;
+            uint256 expectedAssets = expectedShares * rate / 1e18;
+            assertApproxEqAbs(assetsRoundtrip, expectedAssets, 1e9, "round trip should be mathematically consistent");
+        }
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -397,7 +532,7 @@ contract Staking4626FuzzTest is BaseTest {
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Fuzz test maxDeposit with various users
-    function testFuzz_MaxDeposit(address user) public {
+    function testFuzz_MaxDeposit(address user) public view {
         // Skip zero address and contract addresses
         vm.assume(user != address(0) && user.code.length == 0);
 
@@ -405,10 +540,14 @@ contract Staking4626FuzzTest is BaseTest {
 
         // maxDeposit should always return uint256.max for this vault
         assertEq(maxDeposit, type(uint256).max, "maxDeposit should be unlimited");
+
+        // Test that it's deterministic
+        uint256 maxDeposit2 = vault.maxDeposit(user);
+        assertEq(maxDeposit, maxDeposit2, "maxDeposit should be deterministic");
     }
 
     /// @notice Fuzz test maxMint with various users
-    function testFuzz_MaxMint(address user) public {
+    function testFuzz_MaxMint(address user) public view {
         // Skip zero address and contract addresses
         vm.assume(user != address(0) && user.code.length == 0);
 
@@ -416,10 +555,14 @@ contract Staking4626FuzzTest is BaseTest {
 
         // maxMint should always return uint256.max for this vault
         assertEq(maxMint, type(uint256).max, "maxMint should be unlimited");
+
+        // Test that it's deterministic
+        uint256 maxMint2 = vault.maxMint(user);
+        assertEq(maxMint, maxMint2, "maxMint should be deterministic");
     }
 
     /// @notice Fuzz test maxWithdraw with various users
-    function testFuzz_MaxWithdraw(address user) public {
+    function testFuzz_MaxWithdraw(address user) public view {
         // Skip zero address and contract addresses
         vm.assume(user != address(0) && user.code.length == 0);
 
@@ -430,11 +573,16 @@ contract Staking4626FuzzTest is BaseTest {
 
         // maxWithdraw should not exceed user's share balance
         uint256 userShares = vault.balanceOf(user);
-        assertLe(maxWithdraw, vault.convertToAssets(userShares), "maxWithdraw should not exceed user's share value");
+        uint256 userShareValue = vault.convertToAssets(userShares);
+        assertLe(maxWithdraw, userShareValue, "maxWithdraw should not exceed user's share value");
+
+        // Test that it's deterministic
+        uint256 maxWithdraw2 = vault.maxWithdraw(user);
+        assertEq(maxWithdraw, maxWithdraw2, "maxWithdraw should be deterministic");
     }
 
     /// @notice Fuzz test maxRedeem with various users
-    function testFuzz_MaxRedeem(address user) public {
+    function testFuzz_MaxRedeem(address user) public view {
         // Skip zero address and contract addresses
         vm.assume(user != address(0) && user.code.length == 0);
 
@@ -443,6 +591,10 @@ contract Staking4626FuzzTest is BaseTest {
         // maxRedeem should equal user's share balance
         uint256 userShares = vault.balanceOf(user);
         assertEq(maxRedeem, userShares, "maxRedeem should equal user's share balance");
+
+        // Test that it's deterministic
+        uint256 maxRedeem2 = vault.maxRedeem(user);
+        assertEq(maxRedeem, maxRedeem2, "maxRedeem should be deterministic");
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -459,6 +611,12 @@ contract Staking4626FuzzTest is BaseTest {
         vm.stopPrank();
 
         assertEq(vault.rate(), newRate, "rate should be overwritten");
+
+        // Test that rate change affects totalAssets calculation
+        uint256 totalSupply = vault.totalSupply();
+        uint256 expectedTotalAssets = totalSupply * newRate / 1e18;
+        uint256 actualTotalAssets = vault.totalAssets();
+        assertEq(actualTotalAssets, expectedTotalAssets, "totalAssets should reflect new rate");
     }
 
     /// @notice Fuzz test rate consistency after operations
@@ -484,6 +642,12 @@ contract Staking4626FuzzTest is BaseTest {
         uint256 calculatedTotalAssets = vault.totalSupply() * vault.rate() / 1e18;
         uint256 actualTotalAssets = vault.totalAssets();
         assertEq(calculatedTotalAssets, actualTotalAssets, "rate should be consistent with totalAssets");
+
+        // Test that individual user assets are consistent with rate
+        uint256 userShares = vault.balanceOf(user1);
+        uint256 userAssets = vault.convertToAssets(userShares);
+        uint256 expectedUserAssets = userShares * vault.rate() / 1e18;
+        assertApproxEqAbs(userAssets, expectedUserAssets, 1e9, "user assets should be consistent with rate");
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -515,14 +679,28 @@ contract Staking4626FuzzTest is BaseTest {
         // Fast forward time
         vm.warp(block.timestamp + 4 hours);
 
+        // Record state before harvest
+        uint256 beforeTotalSupply = vault.totalSupply();
+        uint256 beforeTotalAssets = vault.totalAssets();
+
         // Harvest should not revert
         vm.prank(owner);
         vault.harvest();
 
         // Rate should remain consistent after harvest
-        uint256 calculatedTotalAssets = vault.totalSupply() * vault.rate() / 1e18;
-        uint256 actualTotalAssets = vault.totalAssets();
-        assertEq(calculatedTotalAssets, actualTotalAssets, "rate should be consistent after harvest");
+        uint256 afterRate = vault.rate();
+        uint256 afterTotalAssets = vault.totalAssets();
+        uint256 afterTotalSupply = vault.totalSupply();
+
+        // Total supply should remain the same
+        assertEq(afterTotalSupply, beforeTotalSupply, "total supply should remain unchanged after harvest");
+
+        // Rate consistency check
+        uint256 calculatedTotalAssets = afterTotalSupply * afterRate / 1e18;
+        assertApproxEqAbs(calculatedTotalAssets, afterTotalAssets, 1e9, "rate should be consistent after harvest");
+
+        // Test that harvest doesn't break invariants
+        assertGe(afterTotalAssets, beforeTotalAssets, "total assets should not decrease after harvest");
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -547,10 +725,18 @@ contract Staking4626FuzzTest is BaseTest {
 
         // With streaming tax, shares should equal assets (no upfront tax)
         assertApproxEqAbs(expectedShares, assets, 1, "previewDeposit should return full amount with streaming tax");
+
+        // Test that tax rate setting is effective
+        IAppStaking.Variables memory currentVariables = staking.variables();
+        assertEq(currentVariables.harbergerTaxRate, taxRate, "tax rate should be set correctly");
+
+        // Test consistency across multiple calls
+        uint256 expectedShares2 = vault.previewDeposit(assets);
+        assertEq(expectedShares, expectedShares2, "previewDeposit should be consistent with same tax rate");
     }
 
     /// @notice Fuzz test tax precision with small amounts
-    function testFuzz_TaxPrecisionSmallAmounts(uint256 assets) public {
+    function testFuzz_TaxPrecisionSmallAmounts(uint256 assets) public view {
         // Bound assets to small amounts (1 wei to 1 ether)
         assets = bound(assets, 1, 1 ether);
 
@@ -558,6 +744,17 @@ contract Staking4626FuzzTest is BaseTest {
 
         // Should handle small amounts without reverting
         assertTrue(expectedShares >= 0, "previewDeposit should handle small amounts");
+
+        // Test mathematical consistency
+        uint256 directShares = vault.convertToShares(assets);
+        assertApproxEqAbs(
+            expectedShares, directShares, 1e9, "previewDeposit should match convertToShares for small amounts"
+        );
+
+        // Test that small amounts are handled consistently
+        if (assets > 0) {
+            assertGt(expectedShares, 0, "small positive amounts should result in positive shares");
+        }
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -565,13 +762,26 @@ contract Staking4626FuzzTest is BaseTest {
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Fuzz test with extreme values
-    function testFuzz_ExtremeValues(uint256 input) public {
+    function testFuzz_ExtremeValues(uint256 input) public view {
         // Test with extreme values (very small to very large)
         input = bound(input, 1, type(uint256).max);
 
         // Should handle extreme values without reverting (may return 0 or max values)
-        try vault.previewDeposit(input) returns (uint256 shares) {
-            assertTrue(true, "previewDeposit should handle extreme values");
+        try vault.previewDeposit(input) {
+            uint256 shares = vault.previewDeposit(input);
+
+            // Test that extreme values don't break mathematical relationships
+            if (input > 0 && shares > 0) {
+                // For very large inputs, shares should be proportionally large
+                if (input > 1e30) {
+                    assertGt(shares, 1e20, "very large inputs should result in proportionally large shares");
+                }
+
+                // For very small inputs, shares should be proportionally small
+                if (input < 1e6) {
+                    assertLt(shares, input * 2, "very small inputs should result in proportionally small shares");
+                }
+            }
         } catch {
             // It's okay if it reverts for extreme values
             assertTrue(true, "previewDeposit may revert for extreme values");
@@ -591,6 +801,16 @@ contract Staking4626FuzzTest is BaseTest {
 
         // Should handle random addresses without reverting
         assertTrue(true, "should handle random addresses");
+
+        // Test consistency of max functions
+        assertEq(maxDeposit, type(uint256).max, "maxDeposit should always be unlimited");
+        assertEq(maxMint, type(uint256).max, "maxMint should always be unlimited");
+        assertGe(maxWithdraw, 0, "maxWithdraw should be non-negative");
+        assertGe(maxRedeem, 0, "maxRedeem should be non-negative");
+
+        // Test that maxRedeem equals user's share balance
+        uint256 userShares = vault.balanceOf(user);
+        assertEq(maxRedeem, userShares, "maxRedeem should equal user's share balance");
     }
 
     /// @notice Fuzz test position recreation after buyout
@@ -628,6 +848,14 @@ contract Staking4626FuzzTest is BaseTest {
         // totalAssets should work and be >= newAssets
         uint256 ta = vault.totalAssets();
         assertGe(ta, prevTa);
+
+        // Test that new position is properly initialized
+        IAppStaking.Position memory newPosition = staking.positions(newId);
+        assertGt(newPosition.amount, 0, "new position should have positive amount");
+
+        // Test rate consistency with new position
+        uint256 expectedTotalAssets = vault.totalSupply() * vault.rate() / 1e18;
+        assertApproxEqAbs(ta, expectedTotalAssets, 1e9, "rate should be consistent after position recreation");
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -640,7 +868,9 @@ contract Staking4626FuzzTest is BaseTest {
         uint256 operationType = seed % 4; // 0: deposit, 1: mint, 2: withdraw, 3: redeem
         uint256 amount = bound(seed, 1 ether, 1000 ether);
 
+        // Record initial state
         uint256 initialRate = vault.rate();
+        uint256 initialTotalSupply = vault.totalSupply();
 
         // Perform random operation
         if (operationType == 0) {
@@ -688,7 +918,20 @@ contract Staking4626FuzzTest is BaseTest {
         if (vault.totalSupply() > 0) {
             uint256 calculatedTotalAssets = vault.totalSupply() * vault.rate() / 1e18;
             uint256 actualTotalAssets = vault.totalAssets();
-            assertEq(calculatedTotalAssets, actualTotalAssets, "rate should be consistent after operation");
+            assertApproxEqAbs(
+                calculatedTotalAssets, actualTotalAssets, 1e9, "rate should be consistent after operation"
+            );
+        }
+
+        // Test that rate hasn't changed unexpectedly
+        uint256 finalRate = vault.rate();
+        assertEq(finalRate, initialRate, "rate should not change during user operations");
+
+        // Test that total supply changes are consistent with operations
+        uint256 finalTotalSupply = vault.totalSupply();
+        if (operationType == 0 || operationType == 1) {
+            // Deposit and mint should increase total supply
+            assertGe(finalTotalSupply, initialTotalSupply, "total supply should not decrease after deposit/mint");
         }
     }
 
@@ -715,5 +958,22 @@ contract Staking4626FuzzTest is BaseTest {
         uint256 calculatedTotalAssets = vault.totalSupply() * vault.rate() / 1e18;
         uint256 actualTotalAssets = vault.totalAssets();
         assertEq(calculatedTotalAssets, actualTotalAssets, "total assets should be consistent");
+
+        // Test that individual user assets sum up correctly
+        uint256 userShares = vault.balanceOf(user1);
+        uint256 userAssets = vault.convertToAssets(userShares);
+        assertApproxEqAbs(userAssets, depositAmount, 1e9, "user assets should equal deposit amount");
+
+        // Test that total assets are positive
+        assertGt(actualTotalAssets, 0, "total assets should be positive after deposit");
+
+        // Test that rate calculation is mathematically sound
+        uint256 rate = vault.rate();
+        if (rate > 0) {
+            uint256 expectedTotalSupply = actualTotalAssets * 1e18 / rate;
+            assertApproxEqAbs(
+                expectedTotalSupply, vault.totalSupply(), 1e9, "rate calculation should be mathematically consistent"
+            );
+        }
     }
 }

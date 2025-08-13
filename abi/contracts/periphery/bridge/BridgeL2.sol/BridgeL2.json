@@ -3,6 +3,11 @@
     "inputs": [
       {
         "internalType": "uint32",
+        "name": "_eid",
+        "type": "uint32"
+      },
+      {
+        "internalType": "uint32",
         "name": "_readChannel",
         "type": "uint32"
       },
@@ -18,12 +23,7 @@
       },
       {
         "internalType": "address",
-        "name": "_totalSupplyOracle",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_totalReservesOracle",
+        "name": "_liquidStaking",
         "type": "address"
       },
       {
@@ -34,17 +34,6 @@
     ],
     "stateMutability": "nonpayable",
     "type": "constructor"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint32",
-        "name": "eid",
-        "type": "uint32"
-      }
-    ],
-    "name": "BridgeNotRegistered",
-    "type": "error"
   },
   {
     "inputs": [],
@@ -197,25 +186,6 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "uint32",
-        "name": "eid",
-        "type": "uint32"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "bridgeL2Reader",
-        "type": "address"
-      }
-    ],
-    "name": "BridgeRegistered",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
         "components": [
           {
             "internalType": "uint32",
@@ -294,35 +264,17 @@
     "type": "event"
   },
   {
-    "anonymous": false,
-    "inputs": [
+    "inputs": [],
+    "name": "LIQUID_STAKING_MAINNET",
+    "outputs": [
       {
-        "indexed": false,
-        "internalType": "uint32",
-        "name": "eid",
-        "type": "uint32"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "rzrSupply",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "rzrReserves",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "usdReserves",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
-    "name": "StateReceived",
-    "type": "event"
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "inputs": [],
@@ -416,25 +368,6 @@
     "inputs": [
       {
         "internalType": "uint32",
-        "name": "eid",
-        "type": "uint32"
-      }
-    ],
-    "name": "bridgeL2Readers",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "bridgeL2Reader",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint32",
         "name": "_eid",
         "type": "uint32"
       },
@@ -455,6 +388,42 @@
         "internalType": "bytes",
         "name": "",
         "type": "bytes"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "data",
+    "outputs": [
+      {
+        "internalType": "uint32",
+        "name": "_eid",
+        "type": "uint32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_rzrReserves",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_usdReserves",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "eid",
+    "outputs": [
+      {
+        "internalType": "uint32",
+        "name": "",
+        "type": "uint32"
       }
     ],
     "stateMutability": "view",
@@ -538,6 +507,19 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "liquidStaking",
+    "outputs": [
+      {
+        "internalType": "contract IStaking4626L2",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -670,11 +652,6 @@
   {
     "inputs": [
       {
-        "internalType": "uint32",
-        "name": "_eid",
-        "type": "uint32"
-      },
-      {
         "internalType": "bytes",
         "name": "_extraOptions",
         "type": "bytes"
@@ -701,24 +678,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint32[]",
-        "name": "_eids",
-        "type": "uint32[]"
-      },
-      {
-        "internalType": "address[]",
-        "name": "_bridgeL2Readers",
-        "type": "address[]"
-      }
-    ],
-    "name": "registerBridges",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -841,17 +800,12 @@
   {
     "inputs": [
       {
-        "internalType": "uint32",
-        "name": "eid",
-        "type": "uint32"
-      },
-      {
         "internalType": "bytes",
         "name": "_extraOptions",
         "type": "bytes"
       }
     ],
-    "name": "syncL2Reserves",
+    "name": "syncRate",
     "outputs": [
       {
         "components": [
@@ -889,39 +843,6 @@
       }
     ],
     "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "syncMainnetReserves",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "totalReservesOracle",
-    "outputs": [
-      {
-        "internalType": "contract ITotalReservesOracle",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "totalSupplyOracle",
-    "outputs": [
-      {
-        "internalType": "contract ITotalSupplyOracle",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {

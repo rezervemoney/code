@@ -1172,11 +1172,6 @@
         "internalType": "address",
         "name": "_burner",
         "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_totalSupplyOracle",
-        "type": "address"
       }
     ],
     "name": "initialize",
@@ -1867,19 +1862,6 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "totalSupplyOracle",
-    "outputs": [
-      {
-        "internalType": "contract ITotalSupplyOracle",
-        "name": "",
-        "type": "address"
       }
     ],
     "stateMutability": "view",

@@ -50,7 +50,7 @@ contract RebaseController is AppAccessControlled, IRebaseController {
         address _authority,
         address _burner,
         address _totalReservesOracle
-    ) public reinitializer(4) {
+    ) public reinitializer(5) {
         app = IApp(_rzr);
         appOracle = IAppOracle(_appOracle);
         staking = IAppStaking(_staking);
@@ -68,6 +68,8 @@ contract RebaseController is AppAccessControlled, IRebaseController {
         minFloorPct = 0.15e18; // 15%
         maxFloorPct = 0.5e18; // 50%
         floorSlope = 0.45e18; // 45%
+
+        lastEpochTime = 0;
 
         app.approve(address(staking), type(uint256).max);
     }

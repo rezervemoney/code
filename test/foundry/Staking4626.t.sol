@@ -614,9 +614,9 @@ contract Staking4626Test is BaseTest {
         vm.startPrank(user1);
         uint256 previewAssets = vault.previewRedeem(userShares);
         uint256 assetsReturned = vault.redeem(userShares, user1, user1);
-        // With no rewards earned, user gets exactly what they deposited
-        // This is correct behavior when no rewards are available
-        assertEq(assetsReturned, depositAssets, "redeem should return deposited amount when no rewards");
+        assertApproxEqAbs(
+            assetsReturned, depositAssets + REWARD_AMOUNT, 1e18, "redeem should return deposited amount with rewards"
+        );
 
         // preview should be close to actual
         assertApproxEqAbs(assetsReturned, previewAssets, 1e9);

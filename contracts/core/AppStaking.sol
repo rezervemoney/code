@@ -48,7 +48,7 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
     /// @inheritdoc IAppStaking
     function initialize(address _appToken, address _trackingToken, address _authority, address _burner)
         public
-        reinitializer(2)
+        reinitializer(3)
     {
         if (lastId == 0) lastId = 1;
 
@@ -481,15 +481,6 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
         _setUpfrontTaxCreditInternal(tokenId, creditAmount);
     }
 
-    function mint(address to, IAppStaking.Position memory position) external onlyPolicy {
-        // mints a position but does not pull any tokens from the user
-        uint256 tokenId = lastId++;
-        _positions[tokenId] = position;
-        _mint(to, tokenId);
-        trackingToken.mint(to, position.amount);
-        emit PositionMigrated(tokenId, to, position.amount, position.declaredValue);
-    }
-
     function overwriteVariables(
         uint256 _periodFinish,
         uint256 _rewardRate,
@@ -503,6 +494,13 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
         rewardPerTokenStored = _rewardPerTokenStored;
         totalStaked = _totalStaked;
         emit VariablesOverwritten(_periodFinish, _rewardRate, _lastUpdateTime, _rewardPerTokenStored, _totalStaked);
+    }
+
+    function updateLastTaxDate(uint256[] memory tokenIds) external onlyGovernor {
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            Position storage position = _positions[tokenIds[i]];
+            position.lastTaxCollectionTime = block.timestamp;
+        }
     }
 
     /// @notice Executes a call to an address with a value and data

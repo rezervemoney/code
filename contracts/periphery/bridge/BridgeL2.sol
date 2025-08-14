@@ -22,7 +22,9 @@ contract BridgeL2 is AppAccessControlled, OAppRead, OAppOptionsType3, IBridgeL2 
     uint16 public constant READ_TYPE = 1;
 
     /// @inheritdoc IBridgeL2
-    address public immutable LIQUID_STAKING_MAINNET = 0x507427Db12766d70445C85e683eFD30143Bf99DF;
+    address public immutable LIQUID_STAKING_MAINNET = 0xB33f4B9C6f0624EdeAE8881c97381837760D52CB;
+
+    address public immutable BRIDGE_MAINNET = 0x507427Db12766d70445C85e683eFD30143Bf99DF;
 
     /// @inheritdoc IBridgeL2
     uint32 public immutable MAINNET_EID = 30101;
@@ -72,7 +74,7 @@ contract BridgeL2 is AppAccessControlled, OAppRead, OAppOptionsType3, IBridgeL2 
         rzr.send{value: msg.value}(
             SendParam({
                 dstEid: MAINNET_EID,
-                to: bytes32(uint256(uint160(LIQUID_STAKING_MAINNET))),
+                to: bytes32(uint256(uint160(BRIDGE_MAINNET))),
                 amountLD: balance,
                 minAmountLD: balance,
                 extraOptions: "",

@@ -270,6 +270,19 @@
   },
   {
     "inputs": [],
+    "name": "BRIDGE_MAINNET",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "LIQUID_STAKING_MAINNET",
     "outputs": [
       {

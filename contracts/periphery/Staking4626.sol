@@ -31,7 +31,7 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
 
     function initialize(address _staking, address _authority, address _lzEndpoint, address _delegate)
         external
-        reinitializer(8)
+        reinitializer(9)
     {
         __OFTProxy_init("Liquid Staked Rezerve.money", "lstRZR", _lzEndpoint, _delegate);
         __AppAccessControlled_init(_authority);
@@ -165,7 +165,7 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
     /// @dev Returns the value of the position in the vault
     /// @return value The value of the position in the vault
     function positionValue() public view returns (uint256 value) {
-        value = _positionValue() + initialAmount;
+        value = _positionValue();
     }
 
     /// -----------------------------------------------------------------------
@@ -212,7 +212,9 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
         _increaseAmount(rewards + balance);
         emit RewardsCompounded(rewards);
 
-        rate = positionValue() * 1e18 / totalSupply();
+        uint256 oldRate = rate;
+        rate = _positionValue() * 1e18 / totalSupply();
+        require(rate >= oldRate, "Rate decreased");
         emit RateUpdated(rate);
     }
 
@@ -241,7 +243,7 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
     }
 
     function _positionValue() internal view returns (uint256) {
-        return staking.earned(tokenId);
+        return staking.positions(tokenId).amount - initialAmount;
     }
 
     // -----------------------------------------------------------------------

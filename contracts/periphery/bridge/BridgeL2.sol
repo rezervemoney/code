@@ -12,6 +12,7 @@ import "@layerzerolabs/oapp-evm/contracts/oapp/libs/OAppOptionsType3.sol";
 import "@layerzerolabs/oapp-evm/contracts/oapp/libs/ReadCodecV1.sol";
 import "@layerzerolabs/oapp-evm/contracts/oapp/OApp.sol";
 import "@layerzerolabs/oapp-evm/contracts/oapp/OAppRead.sol";
+import "@layerzerolabs/oft-evm/contracts/interfaces/IOFT.sol";
 
 contract BridgeL2 is AppAccessControlled, OAppRead, OAppOptionsType3, IBridgeL2 {
     /// @inheritdoc IBridgeL2
@@ -30,6 +31,8 @@ contract BridgeL2 is AppAccessControlled, OAppRead, OAppOptionsType3, IBridgeL2 
     IStaking4626L2 public liquidStaking;
     IAppTreasury public treasury;
 
+    IOFT public immutable rzr;
+
     /// @notice Initialize the contract
     /// @param _eid The EID of the L2 chain
     /// @param _authority The address of the authority
@@ -43,7 +46,8 @@ contract BridgeL2 is AppAccessControlled, OAppRead, OAppOptionsType3, IBridgeL2 
         address _endpoint,
         address _authority,
         address _liquidStaking,
-        address _treasury
+        address _treasury,
+        address _rzr
     ) OAppRead(_endpoint, msg.sender) Ownable(msg.sender) {
         _setPeer(READ_CHANNEL, AddressCast.toBytes32(address(this)));
         __AppAccessControlled_init(_authority);
@@ -52,12 +56,30 @@ contract BridgeL2 is AppAccessControlled, OAppRead, OAppOptionsType3, IBridgeL2 
         READ_CHANNEL = _readChannel;
         liquidStaking = IStaking4626L2(_liquidStaking);
         treasury = IAppTreasury(_treasury);
+        rzr = IOFT(_rzr);
     }
 
     function _checkOwner() internal view virtual override {
         if (!authority.isGovernor(_msgSender())) {
             revert OwnableUnauthorizedAccount(_msgSender());
         }
+    }
+
+    function flushToL1() external payable onlyExecutor {
+        uint256 balance = IERC20(address(rzr)).balanceOf(address(this));
+        rzr.send{value: msg.value}(
+            SendParam({
+                dstEid: MAINNET_EID,
+                to: bytes32(uint256(uint160(LIQUID_STAKING_MAINNET))),
+                amountLD: balance,
+                minAmountLD: balance,
+                extraOptions: "",
+                composeMsg: "",
+                oftCmd: ""
+            }),
+            MessagingFee({nativeFee: msg.value, lzTokenFee: 0}),
+            address(this)
+        );
     }
 
     /// @inheritdoc OAppRead

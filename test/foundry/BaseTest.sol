@@ -113,18 +113,6 @@ contract BaseTest is Test {
             address(app), address(staking), address(treasury), address(authority), address(loyaltyList)
         );
 
-        // Deploy BridgeL1
-        bridgeL1 = new BridgeL1(
-            1,
-            address(lz),
-            address(authority),
-            address(totalReservesOracle),
-            address(treasury),
-            address(0x1),
-            address(staking4626),
-            address(app)
-        );
-
         sapp.setStakingContract(address(staking));
 
         // Deploy RebaseController
@@ -141,6 +129,18 @@ contract BaseTest is Test {
 
         staking4626 = new Staking4626();
         staking4626.initialize(address(staking), address(authority), address(lz), owner);
+
+        // Deploy BridgeL1
+        bridgeL1 = new BridgeL1(
+            1,
+            address(lz),
+            address(authority),
+            address(totalReservesOracle),
+            address(treasury),
+            address(0x1),
+            address(staking4626),
+            address(app)
+        );
 
         authority.addPolicy(address(treasury));
         authority.addPolicy(address(rebaseController));

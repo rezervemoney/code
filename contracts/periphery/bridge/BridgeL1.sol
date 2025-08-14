@@ -8,6 +8,8 @@ import "../../interfaces/IBridgeL1.sol";
 import "../../interfaces/IBridgeL2.sol";
 import "../../interfaces/ITotalReservesOracle.sol";
 import "../../interfaces/ITotalSupplyOracle.sol";
+import "../../interfaces/IStaking4626.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroEndpointV2.sol";
 import "@layerzerolabs/lz-evm-protocol-v2/contracts/libs/AddressCast.sol";
 import "@layerzerolabs/oapp-evm/contracts/oapp/libs/OAppOptionsType3.sol";
@@ -33,6 +35,12 @@ contract BridgeL1 is AppAccessControlled, OAppRead, OAppOptionsType3, IBridgeL1 
     /// @inheritdoc IBridgeL1
     IAppTreasury public treasury;
 
+    address public lstrzrOFT;
+
+    IStaking4626 public lstRZR;
+
+    IERC20 public rzr;
+
     /// @notice Initialize the cross-chain read contract
     /// @dev Sets up LayerZero connectivity and establishes read channel peer relationship
     /// @param _endpoint LayerZero endpoint address on the source chain
@@ -42,7 +50,10 @@ contract BridgeL1 is AppAccessControlled, OAppRead, OAppOptionsType3, IBridgeL1 
         address _endpoint,
         address _authority,
         address _totalReservesOracle,
-        address _treasury
+        address _treasury,
+        address _lstrzrOFT,
+        address _lstRZR,
+        address _rzr
     ) OAppRead(_endpoint, msg.sender) Ownable(msg.sender) {
         READ_CHANNEL = _readChannel;
         _setPeer(READ_CHANNEL, AddressCast.toBytes32(address(this)));
@@ -50,6 +61,11 @@ contract BridgeL1 is AppAccessControlled, OAppRead, OAppOptionsType3, IBridgeL1 
         _transferOwnership(address(0));
         totalReservesOracle = ITotalReservesOracle(_totalReservesOracle);
         treasury = IAppTreasury(_treasury);
+        lstrzrOFT = _lstrzrOFT;
+        lstRZR = IStaking4626(_lstRZR);
+        rzr = IERC20(_rzr);
+
+        rzr.approve(address(lstRZR), type(uint256).max);
     }
 
     function _checkOwner() internal view virtual override {
@@ -97,6 +113,12 @@ contract BridgeL1 is AppAccessControlled, OAppRead, OAppOptionsType3, IBridgeL1 
             combineOptions(READ_CHANNEL, READ_TYPE, _extraOptions),
             false
         );
+    }
+
+    /// @inheritdoc IBridgeL1
+    function flushRZR() external onlyExecutor {
+        uint256 balance = IERC20(address(rzr)).balanceOf(address(this));
+        lstRZR.deposit(balance, lstrzrOFT);
     }
 
     /// @notice Internal function to read data from a single bridge on the target chain

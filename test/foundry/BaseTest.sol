@@ -114,7 +114,16 @@ contract BaseTest is Test {
         );
 
         // Deploy BridgeL1
-        bridgeL1 = new BridgeL1(1, address(lz), address(authority), address(totalReservesOracle), address(treasury));
+        bridgeL1 = new BridgeL1(
+            1,
+            address(lz),
+            address(authority),
+            address(totalReservesOracle),
+            address(treasury),
+            address(0x1),
+            address(staking4626),
+            address(app)
+        );
 
         sapp.setStakingContract(address(staking));
 

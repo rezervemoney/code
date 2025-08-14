@@ -4,6 +4,8 @@ pragma solidity 0.8.28;
 import {ITotalSupplyOracle} from "./ITotalSupplyOracle.sol";
 import {ITotalReservesOracle} from "./ITotalReservesOracle.sol";
 import {IAppTreasury} from "./IAppTreasury.sol";
+import {IStaking4626} from "./IStaking4626.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {
     MessagingFee,
     MessagingReceipt
@@ -33,6 +35,18 @@ interface IBridgeL1 {
 
     /// @notice The treasury
     function treasury() external view returns (IAppTreasury);
+
+    /// @notice The lstrzrOFT
+    function lstrzrOFT() external view returns (address);
+
+    /// @notice The lstRZR
+    function lstRZR() external view returns (IStaking4626);
+
+    /// @notice The rzr
+    function rzr() external view returns (IERC20);
+
+    /// @notice Flush the rzr to the lstRZR oft adapter
+    function flushRZR() external;
 
     /// @notice Register a bridge on the target chain
     /// @param _eids The LayerZero endpoint IDs of the target chains

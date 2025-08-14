@@ -25,6 +25,21 @@
         "internalType": "address",
         "name": "_treasury",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_lstrzrOFT",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_lstRZR",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_rzr",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -487,6 +502,13 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "flushRZR",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "components": [
@@ -527,6 +549,32 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "lstRZR",
+    "outputs": [
+      {
+        "internalType": "contract IStaking4626",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "lstrzrOFT",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -715,6 +763,19 @@
     "name": "renounceOwnership",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "rzr",
+    "outputs": [
+      {
+        "internalType": "contract IERC20",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {

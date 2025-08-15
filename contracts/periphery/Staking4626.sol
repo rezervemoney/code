@@ -31,7 +31,7 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
 
     function initialize(address _staking, address _authority, address _lzEndpoint, address _delegate)
         external
-        reinitializer(9)
+        reinitializer(10)
     {
         __OFTProxy_init("Liquid Staked Rezerve.money", "lstRZR", _lzEndpoint, _delegate);
         __AppAccessControlled_init(_authority);

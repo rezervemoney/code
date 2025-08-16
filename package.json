@@ -57,7 +57,9 @@
     "test:halmos": "halmos",
     "coverage:html": "node scripts/renderCoverage.js",
     "deploy-w3f-bond-events": "w3f deploy web3-functions/bond-events/index.ts",
-    "test-w3f-bond-events": "hardhat w3f-run bond-events --network sonic --logs"
+    "deploy-w3f-sync-l1-reserves": "w3f deploy web3-functions/sync-l1-reserves/index.ts",
+    "test-w3f-bond-events": "hardhat w3f-run bond-events --network sonic --logs",
+    "test-w3f-sync-l1-reserves": "hardhat w3f-run sync-l1-reserves --network mainnet --logs"
   },
   "repository": {
     "type": "git",

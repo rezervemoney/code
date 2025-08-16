@@ -58,8 +58,12 @@
     "coverage:html": "node scripts/renderCoverage.js",
     "deploy-w3f-bond-events": "w3f deploy web3-functions/bond-events/index.ts",
     "deploy-w3f-sync-l1-reserves": "w3f deploy web3-functions/sync-l1-reserves/index.ts",
+    "deploy-w3f-harvest-rewards": "w3f deploy web3-functions/harvest-rewards/index.ts",
+    "deploy-w3f-snapshot-l1-reserves": "w3f deploy web3-functions/snapshot-l1-reserves/index.ts",
     "test-w3f-bond-events": "hardhat w3f-run bond-events --network sonic --logs",
-    "test-w3f-sync-l1-reserves": "hardhat w3f-run sync-l1-reserves --network mainnet --logs"
+    "test-w3f-sync-l1-reserves": "hardhat w3f-run sync-l1-reserves --network mainnet --logs",
+    "test-w3f-harvest-rewards": "hardhat w3f-run harvest-rewards --network mainnet --logs",
+    "test-w3f-snapshot-l1-reserves": "hardhat w3f-run snapshot-l1-reserves --network mainnet --logs"
   },
   "repository": {
     "type": "git",

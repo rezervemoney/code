@@ -60,10 +60,12 @@
     "deploy-w3f-sync-l1-reserves": "w3f deploy web3-functions/sync-l1-reserves/index.ts",
     "deploy-w3f-harvest-rewards": "w3f deploy web3-functions/harvest-rewards/index.ts",
     "deploy-w3f-snapshot-l1-reserves": "w3f deploy web3-functions/snapshot-l1-reserves/index.ts",
+    "deploy-w3f-sync-l2-rate": "w3f deploy web3-functions/sync-l2-rate/index.ts",
     "test-w3f-bond-events": "hardhat w3f-run bond-events --network sonic --logs",
     "test-w3f-sync-l1-reserves": "hardhat w3f-run sync-l1-reserves --network mainnet --logs",
     "test-w3f-harvest-rewards": "hardhat w3f-run harvest-rewards --network mainnet --logs",
-    "test-w3f-snapshot-l1-reserves": "hardhat w3f-run snapshot-l1-reserves --network mainnet --logs"
+    "test-w3f-snapshot-l1-reserves": "hardhat w3f-run snapshot-l1-reserves --network mainnet --logs",
+    "test-w3f-sync-l2-rate": "hardhat w3f-run sync-l2-rate --network sonic --logs"
   },
   "repository": {
     "type": "git",

@@ -55,7 +55,7 @@ contract TotalReservesOracle is AppAccessControlled, ITotalReservesOracle {
     }
 
     /// @inheritdoc ITotalReservesOracle
-    function initialize(address _authority, address _offchainUpdater) external reinitializer(2) {
+    function initialize(address _authority, address _offchainUpdater) external reinitializer(3) {
         __AppAccessControlled_init(_authority);
         offchainUpdater = _offchainUpdater;
         maxDeviation = 1e16; // 1% max deviation (100 basis points)
@@ -120,7 +120,7 @@ contract TotalReservesOracle is AppAccessControlled, ITotalReservesOracle {
 
     /// @inheritdoc ITotalReservesOracle
     function updateReservesOffchain(uint256 _rzrReserves, uint256 _usdReserves) external {
-        require(msg.sender == offchainUpdater, "Only updater");
+        require(msg.sender == offchainUpdater || authority.isExecutor(msg.sender), "Only updater");
         offchainRzrReserves = _rzrReserves;
         offchainUsdReserves = _usdReserves;
         lastUpdatedOffchainAt = block.timestamp;

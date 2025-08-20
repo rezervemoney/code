@@ -20,12 +20,12 @@ contract AppUIHelperRead is AppUIHelperBase {
             bytes8 referralCode,
             TokenInfo[] memory tokenInfos,
             StakingPositionInfo[] memory stakingPositions,
-            BondPositionInfo[] memory bondPositions,
+            ConvertiblePositionInfo[] memory convertiblePositions,
             ProjectedEpochRate memory projectedEpochRate
         )
     {
         // Get protocol-wide stats
-        bondPositions = getBondPositions(user);
+        convertiblePositions = getConvertiblePositions(user);
         projectedEpochRate = getProjectedEpochRate();
         protocolInfo = getProtocolInfo();
         referralCode = referrals.referrerCodes(user);
@@ -124,7 +124,7 @@ contract AppUIHelperRead is AppUIHelperBase {
             IERC20Metadata token = IERC20Metadata(bondTokens[i]);
             tokenInfos[i + 3] = TokenInfo({
                 balance: token.balanceOf(user),
-                allowance: token.allowance(user, address(bondDepository)),
+                allowance: token.allowance(user, address(convertibles)),
                 decimals: token.decimals(),
                 totalSupply: token.totalSupply(),
                 name: token.name(),
@@ -170,57 +170,57 @@ contract AppUIHelperRead is AppUIHelperBase {
         }
     }
 
-    function getBondPositions(address user) internal view returns (BondPositionInfo[] memory bondPositions) {
-        if (address(bondDepository) == address(0)) return bondPositions;
+    function getConvertiblePositions(address user)
+        internal
+        view
+        returns (ConvertiblePositionInfo[] memory convertiblePositions)
+    {
+        if (address(convertibles) == address(0)) return convertiblePositions;
 
-        uint256 bondBalance = bondDepository.balanceOf(user);
-        bondPositions = new BondPositionInfo[](bondBalance);
+        uint256 convertibleBalance = convertibles.balanceOf(user);
+        convertiblePositions = new ConvertiblePositionInfo[](convertibleBalance);
 
-        for (uint256 i = 0; i < bondBalance; i++) {
-            uint256 tokenId = bondDepository.tokenOfOwnerByIndex(user, i);
-            IAppBondDepository.BondPosition memory position = bondDepository.positions(tokenId);
+        for (uint256 i = 0; i < convertibleBalance; i++) {
+            uint256 tokenId = convertibles.tokenOfOwnerByIndex(user, i);
+            IAppConvertibles.Position memory position = convertibles.positions(tokenId);
 
-            bondPositions[i] = BondPositionInfo({
+            convertiblePositions[i] = ConvertiblePositionInfo({
                 owner: user,
                 id: tokenId,
-                bondId: position.bondId,
-                amount: position.amount,
-                quoteAmount: position.quoteAmount,
-                startTime: position.startTime,
-                lastClaimTime: position.lastClaimTime,
-                claimedAmount: position.claimedAmount,
-                vestingPeriod: position.vestingPeriod,
-                claimableAmount: bondDepository.claimableAmount(tokenId),
-                isStaked: position.isStaked
+                amountStaked: position.amountStaked,
+                amountConvertible: position.amountConvertible,
+                fixedInterestRate: position.fixedInterestRate,
+                lockDuration: position.lockDuration,
+                lockStartTime: position.lockStartTime,
+                priceConversion: position.priceConversion,
+                priceEntry: position.priceEntry
             });
         }
     }
 
-    function getBondPositionsByIndex(uint256 startIndex, uint256 endIndex)
+    function getConvertiblePositionsByIndex(uint256 startIndex, uint256 endIndex)
         external
         view
-        returns (BondPositionInfo[] memory bondPositions)
+        returns (ConvertiblePositionInfo[] memory convertiblePositions)
     {
-        if (address(bondDepository) == address(0)) return bondPositions;
+        if (address(convertibles) == address(0)) return convertiblePositions;
 
-        endIndex = endIndex > bondDepository.totalSupply() ? bondDepository.totalSupply() : endIndex;
-        bondPositions = new BondPositionInfo[](endIndex - startIndex);
+        endIndex = endIndex > convertibles.totalSupply() ? convertibles.totalSupply() : endIndex;
+        convertiblePositions = new ConvertiblePositionInfo[](endIndex - startIndex);
 
         for (uint256 i = startIndex; i < endIndex; i++) {
-            // if (bondDepository.ownerOf(i) == address(0)) continue;
-            IAppBondDepository.BondPosition memory position = bondDepository.positions(i);
-            bondPositions[i - startIndex] = BondPositionInfo({
-                owner: bondDepository.ownerOf(i),
+            // if (convertibles.ownerOf(i) == address(0)) continue;
+            IAppConvertibles.Position memory position = convertibles.positions(i);
+            convertiblePositions[i - startIndex] = ConvertiblePositionInfo({
+                owner: convertibles.ownerOf(i),
                 id: i,
-                bondId: position.bondId,
-                amount: position.amount,
-                quoteAmount: position.quoteAmount,
-                startTime: position.startTime,
-                lastClaimTime: position.lastClaimTime,
-                claimedAmount: position.claimedAmount,
-                vestingPeriod: position.vestingPeriod,
-                claimableAmount: bondDepository.claimableAmount(i),
-                isStaked: position.isStaked
+                amountStaked: position.amountStaked,
+                amountConvertible: position.amountConvertible,
+                fixedInterestRate: position.fixedInterestRate,
+                lockDuration: position.lockDuration,
+                lockStartTime: position.lockStartTime,
+                priceConversion: position.priceConversion,
+                priceEntry: position.priceEntry
             });
         }
     }
@@ -282,19 +282,27 @@ contract AppUIHelperRead is AppUIHelperBase {
         return positions;
     }
 
-    function getBondVariables(uint256[] memory bondIds)
+    function getConvertibleVariables()
         external
         view
-        returns (IAppBondDepository.Bond[] memory bonds, uint256[] memory currentPrices)
+        returns (
+            uint256 minConversionPremium,
+            uint256 maxConversionPremium,
+            uint256 minFixedInterestRate,
+            uint256 maxFixedInterestRate,
+            uint256 supplyCap,
+            uint256 debtCap
+        )
     {
-        if (address(bondDepository) == address(0)) return (bonds, currentPrices);
-        bonds = new IAppBondDepository.Bond[](bondIds.length);
-        currentPrices = new uint256[](bondIds.length);
-
-        for (uint256 i = 0; i < bondIds.length; i++) {
-            IAppBondDepository.Bond memory bond = bondDepository.bonds(bondIds[i]);
-            bonds[i] = bond;
-            currentPrices[i] = bondDepository.currentPrice(bondIds[i]);
-        }
+        if (address(convertibles) == address(0)) return (0, 0, 0, 0, 0, 0);
+        IAppConvertibles.Variables memory vars = convertibles.variables();
+        return (
+            vars.minConversionPremium,
+            vars.maxConversionPremium,
+            vars.minFixedInterestRate,
+            vars.maxFixedInterestRate,
+            vars.supplyCap,
+            vars.debtCap
+        );
     }
 }

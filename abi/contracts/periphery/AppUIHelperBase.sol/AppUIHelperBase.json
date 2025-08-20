@@ -46,10 +46,10 @@
   },
   {
     "inputs": [],
-    "name": "bondDepository",
+    "name": "convertibles",
     "outputs": [
       {
-        "internalType": "contract IAppBondDepository",
+        "internalType": "contract IAppConvertibles",
         "name": "",
         "type": "address"
       }
@@ -63,6 +63,32 @@
     "outputs": [
       {
         "internalType": "contract IOracleV2",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "loanToken",
+    "outputs": [
+      {
+        "internalType": "contract IERC4626",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "loanTokenUnderlying",
+    "outputs": [
+      {
+        "internalType": "contract IERC20",
         "name": "",
         "type": "address"
       }

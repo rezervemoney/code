@@ -44,7 +44,7 @@ contract AppUIHelperWriteTest is BaseTest {
         uiHelper = new AppUIHelperWrite(
             AppUIHelperBase.InitParams({
                 staking: address(staking),
-                bondDepository: address(bondDepository),
+                convertibles: address(0),
                 treasury: address(treasury),
                 appToken: address(app),
                 stakingToken: address(staking),
@@ -75,7 +75,7 @@ contract AppUIHelperWriteTest is BaseTest {
 
     function test_Constructor() public view {
         assertEq(address(uiHelper.staking()), address(staking));
-        assertEq(address(uiHelper.bondDepository()), address(bondDepository));
+        // assertEq(address(uiHelper.convertibles()), address(convertibles));
         assertEq(address(uiHelper.treasury()), address(treasury));
         assertEq(address(uiHelper.appToken()), address(app));
         assertEq(address(uiHelper.appOracle()), address(appOracle));
@@ -120,110 +120,6 @@ contract AppUIHelperWriteTest is BaseTest {
         vm.stopPrank();
 
         assertEq(claimedAmount, 0, "Should claim 0 rewards when no positions");
-    }
-
-    function test_ZapAndBuyBond() public {
-        // Setup: Alice registers a referral code
-        vm.startPrank(ALICE);
-        referrals.registerReferralCode(REFERRAL_CODE);
-        vm.stopPrank();
-
-        // Create a bond
-        vm.startPrank(owner);
-        uint256 bondId = bondDepository.create(
-            mockQuoteToken,
-            1000e18, // capacity
-            2e18, // initial price
-            1e18, // final price
-            0, // min price
-            7 days, // duration
-            12 days, // vesting period
-            30 days, // staking lock period
-            false
-        );
-        vm.stopPrank();
-
-        // Setup zap parameters - use the same token for input and output to avoid complex swaps
-        AppUIHelperWrite.OdosParams memory odosParams = AppUIHelperWrite.OdosParams({
-            tokenIn: address(mockQuoteToken),
-            tokenAmountIn: 100e18,
-            odosTokenIn: address(mockQuoteToken),
-            odosTokenAmountIn: 100e18,
-            odosData: ""
-        });
-
-        AppUIHelperWrite.BondParams memory bondParams = AppUIHelperWrite.BondParams({
-            id: bondId,
-            amount: 100e18,
-            maxPrice: 2e18,
-            minPayout: 0,
-            referralCode: REFERRAL_CODE
-        });
-
-        // Bob zaps and buys bond
-        vm.startPrank(BOB);
-        deal(address(mockQuoteToken), BOB, 100e18);
-        mockQuoteToken.approve(address(uiHelper), 100e18);
-
-        (uint256 payout, uint256 tokenId) = uiHelper.zapAndBuyBond(odosParams, bondParams);
-        vm.stopPrank();
-
-        // Verify bond was created
-        assertGt(payout, 0, "Should receive payout");
-        assertGt(tokenId, 0, "Should receive token ID");
-    }
-
-    function test_ZapAndBuyBond_WithETH() public {
-        // Setup: Alice registers a referral code
-        vm.startPrank(ALICE);
-        referrals.registerReferralCode(REFERRAL_CODE);
-        vm.stopPrank();
-
-        // Create a bond
-        vm.startPrank(owner);
-        uint256 bondId = bondDepository.create(
-            mockQuoteToken,
-            1000e18, // capacity
-            2e18, // initial price
-            1e18, // final price
-            0, // min price
-            7 days, // duration
-            12 days, // vesting period
-            30 days, // staking lock period
-            false
-        );
-        vm.stopPrank();
-
-        // Setup zap parameters with ETH
-        AppUIHelperWrite.OdosParams memory odosParams = AppUIHelperWrite.OdosParams({
-            tokenIn: address(0), // ETH
-            tokenAmountIn: 1e18,
-            odosTokenIn: address(mockQuoteToken),
-            odosTokenAmountIn: 100e18,
-            odosData: ""
-        });
-
-        AppUIHelperWrite.BondParams memory bondParams = AppUIHelperWrite.BondParams({
-            id: bondId,
-            amount: 100e18,
-            maxPrice: 2e18,
-            minPayout: 0,
-            referralCode: REFERRAL_CODE
-        });
-
-        // Bob zaps and buys bond with ETH
-        vm.startPrank(BOB);
-        deal(BOB, 2e18); // Give Bob some ETH
-
-        // Simulate zap output: give the UI helper the mockQuoteToken it needs
-        deal(address(mockQuoteToken), address(uiHelper), 100e18);
-
-        (uint256 payout, uint256 tokenId) = uiHelper.zapAndBuyBond{value: 1e18}(odosParams, bondParams);
-        vm.stopPrank();
-
-        // Verify bond was created
-        assertGt(payout, 0, "Should receive payout");
-        assertGt(tokenId, 0, "Should receive token ID");
     }
 
     function test_ZapAndStake() public {

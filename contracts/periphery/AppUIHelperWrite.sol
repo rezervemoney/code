@@ -18,12 +18,10 @@ contract AppUIHelperWrite is AppUIHelperBase {
         bytes odosData;
     }
 
-    struct BondParams {
-        uint256 id;
+    struct ConvertibleParams {
         uint256 amount;
-        uint256 maxPrice;
-        uint256 minPayout;
-        bytes8 referralCode;
+        uint256 lockDuration;
+        bool stakeInto4626;
     }
 
     struct StakeParams {
@@ -47,41 +45,35 @@ contract AppUIHelperWrite is AppUIHelperBase {
         }
     }
 
-    /// @notice Claim all rewards for a bond position
-    /// @return amount The amount of rewards claimed
-    function claimBondRewards(address user) external returns (uint256 amount) {
-        uint256 balance = bondDepository.balanceOf(user);
-        for (uint256 i = 0; i < balance; i++) {
-            uint256 tokenId = bondDepository.tokenOfOwnerByIndex(user, i);
-            if (tokenId == 0) continue;
-            uint256 claimable = IAppBondDepository(bondDepository).claimableAmount(tokenId);
-            if (claimable > 0) {
-                IAppBondDepository(bondDepository).claim(tokenId);
-                amount += claimable;
-            }
-        }
-    }
-
     /// @notice Zaps and buys a bond
     /// @param odosParams The parameters for the zap
-    /// @param bondParams The parameters for the bond
-    /// @return payout_ The amount of RZR tokens received
-    /// @return tokenId_ The ID of the created bond position NFT
-    function zapAndBuyBond(OdosParams memory odosParams, BondParams memory bondParams)
+    /// @param convertibleParams The parameters for the convertible
+    /// @return tokenId The ID of the created convertible position NFT
+    /// @return conversionPrice The price of the convertible
+    /// @return conversionAmount The amount of RZR tokens convertible
+    /// @return fixedInterestRate The fixed interest rate per second
+    /// @return fixedInterestRateAmount The fixed interest rate amount
+    function zapAndBuyConvertible(OdosParams memory odosParams, ConvertibleParams memory convertibleParams)
         external
         payable
-        returns (uint256 payout_, uint256 tokenId_)
+        returns (
+            uint256 tokenId,
+            uint256 conversionPrice,
+            uint256 conversionAmount,
+            uint256 fixedInterestRate,
+            uint256 fixedInterestRateAmount
+        )
     {
         _performZap(odosParams);
-        IERC20(odosParams.odosTokenIn).approve(address(referrals), type(uint256).max);
-        (payout_, tokenId_) = referrals.bondWithReferral(
-            bondParams.id,
-            IERC20(odosParams.odosTokenIn).balanceOf(address(this)),
-            bondParams.maxPrice,
-            bondParams.minPayout,
-            bondParams.referralCode,
-            msg.sender
-        );
+
+        if (convertibleParams.stakeInto4626) {
+            loanTokenUnderlying.approve(address(loanToken), type(uint256).max);
+            loanToken.deposit(loanTokenUnderlying.balanceOf(address(this)), address(this));
+        }
+
+        (tokenId, conversionPrice, conversionAmount, fixedInterestRate, fixedInterestRateAmount) =
+            convertibles.stake(loanToken.balanceOf(address(this)), convertibleParams.lockDuration, msg.sender);
+
         _purgeAll(odosParams);
     }
 
@@ -172,9 +164,9 @@ contract AppUIHelperWrite is AppUIHelperBase {
         view
         returns (uint256 output_)
     {
-        uint256 price = bondDepository.currentPrice(bondId);
-        (uint256 payout,) = bondDepository.calculatePayoutAndProfit(IERC20(tokenIn), price, amountIn);
-        output_ = payout;
+        // uint256 price = convertibles.currentPrice(bondId);
+        // (uint256 payout,) = convertibles.calculatePayoutAndProfit(IERC20(tokenIn), price, amountIn);
+        // output_ = payout;
     }
 
     /// @notice Purges all tokens from the contract

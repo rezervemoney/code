@@ -3,7 +3,6 @@ pragma solidity 0.8.28;
 pragma abicoder v2;
 
 import "../interfaces/IAppStaking.sol";
-import "../interfaces/IAppBondDepository.sol";
 import "../interfaces/IRebaseController.sol";
 import "../interfaces/IAppTreasury.sol";
 import "../interfaces/IAppOracle.sol";
@@ -11,6 +10,7 @@ import "../interfaces/IOracleV2.sol";
 import "../interfaces/IStaking4626.sol";
 import "../interfaces/IAppReferrals.sol";
 import "../interfaces/ITotalReservesOracle.sol";
+import "../interfaces/IAppConvertibles.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title RZR UI Helper
@@ -56,18 +56,16 @@ abstract contract AppUIHelperBase {
         bool isFrom4626; // whether the position is from the 4626 staking contract
     }
 
-    struct BondPositionInfo {
+    struct ConvertiblePositionInfo {
         address owner;
         uint256 id;
-        uint256 bondId;
-        uint256 amount; // amount of RZR tokens
-        uint256 quoteAmount; // amount of quote tokens paid
-        uint256 startTime; // when the bond was purchased
-        uint256 lastClaimTime; // last time tokens were claimed
-        uint256 vestingPeriod; // vesting period of the bond
-        uint256 claimedAmount; // amount of tokens already claimed
-        uint256 claimableAmount; // amount of tokens that can be claimed
-        bool isStaked; // whether the position is staked
+        uint256 amountStaked;
+        uint256 amountConvertible;
+        uint256 fixedInterestRate;
+        uint256 lockDuration;
+        uint256 lockStartTime;
+        uint256 priceConversion;
+        uint256 priceEntry;
     }
 
     struct BondVariables {
@@ -94,7 +92,6 @@ abstract contract AppUIHelperBase {
 
     // State variables
     address public odos;
-    IAppBondDepository public bondDepository;
     IAppOracle public appOracle;
     IAppStaking public staking;
     IAppTreasury public treasury;
@@ -106,13 +103,16 @@ abstract contract AppUIHelperBase {
     IStaking4626 public staking4626;
     IAppReferrals public referrals;
     ITotalReservesOracle public totalReservesOracle;
+    IAppConvertibles public convertibles;
+    IERC4626 public loanToken;
+    IERC20 public loanTokenUnderlying;
 
     // Events
     event RewardsClaimed(uint256 indexed positionId, uint256 amount);
 
     struct InitParams {
         address staking;
-        address bondDepository;
+        address convertibles;
         address treasury;
         address appToken;
         address stakingToken;
@@ -128,7 +128,7 @@ abstract contract AppUIHelperBase {
 
     constructor(InitParams memory params) {
         staking = IAppStaking(params.staking);
-        bondDepository = IAppBondDepository(params.bondDepository);
+        convertibles = IAppConvertibles(params.convertibles);
         treasury = IAppTreasury(params.treasury);
         appToken = IERC20(params.appToken);
         stakingToken = IERC20(params.stakingToken);
@@ -145,8 +145,10 @@ abstract contract AppUIHelperBase {
             appToken.approve(address(staking), type(uint256).max);
         }
 
-        if (address(bondDepository) != address(0)) {
-            appToken.approve(address(bondDepository), type(uint256).max);
+        if (address(convertibles) != address(0)) {
+            loanToken = IERC4626(convertibles.loanToken());
+            loanTokenUnderlying = IERC20(loanToken.asset());
+            loanToken.approve(address(convertibles), type(uint256).max);
         }
     }
 }

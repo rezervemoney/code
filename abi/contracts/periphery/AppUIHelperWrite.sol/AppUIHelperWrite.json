@@ -10,7 +10,7 @@
           },
           {
             "internalType": "address",
-            "name": "bondDepository",
+            "name": "convertibles",
             "type": "address"
           },
           {
@@ -134,19 +134,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "bondDepository",
-    "outputs": [
-      {
-        "internalType": "contract IAppBondDepository",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -166,22 +153,16 @@
     "type": "function"
   },
   {
-    "inputs": [
+    "inputs": [],
+    "name": "convertibles",
+    "outputs": [
       {
-        "internalType": "address",
-        "name": "user",
+        "internalType": "contract IAppConvertibles",
+        "name": "",
         "type": "address"
       }
     ],
-    "name": "claimBondRewards",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -270,6 +251,32 @@
     "outputs": [
       {
         "internalType": "contract IOracleV2",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "loanToken",
+    "outputs": [
+      {
+        "internalType": "contract IERC4626",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "loanTokenUnderlying",
+    "outputs": [
+      {
+        "internalType": "contract IERC20",
         "name": "",
         "type": "address"
       }
@@ -432,45 +439,50 @@
         "components": [
           {
             "internalType": "uint256",
-            "name": "id",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
             "name": "amount",
             "type": "uint256"
           },
           {
             "internalType": "uint256",
-            "name": "maxPrice",
+            "name": "lockDuration",
             "type": "uint256"
           },
           {
-            "internalType": "uint256",
-            "name": "minPayout",
-            "type": "uint256"
-          },
-          {
-            "internalType": "bytes8",
-            "name": "referralCode",
-            "type": "bytes8"
+            "internalType": "bool",
+            "name": "stakeInto4626",
+            "type": "bool"
           }
         ],
-        "internalType": "struct AppUIHelperWrite.BondParams",
-        "name": "bondParams",
+        "internalType": "struct AppUIHelperWrite.ConvertibleParams",
+        "name": "convertibleParams",
         "type": "tuple"
       }
     ],
-    "name": "zapAndBuyBond",
+    "name": "zapAndBuyConvertible",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "payout_",
+        "name": "tokenId",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "tokenId_",
+        "name": "conversionPrice",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "conversionAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "fixedInterestRate",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "fixedInterestRateAmount",
         "type": "uint256"
       }
     ],

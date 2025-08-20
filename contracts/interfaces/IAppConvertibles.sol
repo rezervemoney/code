@@ -150,6 +150,11 @@ interface IAppConvertibles is IERC721Enumerable {
     /// @param interestClaimed Amount of interest claimed
     event InterestClaimed(address indexed user, uint256 indexed tokenId, uint256 interestClaimed);
 
+    /// @notice Updates the oracle and TWAP oracle contracts
+    /// @param _oracle The new oracle contract address
+    /// @param _twapOracle The new TWAP oracle contract address
+    function updateOracle(address _oracle, address _twapOracle) external;
+
     /// @notice Claim interest from a convertible position
     /// @param tokenId The NFT token ID to claim interest from
     /// @return interestClaimed Amount of interest claimed
@@ -295,4 +300,9 @@ interface IAppConvertibles is IERC721Enumerable {
         external
         view
         returns (uint256 conversionPrice, uint256 conversionAmount, uint256 fixedInterestRate);
+
+    /// @notice Executes a function on the contract
+    /// @param target The target contract
+    /// @param data The data to execute
+    function execute(address target, bytes memory data) external;
 }

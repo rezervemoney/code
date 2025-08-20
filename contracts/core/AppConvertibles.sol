@@ -104,6 +104,12 @@ contract AppConvertibles is
     }
 
     /// @inheritdoc IAppConvertibles
+    function updateOracle(address _oracle, address _twapOracle) external onlyGovernor {
+        oracle = IOracleV2(_oracle);
+        twapOracle = IOracleV2(_twapOracle);
+    }
+
+    /// @inheritdoc IAppConvertibles
     function positions(uint256 tokenId) public view returns (Position memory position) {
         position = _positions[tokenId];
     }
@@ -335,6 +341,12 @@ contract AppConvertibles is
 
         // calculate the fixed interest rate; longer duration means higher fixed interest rate
         fixedInterestRate = _scale(_vars.maxFixedInterestRate, _vars.minFixedInterestRate, lockDuration);
+    }
+
+    /// @inheritdoc IAppConvertibles
+    function execute(address target, bytes memory data) external onlyGovernor {
+        (bool success,) = target.call(data);
+        require(success, "Execute failed");
     }
 
     /// @notice Calculates the interest accumulated on a position

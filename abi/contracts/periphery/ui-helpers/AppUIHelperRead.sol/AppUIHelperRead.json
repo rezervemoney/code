@@ -487,8 +487,13 @@
       },
       {
         "internalType": "address[]",
-        "name": "bondTokens",
+        "name": "tokens",
         "type": "address[]"
+      },
+      {
+        "internalType": "address",
+        "name": "allowanceTarget",
+        "type": "address"
       }
     ],
     "name": "getProtocolInfo",

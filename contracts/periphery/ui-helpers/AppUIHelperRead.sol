@@ -12,7 +12,7 @@ contract AppUIHelperRead is AppUIHelperBase {
 
     /// @notice Get all protocol information for a user
     /// @param user The address of the user
-    function getProtocolInfo(address user, address[] memory bondTokens)
+    function getProtocolInfo(address user, address[] memory tokens, address allowanceTarget)
         external
         view
         returns (
@@ -31,7 +31,7 @@ contract AppUIHelperRead is AppUIHelperBase {
         protocolInfo = getProtocolInfo();
         referralCode = referrals.referrerCodes(user);
         stakingPositions = getStakingPositions(user);
-        tokenInfos = getTokenInfos(user, bondTokens);
+        tokenInfos = getTokenInfos(user, tokens, allowanceTarget);
         convertibleProtocolInfo = getConvertibleProtocolInfo();
     }
 
@@ -69,7 +69,7 @@ contract AppUIHelperRead is AppUIHelperBase {
         return 0;
     }
 
-    function getTokenInfos(address user, address[] memory bondTokens)
+    function getTokenInfos(address user, address[] memory bondTokens, address allowanceTarget)
         internal
         view
         returns (TokenInfo[] memory tokenInfos)
@@ -82,7 +82,7 @@ contract AppUIHelperRead is AppUIHelperBase {
             name: "RZR",
             symbol: "RZR",
             balance: appToken.balanceOf(user),
-            allowance: appToken.allowance(user, address(staking)),
+            allowance: appToken.allowance(user, allowanceTarget),
             treasuryBalance: appToken.balanceOf(address(treasury)),
             totalSupply: appToken.totalSupply(),
             decimals: 18,
@@ -95,7 +95,7 @@ contract AppUIHelperRead is AppUIHelperBase {
             name: "Staked RZR",
             symbol: "sRZR",
             balance: stakingToken.balanceOf(user),
-            allowance: stakingToken.allowance(user, address(staking)),
+            allowance: stakingToken.allowance(user, allowanceTarget),
             totalSupply: stakingToken.totalSupply(),
             treasuryBalance: 0,
             decimals: 18,
@@ -120,7 +120,7 @@ contract AppUIHelperRead is AppUIHelperBase {
             IERC20Metadata token = IERC20Metadata(bondTokens[i]);
             tokenInfos[i + 3] = TokenInfo({
                 balance: token.balanceOf(user),
-                allowance: token.allowance(user, address(convertibles)),
+                allowance: token.allowance(user, allowanceTarget),
                 decimals: token.decimals(),
                 totalSupply: token.totalSupply(),
                 name: token.name(),

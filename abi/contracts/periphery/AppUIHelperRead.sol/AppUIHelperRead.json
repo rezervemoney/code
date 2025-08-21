@@ -322,6 +322,11 @@
             "internalType": "uint256",
             "name": "priceEntry",
             "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "canConvert",
+            "type": "bool"
           }
         ],
         "internalType": "struct AppUIHelperBase.ConvertiblePositionInfo[]",
@@ -334,37 +339,49 @@
   },
   {
     "inputs": [],
-    "name": "getConvertibleVariables",
+    "name": "getConvertibleProtocolInfo",
     "outputs": [
       {
-        "internalType": "uint256",
-        "name": "minConversionPremium",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "maxConversionPremium",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "minFixedInterestRate",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "maxFixedInterestRate",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "supplyCap",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "debtCap",
-        "type": "uint256"
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "totalStaked",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "minConversionPremium",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxConversionPremium",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "minFixedInterestRate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxFixedInterestRate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "supplyCap",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "debtCap",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct AppUIHelperBase.ConvertibleProtocolInfo",
+        "name": "convertibleProtocolInfo",
+        "type": "tuple"
       }
     ],
     "stateMutability": "view",
@@ -476,11 +493,6 @@
           },
           {
             "internalType": "uint256",
-            "name": "treasuryValueApp",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
             "name": "totalSupply",
             "type": "uint256"
           },
@@ -491,12 +503,7 @@
           },
           {
             "internalType": "uint256",
-            "name": "oraclePrice",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "oraclePriceInApp",
+            "name": "oraclePriceUsd",
             "type": "uint256"
           }
         ],
@@ -612,11 +619,58 @@
             "internalType": "uint256",
             "name": "priceEntry",
             "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "canConvert",
+            "type": "bool"
           }
         ],
         "internalType": "struct AppUIHelperBase.ConvertiblePositionInfo[]",
         "name": "convertiblePositions",
         "type": "tuple[]"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "totalStaked",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "minConversionPremium",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxConversionPremium",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "minFixedInterestRate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxFixedInterestRate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "supplyCap",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "debtCap",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct AppUIHelperBase.ConvertibleProtocolInfo",
+        "name": "convertibleProtocolInfo",
+        "type": "tuple"
       },
       {
         "components": [
@@ -649,6 +703,19 @@
         "internalType": "struct AppUIHelperBase.ProjectedEpochRate",
         "name": "projectedEpochRate",
         "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getTwapPrice",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "price",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",

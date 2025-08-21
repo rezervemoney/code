@@ -28,6 +28,16 @@ abstract contract AppUIHelperBase {
         uint256 unbackedSupply;
     }
 
+    struct ConvertibleProtocolInfo {
+        uint256 totalStaked;
+        uint256 minConversionPremium;
+        uint256 maxConversionPremium;
+        uint256 minFixedInterestRate;
+        uint256 maxFixedInterestRate;
+        uint256 supplyCap;
+        uint256 debtCap;
+    }
+
     struct TokenInfo {
         address token;
         string name;
@@ -35,11 +45,9 @@ abstract contract AppUIHelperBase {
         uint256 balance;
         uint256 allowance;
         uint256 treasuryBalance;
-        uint256 treasuryValueApp;
         uint256 totalSupply;
         uint8 decimals;
-        uint256 oraclePrice;
-        uint256 oraclePriceInApp;
+        uint256 oraclePriceUsd;
     }
 
     struct StakingPositionInfo {
@@ -66,6 +74,7 @@ abstract contract AppUIHelperBase {
         uint256 lockStartTime;
         uint256 priceConversion;
         uint256 priceEntry;
+        bool canConvert;
     }
 
     struct BondVariables {

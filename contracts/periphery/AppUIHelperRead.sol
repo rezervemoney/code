@@ -21,6 +21,7 @@ contract AppUIHelperRead is AppUIHelperBase {
             TokenInfo[] memory tokenInfos,
             StakingPositionInfo[] memory stakingPositions,
             ConvertiblePositionInfo[] memory convertiblePositions,
+            ConvertibleProtocolInfo memory convertibleProtocolInfo,
             ProjectedEpochRate memory projectedEpochRate
         )
     {
@@ -31,6 +32,7 @@ contract AppUIHelperRead is AppUIHelperBase {
         referralCode = referrals.referrerCodes(user);
         stakingPositions = getStakingPositions(user);
         tokenInfos = getTokenInfos(user, bondTokens);
+        convertibleProtocolInfo = getConvertibleProtocolInfo();
     }
 
     function getProtocolInfo() internal view returns (ProtocolInfo memory protocolInfo) {
@@ -82,11 +84,9 @@ contract AppUIHelperRead is AppUIHelperBase {
             balance: appToken.balanceOf(user),
             allowance: appToken.allowance(user, address(staking)),
             treasuryBalance: appToken.balanceOf(address(treasury)),
-            treasuryValueApp: appToken.balanceOf(address(treasury)),
             totalSupply: appToken.totalSupply(),
             decimals: 18,
-            oraclePrice: 0, // appOracle.getTokenPrice(),
-            oraclePriceInApp: 0 // 1e18
+            oraclePriceUsd: getSpotPrice()
         });
 
         // Add staking token info
@@ -98,10 +98,8 @@ contract AppUIHelperRead is AppUIHelperBase {
             allowance: stakingToken.allowance(user, address(staking)),
             totalSupply: stakingToken.totalSupply(),
             treasuryBalance: 0,
-            treasuryValueApp: 0,
             decimals: 18,
-            oraclePrice: 0, // appOracle.getTokenPrice(),
-            oraclePriceInApp: 0 // 1e18
+            oraclePriceUsd: getSpotPrice()
         });
 
         // Add lstRZR token info
@@ -113,10 +111,8 @@ contract AppUIHelperRead is AppUIHelperBase {
             allowance: 0,
             totalSupply: staking4626.totalSupply(),
             treasuryBalance: staking4626.balanceOf(address(treasury)),
-            treasuryValueApp: staking4626.balanceOf(address(treasury)),
             decimals: 18,
-            oraclePrice: 0, // appOracle.getPrice(address(staking4626), 1e18),
-            oraclePriceInApp: 0 // appOracle.getPriceInToken(address(staking4626), 1e18)
+            oraclePriceUsd: getLstPrice()
         });
 
         // Add bond token info
@@ -130,12 +126,29 @@ contract AppUIHelperRead is AppUIHelperBase {
                 name: token.name(),
                 symbol: token.symbol(),
                 treasuryBalance: token.balanceOf(address(treasury)),
-                treasuryValueApp: 0, // treasury.tokenValueE18(address(token), token.balanceOf(address(treasury)))[1],
                 token: address(token),
-                oraclePriceInApp: 0, // appOracle.getPriceInToken(address(token), token.balanceOf(address(treasury))),
-                oraclePrice: 0 // appOracle.getPrice(address(token), token.balanceOf(address(treasury)))
+                oraclePriceUsd: getTokenPrice(token)
             });
         }
+    }
+
+    function getTokenPrice(IERC20Metadata token) internal view returns (uint256) {
+        uint256 decimals = token.decimals();
+        uint256 oneUnit = 10 ** decimals;
+        uint256 rzrPrice = getSpotPrice();
+
+        if (address(appToken) != address(0)) {
+            (uint256 rzrAmount, uint256 usdAmount,) = appOracle.getPriceForAmount(address(token), oneUnit);
+            return usdAmount + (rzrPrice * rzrAmount / 1e18);
+        }
+
+        return 0;
+    }
+
+    function getLstPrice() internal view returns (uint256) {
+        uint256 rzrPrice = getSpotPrice();
+        uint256 lstPrice = staking4626.rate();
+        return rzrPrice * lstPrice / 1e18;
     }
 
     function getStakingPositions(address user) internal view returns (StakingPositionInfo[] memory stakingPositions) {
@@ -179,6 +192,7 @@ contract AppUIHelperRead is AppUIHelperBase {
 
         uint256 convertibleBalance = convertibles.balanceOf(user);
         convertiblePositions = new ConvertiblePositionInfo[](convertibleBalance);
+        uint256 twapPrice = getTwapPrice();
 
         for (uint256 i = 0; i < convertibleBalance; i++) {
             uint256 tokenId = convertibles.tokenOfOwnerByIndex(user, i);
@@ -193,7 +207,8 @@ contract AppUIHelperRead is AppUIHelperBase {
                 lockDuration: position.lockDuration,
                 lockStartTime: position.lockStartTime,
                 priceConversion: position.priceConversion,
-                priceEntry: position.priceEntry
+                priceEntry: position.priceEntry,
+                canConvert: position.priceConversion >= twapPrice
             });
         }
     }
@@ -208,9 +223,11 @@ contract AppUIHelperRead is AppUIHelperBase {
         endIndex = endIndex > convertibles.totalSupply() ? convertibles.totalSupply() : endIndex;
         convertiblePositions = new ConvertiblePositionInfo[](endIndex - startIndex);
 
+        uint256 twapPrice = getTwapPrice();
         for (uint256 i = startIndex; i < endIndex; i++) {
-            // if (convertibles.ownerOf(i) == address(0)) continue;
             IAppConvertibles.Position memory position = convertibles.positions(i);
+            if (position.amountStaked == 0) continue;
+
             convertiblePositions[i - startIndex] = ConvertiblePositionInfo({
                 owner: convertibles.ownerOf(i),
                 id: i,
@@ -220,9 +237,17 @@ contract AppUIHelperRead is AppUIHelperBase {
                 lockDuration: position.lockDuration,
                 lockStartTime: position.lockStartTime,
                 priceConversion: position.priceConversion,
-                priceEntry: position.priceEntry
+                priceEntry: position.priceEntry,
+                canConvert: position.priceConversion >= twapPrice
             });
         }
+    }
+
+    function getTwapPrice() public view returns (uint256 price) {
+        if (address(convertibles) == address(0)) return 0;
+        IOracleV2 twapOracle = convertibles.twapOracle();
+        (, uint256 usdAssets,) = twapOracle.getPriceForAmount(1e18);
+        price = usdAssets;
     }
 
     function getProjectedEpochRate() internal view returns (ProjectedEpochRate memory projectedEpochRate) {
@@ -282,27 +307,22 @@ contract AppUIHelperRead is AppUIHelperBase {
         return positions;
     }
 
-    function getConvertibleVariables()
-        external
+    function getConvertibleProtocolInfo()
+        public
         view
-        returns (
-            uint256 minConversionPremium,
-            uint256 maxConversionPremium,
-            uint256 minFixedInterestRate,
-            uint256 maxFixedInterestRate,
-            uint256 supplyCap,
-            uint256 debtCap
-        )
+        returns (ConvertibleProtocolInfo memory convertibleProtocolInfo)
     {
-        if (address(convertibles) == address(0)) return (0, 0, 0, 0, 0, 0);
+        if (address(convertibles) == address(0)) return convertibleProtocolInfo;
         IAppConvertibles.Variables memory vars = convertibles.variables();
-        return (
-            vars.minConversionPremium,
-            vars.maxConversionPremium,
-            vars.minFixedInterestRate,
-            vars.maxFixedInterestRate,
-            vars.supplyCap,
-            vars.debtCap
-        );
+        uint256 totalStaked = convertibles.totalStaked();
+        convertibleProtocolInfo = ConvertibleProtocolInfo({
+            totalStaked: totalStaked,
+            minConversionPremium: vars.minConversionPremium,
+            maxConversionPremium: vars.maxConversionPremium,
+            minFixedInterestRate: vars.minFixedInterestRate,
+            maxFixedInterestRate: vars.maxFixedInterestRate,
+            supplyCap: vars.supplyCap,
+            debtCap: vars.debtCap
+        });
     }
 }

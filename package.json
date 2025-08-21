@@ -81,6 +81,7 @@
     "@gelatonetwork/automate-sdk": "^3.1.0",
     "@gelatonetwork/web3-functions-sdk": "^2.4.4",
     "inquirer": "^12.6.3",
+    "markdown-table": "^3.0.4",
     "prettier": "^3.5.3"
   }
 }

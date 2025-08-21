@@ -211,8 +211,10 @@ contract AppConvertibles is
         totalStaked -= amountStaked;
         totalConvertible -= amountConvertible;
 
-        // clear out the debt and send it to the treasury
+        // transfer the loan tokens to the treasury so that we can clear out our debt
         loanToken.transfer(address(authority.treasury()), amountStaked);
+
+        // burn the loan tracking tokens
         loanTrackingToken.burn(msg.sender, amountStaked);
 
         // convert the debt to rzr

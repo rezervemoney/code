@@ -45,6 +45,25 @@ contract AppUIHelperWrite is AppUIHelperBase {
         }
     }
 
+    /// @notice Claim all rewards for a convertible position
+    /// @param user The user to claim rewards for
+    /// @param merkleProofs The merkle proofs for the rewards
+    /// @return amount The amount of rewards claimed
+    function claimAllInterestAndMerklRewards(address user, bytes memory merkleProofs)
+        external
+        returns (uint256 amount)
+    {
+        uint256 balance = convertibles.balanceOf(user);
+        for (uint256 i = 0; i < balance; i++) {
+            uint256 tokenId = convertibles.tokenOfOwnerByIndex(user, i);
+            if (tokenId == 0) continue;
+            (uint256 interestClaimable, uint256 totalInterestClaimed) = convertibles.claimableInterest(tokenId);
+            amount += interestClaimable;
+        }
+
+        // todo claim merkl rewards
+    }
+
     /// @notice Zaps and buys a bond
     /// @param odosParams The parameters for the zap
     /// @param convertibleParams The parameters for the convertible

@@ -308,22 +308,21 @@ contract AppConvertibles is
         returns (uint256 interestClaimed, uint256 totalInterestClaimed)
     {
         Position storage position = _positions[tokenId];
-        require(position.amountStaked > 0, "Position does not exist");
-
-        totalInterestClaimed = _interestAccumulated(
-            position.amountStaked,
-            position.fixedInterestRate,
-            block.timestamp,
-            position.lockStartTime,
-            position.lockDuration
-        );
-
-        interestClaimed = totalInterestClaimed - position.fixedInterestClaimed;
+        (interestClaimed, totalInterestClaimed) = _claimableInterest(tokenId);
         require(interestClaimed > 0, "No interest to claim");
         position.fixedInterestClaimed = totalInterestClaimed;
 
         loanToken.transfer(ownerOf(tokenId), interestClaimed);
         emit InterestClaimed(msg.sender, tokenId, interestClaimed);
+    }
+
+    /// @inheritdoc IAppConvertibles
+    function claimableInterest(uint256 tokenId)
+        public
+        view
+        returns (uint256 interestClaimable, uint256 totalInterestClaimed)
+    {
+        (interestClaimable, totalInterestClaimed) = _claimableInterest(tokenId);
     }
 
     /// @inheritdoc IAppConvertibles
@@ -349,6 +348,25 @@ contract AppConvertibles is
     function execute(address target, bytes memory data) external onlyGovernor {
         (bool success,) = target.call(data);
         require(success, "Execute failed");
+    }
+
+    function _claimableInterest(uint256 tokenId)
+        internal
+        view
+        returns (uint256 interestClaimable, uint256 totalInterestClaimed)
+    {
+        Position storage position = _positions[tokenId];
+        require(position.amountStaked > 0, "Position does not exist");
+
+        totalInterestClaimed = _interestAccumulated(
+            position.amountStaked,
+            position.fixedInterestRate,
+            block.timestamp,
+            position.lockStartTime,
+            position.lockDuration
+        );
+
+        interestClaimable = totalInterestClaimed - position.fixedInterestClaimed;
     }
 
     /// @notice Calculates the interest accumulated on a position

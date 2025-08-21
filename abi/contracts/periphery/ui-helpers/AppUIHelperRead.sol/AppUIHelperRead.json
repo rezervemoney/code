@@ -265,6 +265,87 @@
     "inputs": [
       {
         "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getConvertiblePositions",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountStaked",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountConvertible",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "fixedInterestRate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "lockDuration",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "lockStartTime",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "priceConversion",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "priceEntry",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "interestClaimable",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalInterestClaimed",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "canConvert",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct AppUIHelperBase.ConvertiblePositionInfo",
+        "name": "convertiblePosition",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
         "name": "startIndex",
         "type": "uint256"
       },
@@ -321,6 +402,16 @@
           {
             "internalType": "uint256",
             "name": "priceEntry",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "interestClaimable",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalInterestClaimed",
             "type": "uint256"
           },
           {
@@ -618,6 +709,16 @@
           {
             "internalType": "uint256",
             "name": "priceEntry",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "interestClaimable",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalInterestClaimed",
             "type": "uint256"
           },
           {

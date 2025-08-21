@@ -192,25 +192,40 @@ contract AppUIHelperRead is AppUIHelperBase {
 
         uint256 convertibleBalance = convertibles.balanceOf(user);
         convertiblePositions = new ConvertiblePositionInfo[](convertibleBalance);
-        uint256 twapPrice = getTwapPrice();
 
         for (uint256 i = 0; i < convertibleBalance; i++) {
             uint256 tokenId = convertibles.tokenOfOwnerByIndex(user, i);
-            IAppConvertibles.Position memory position = convertibles.positions(tokenId);
-
-            convertiblePositions[i] = ConvertiblePositionInfo({
-                owner: user,
-                id: tokenId,
-                amountStaked: position.amountStaked,
-                amountConvertible: position.amountConvertible,
-                fixedInterestRate: position.fixedInterestRate,
-                lockDuration: position.lockDuration,
-                lockStartTime: position.lockStartTime,
-                priceConversion: position.priceConversion,
-                priceEntry: position.priceEntry,
-                canConvert: position.priceConversion >= twapPrice
-            });
+            convertiblePositions[i] = getConvertiblePositions(tokenId);
         }
+    }
+
+    function getConvertiblePositions(uint256 tokenId)
+        public
+        view
+        returns (ConvertiblePositionInfo memory convertiblePosition)
+    {
+        if (address(convertibles) == address(0)) return convertiblePosition;
+        uint256 twapPrice = getTwapPrice();
+
+        IAppConvertibles.Position memory position = convertibles.positions(tokenId);
+        (uint256 interestClaimable, uint256 totalInterestClaimed) = convertibles.claimableInterest(tokenId);
+
+        convertiblePosition = ConvertiblePositionInfo({
+            owner: convertibles.ownerOf(tokenId),
+            id: tokenId,
+            amountStaked: position.amountStaked,
+            amountConvertible: position.amountConvertible,
+            fixedInterestRate: position.fixedInterestRate,
+            lockDuration: position.lockDuration,
+            lockStartTime: position.lockStartTime,
+            priceConversion: position.priceConversion,
+            priceEntry: position.priceEntry,
+            canConvert: position.priceConversion >= twapPrice,
+            interestClaimable: interestClaimable,
+            totalInterestClaimed: totalInterestClaimed
+        });
+
+        return convertiblePosition;
     }
 
     function getConvertiblePositionsByIndex(uint256 startIndex, uint256 endIndex)
@@ -223,23 +238,8 @@ contract AppUIHelperRead is AppUIHelperBase {
         endIndex = endIndex > convertibles.totalSupply() ? convertibles.totalSupply() : endIndex;
         convertiblePositions = new ConvertiblePositionInfo[](endIndex - startIndex);
 
-        uint256 twapPrice = getTwapPrice();
         for (uint256 i = startIndex; i < endIndex; i++) {
-            IAppConvertibles.Position memory position = convertibles.positions(i);
-            if (position.amountStaked == 0) continue;
-
-            convertiblePositions[i - startIndex] = ConvertiblePositionInfo({
-                owner: convertibles.ownerOf(i),
-                id: i,
-                amountStaked: position.amountStaked,
-                amountConvertible: position.amountConvertible,
-                fixedInterestRate: position.fixedInterestRate,
-                lockDuration: position.lockDuration,
-                lockStartTime: position.lockStartTime,
-                priceConversion: position.priceConversion,
-                priceEntry: position.priceEntry,
-                canConvert: position.priceConversion >= twapPrice
-            });
+            convertiblePositions[i - startIndex] = getConvertiblePositions(i);
         }
     }
 

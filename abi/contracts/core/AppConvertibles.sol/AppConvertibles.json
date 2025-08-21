@@ -649,6 +649,30 @@
         "type": "uint256"
       }
     ],
+    "name": "claimableInterest",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "interestClaimable",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "totalInterestClaimed",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
     "name": "convert",
     "outputs": [],
     "stateMutability": "nonpayable",

@@ -74,6 +74,8 @@ abstract contract AppUIHelperBase {
         uint256 lockStartTime;
         uint256 priceConversion;
         uint256 priceEntry;
+        uint256 interestClaimable;
+        uint256 totalInterestClaimed;
         bool canConvert;
     }
 

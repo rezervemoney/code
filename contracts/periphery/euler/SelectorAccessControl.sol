@@ -2,14 +2,10 @@
 
 pragma solidity ^0.8.0;
 
-import {ContextUpgradeable} from "openzeppelin-contracts-upgradeable/utils/ContextUpgradeable.sol";
-import {AccessControlEnumerableUpgradeable} from
-    "openzeppelin-contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
-import {
-    AccessControlUpgradeable,
-    IAccessControl
-} from "openzeppelin-contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import {EVCUtil} from "ethereum-vault-connector/utils/EVCUtil.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "evc/utils/EVCUtil.sol";
 
 /// @title SelectorAccessControl
 /// @custom:security-contact security@euler.xyz

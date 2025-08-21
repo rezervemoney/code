@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.28;
 
-import {BaseHookTarget} from "./BaseHookTarget.sol";
-import {SelectorAccessControl} from "./SelectorAccessControl.sol";
-import {ILoyaltyList} from "../../interfaces/ILoyaltyList.sol";
+import "./BaseHookTarget.sol";
+import "./SelectorAccessControl.sol";
+import "../../interfaces/ILoyaltyList.sol";
 
 /// @title HookTargetAccessControlKeyring
 /// @custom:security-contact security@euler.xyz
@@ -90,9 +90,9 @@ contract WhitelistedHook is BaseHookTarget, SelectorAccessControl {
     /// @dev If the EVC owner is not registered yet, the account is assumed to be the owner
     /// @param account The address to check credential for
     /// @return bool True if the EVC owner of the account has valid Keyring credential
-    function checkKeyringCredential(address account) public view returns (bool) {
+    function checkCredential(address account) public view returns (bool) {
         address owner = evc.getAccountOwner(account);
-        return keyring.checkCredential(owner == address(0) ? account : owner, policyId);
+        return loyaltyList.isLoyaltyWallet(owner == address(0) ? account : owner);
     }
 
     /// @notice Checks if the EVC owner of the account has a valid Keyring credential or the account has the wildcard
@@ -102,7 +102,7 @@ contract WhitelistedHook is BaseHookTarget, SelectorAccessControl {
     /// @return bool True if the EVC owner of the account has a valid Keyring credential or the account has the wildcard
     /// role
     function checkKeyringCredentialOrWildCard(address account) external view returns (bool) {
-        return hasRole(WILD_CARD, account) || checkKeyringCredential(account);
+        return hasRole(WILD_CARD, account) || checkCredential(account);
     }
 
     /// @notice Authenticates both the caller and the specified account for access control
@@ -123,7 +123,7 @@ contract WhitelistedHook is BaseHookTarget, SelectorAccessControl {
         // the account share the same EVC owner, ensure the authentication is not carried out using the privileged
         // account path
         if (
-            !keyring.checkCredential(owner, policyId)
+            !loyaltyList.isLoyaltyWallet(owner)
                 && (!hasRole(PRIVILEGED_ACCOUNT_ROLE, owner) || _haveCommonOwner(owner, account))
         ) {
             revert NotAuthorized();
@@ -137,7 +137,7 @@ contract WhitelistedHook is BaseHookTarget, SelectorAccessControl {
             if (owner == address(0)) owner = account;
 
             // If the account owner has the privileged account role, do not require Keyring authentication
-            if (!keyring.checkCredential(owner, policyId) && !hasRole(PRIVILEGED_ACCOUNT_ROLE, owner)) {
+            if (!loyaltyList.isLoyaltyWallet(owner) && !hasRole(PRIVILEGED_ACCOUNT_ROLE, owner)) {
                 revert NotAuthorized();
             }
         }

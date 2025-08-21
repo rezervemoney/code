@@ -2,8 +2,8 @@
 
 pragma solidity >=0.8.0;
 
-import {GenericFactory} from "./GenericFactory.sol";
-import {IHookTarget} from "./IHookTarget.sol";
+import "evk/GenericFactory/GenericFactory.sol";
+import "evk/interfaces/IHookTarget.sol";
 
 /// @title BaseHookTarget
 /// @custom:security-contact security@euler.xyz

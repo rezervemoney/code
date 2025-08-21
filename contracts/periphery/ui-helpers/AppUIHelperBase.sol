@@ -2,15 +2,15 @@
 pragma solidity 0.8.28;
 pragma abicoder v2;
 
-import "../interfaces/IAppStaking.sol";
-import "../interfaces/IRebaseController.sol";
-import "../interfaces/IAppTreasury.sol";
-import "../interfaces/IAppOracle.sol";
-import "../interfaces/IOracleV2.sol";
-import "../interfaces/IStaking4626.sol";
-import "../interfaces/IAppReferrals.sol";
-import "../interfaces/ITotalReservesOracle.sol";
-import "../interfaces/IAppConvertibles.sol";
+import "../../interfaces/IAppStaking.sol";
+import "../../interfaces/IRebaseController.sol";
+import "../../interfaces/IAppTreasury.sol";
+import "../../interfaces/IAppOracle.sol";
+import "../../interfaces/IOracleV2.sol";
+import "../../interfaces/IStaking4626.sol";
+import "../../interfaces/IAppReferrals.sol";
+import "../../interfaces/ITotalReservesOracle.sol";
+import "../../interfaces/IAppConvertibles.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title RZR UI Helper

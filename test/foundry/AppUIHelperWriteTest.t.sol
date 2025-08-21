@@ -2,7 +2,7 @@
 pragma solidity 0.8.28;
 
 import "./BaseTest.sol";
-import "../../contracts/periphery/AppUIHelperWrite.sol";
+import "../../contracts/periphery/ui-helpers/AppUIHelperWrite.sol";
 import "../../contracts/core/AppReferrals.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 

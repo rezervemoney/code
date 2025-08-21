@@ -137,7 +137,7 @@ contract AppUIHelperRead is AppUIHelperBase {
         uint256 oneUnit = 10 ** decimals;
         uint256 rzrPrice = getSpotPrice();
 
-        if (address(appToken) != address(0)) {
+        if (address(appOracle) != address(0)) {
             (uint256 rzrAmount, uint256 usdAmount,) = appOracle.getPriceForAmount(address(token), oneUnit);
             return usdAmount + (rzrPrice * rzrAmount / 1e18);
         }

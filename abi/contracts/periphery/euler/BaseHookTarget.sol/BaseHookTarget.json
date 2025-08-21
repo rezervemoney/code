@@ -1,0 +1,28 @@
+[
+  {
+    "inputs": [],
+    "name": "eVaultFactory",
+    "outputs": [
+      {
+        "internalType": "contract GenericFactory",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "isHookTarget",
+    "outputs": [
+      {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

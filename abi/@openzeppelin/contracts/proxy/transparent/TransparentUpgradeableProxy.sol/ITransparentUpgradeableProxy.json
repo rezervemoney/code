@@ -48,12 +48,12 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "newImplementation",
+        "name": "",
         "type": "address"
       },
       {
         "internalType": "bytes",
-        "name": "data",
+        "name": "",
         "type": "bytes"
       }
     ],

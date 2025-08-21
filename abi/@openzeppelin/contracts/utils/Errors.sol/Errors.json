@@ -24,16 +24,5 @@
     ],
     "name": "InsufficientBalance",
     "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "MissingPrecompile",
-    "type": "error"
   }
 ]

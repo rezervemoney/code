@@ -1,0 +1,30 @@
+[
+  {
+    "inputs": [],
+    "name": "ControllerDisabled",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "EVC_InvalidAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotAuthorized",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "EVC",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

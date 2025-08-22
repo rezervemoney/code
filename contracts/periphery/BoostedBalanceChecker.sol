@@ -19,4 +19,16 @@ contract BoostedBalanceChecker {
             boostedBalance += (position.amountStaked * position.lockDuration) / convertible.MAX_LOCK_DURATION();
         }
     }
+
+    function totalSupply() external view returns (uint256 _totalSupply) {
+        uint256 maxLockDuration = convertible.MAX_LOCK_DURATION();
+        uint256 total = convertible.totalSupply();
+
+        for (uint256 i = 0; i < total; i++) {
+            uint256 tokenId = convertible.tokenByIndex(i);
+            IAppConvertibles.Position memory position = convertible.positions(tokenId);
+            if (position.amountStaked == 0) continue;
+            _totalSupply += (position.amountStaked * position.lockDuration) / maxLockDuration;
+        }
+    }
 }

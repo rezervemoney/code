@@ -1,7 +1,6 @@
 # AppAccessControlled
 
 **File**: [`AppAccessControlled.sol`](./AppAccessControlled.sol)
-**Interface**: [`IAppAccessControlled.sol`](../interfaces/IAppAccessControlled.sol)
 **License**: AGPL-3.0
 
 ## Overview

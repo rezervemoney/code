@@ -71,7 +71,6 @@ The core contracts implement the fundamental architecture and business logic of 
 - **Integration**: Inherited by all core protocol contracts
 
 **File**: [`AppAccessControlled.sol`](./AppAccessControlled.sol)
-**Interface**: [`IAppAccessControlled.sol`](../interfaces/IAppAccessControlled.sol)
 
 ### Token & Staking System
 
@@ -132,16 +131,27 @@ The core contracts implement the fundamental architecture and business logic of 
 
 **File**: [`AppStaking.sol`](./AppStaking.sol)
 
-#### [AppBondDepository](./AppBondDepository.md)
+#### [AppConvertibles](./AppConvertibles.md)
 
-**Bond issuance and management system for protocol funding**
+**Convertible bond and debt instrument management**
 
-- **Purpose**: Bond sales, debt management, protocol funding mechanism
-- **Key Features**: Bond auctions, debt tracking, bond redemption
-- **Mechanics**: Discount bonds, vesting schedules, debt management
-- **Integration**: Treasury, RZR token, economic policy
+- **Purpose**: Convertible debt instruments, debt-equity conversion
+- **Key Features**: Conversion mechanisms, debt management, equity distribution
+- **Integration**: Bond system, treasury, governance
+- **Mechanics**: Conversion ratios, vesting schedules, debt tracking
 
-**File**: [`AppBondDepository.sol`](./AppBondDepository.sol)
+**File**: [`AppConvertibles.sol`](./AppConvertibles.sol)
+
+#### [RebaseController](./RebaseController.md)
+
+**Rebase mechanism for token supply adjustments**
+
+- **Purpose**: Supply adjustment, economic rebalancing, market stabilization
+- **Key Features**: Rebase calculations, supply adjustments, market mechanics
+- **Integration**: RZR token, treasury, economic policy
+- **Effects**: Supply elasticity, price stabilization
+
+**File**: [`RebaseController.sol`](./RebaseController.sol)
 
 ### Utility & Infrastructure
 
@@ -178,17 +188,6 @@ The core contracts implement the fundamental architecture and business logic of 
 
 **File**: [`AppOracle.sol`](./AppOracle.sol)
 
-#### [AppConvertibles](./AppConvertibles.md)
-
-**Convertible bond and debt instrument management**
-
-- **Purpose**: Convertible debt instruments, debt-equity conversion
-- **Key Features**: Conversion mechanisms, debt management, equity distribution
-- **Integration**: Bond system, treasury, governance
-- **Mechanics**: Conversion ratios, vesting schedules, debt tracking
-
-**File**: [`AppConvertibles.sol`](./AppConvertibles.sol)
-
 #### [AppBurner](./AppBurner.md)
 
 **Token burning mechanism for deflationary pressure**
@@ -210,17 +209,6 @@ The core contracts implement the fundamental architecture and business logic of 
 - **Benefits**: Growth incentives, user acquisition, community building
 
 **File**: [`AppReferrals.sol`](./AppReferrals.sol)
-
-#### [RebaseController](./RebaseController.md)
-
-**Rebase mechanism for token supply adjustments**
-
-- **Purpose**: Supply adjustment, economic rebalancing, market stabilization
-- **Key Features**: Rebase calculations, supply adjustments, market mechanics
-- **Integration**: RZR token, treasury, economic policy
-- **Effects**: Supply elasticity, price stabilization
-
-**File**: [`RebaseController.sol`](./RebaseController.sol)
 
 ## System Integration
 

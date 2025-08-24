@@ -33,7 +33,7 @@ contract TwapOracleV3Test is BaseTest {
         vm.stopPrank();
     }
 
-    function test_Constructor() public {
+    function test_Constructor() public view {
         // Verify initial state
         assertEq(address(twapOracle.oracle()), address(twapOracleMock), "Oracle address should be set correctly");
         assertEq(twapOracle.lastUpdateTime(), block.timestamp, "Last update time should be set to current timestamp");
@@ -185,7 +185,7 @@ contract TwapOracleV3Test is BaseTest {
         assertEq(twapUsd, expectedUsd, "TWAP USD price should be correct after cycling through buffer");
     }
 
-    function test_GetPriceForAmount() public {
+    function test_GetPriceForAmount() public view {
         // Test getting price for amount
         (uint256 priceRzr, uint256 priceUsd, uint256 lastUpdated) = twapOracle.getPriceForAmount(1e18);
 
@@ -195,7 +195,7 @@ contract TwapOracleV3Test is BaseTest {
         assertEq(lastUpdated, twapOracle.lastUpdateTime(), "Last updated should match oracle's last update time");
     }
 
-    function test_Asset() public {
+    function test_Asset() public view {
         // Test asset function
         IERC20Metadata asset = twapOracle.asset();
         assertEq(address(asset), address(mockAsset), "Asset should match mock asset");
@@ -229,7 +229,7 @@ contract TwapOracleV3Test is BaseTest {
         twapOracle.observations(MAX_OBSERVATIONS);
     }
 
-    function test_Constants() public {
+    function test_Constants() public view {
         // Test immutable constants
         assertEq(twapOracle.MAX_STALENESS(), MAX_STALENESS, "MAX_STALENESS should be correct");
         assertEq(twapOracle.EPOCH_DURATION(), EPOCH_DURATION, "EPOCH_DURATION should be correct");

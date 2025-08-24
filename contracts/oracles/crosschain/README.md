@@ -1,6 +1,6 @@
 # Cross-Chain Oracle Contracts
 
-This directory contains smart contracts that provide cross-chain data aggregation and validation for the protocol. The primary contract, `TotalReservesOracle`, serves as a decentralized oracle that captures reserve information from multiple Layer 2 networks and off-chain sources, ensuring data consistency and reliability across the entire ecosystem.
+This directory contains smart contracts that provide cross-chain data aggregation and validation for the protocol. The primary contract, [`TotalReservesOracle`](./TotalReservesOracle.sol), serves as a decentralized oracle that captures reserve information from multiple Layer 2 networks and off-chain sources, ensuring data consistency and reliability across the entire ecosystem.
 
 ## Overview
 
@@ -14,7 +14,7 @@ The cross-chain oracle system provides a robust mechanism for:
 
 ## Contract Architecture
 
-### TotalReservesOracle.sol
+### [TotalReservesOracle.sol](./TotalReservesOracle.sol)
 
 **Central oracle contract that aggregates and validates reserve data from multiple sources**
 
@@ -95,8 +95,8 @@ uint256 public staleness; // 25 hours default
 
 ### Cross-Chain Reserve Updates
 
-1. **BridgeL1** receives reserve data from L2 chains via LayerZero
-2. **BridgeL1** calls `setCrosschainReserves()` on TotalReservesOracle
+1. **[BridgeL1](../bridge/BridgeL1.sol)** receives reserve data from L2 chains via LayerZero
+2. **[BridgeL1](../bridge/BridgeL1.sol)** calls `setCrosschainReserves()` on [TotalReservesOracle](./TotalReservesOracle.sol)
 3. **Oracle** updates the specific chain's reserve data and timestamp
 4. **Event** emitted for monitoring and indexing
 
@@ -169,7 +169,7 @@ function setReservesCreditRzr(uint256 _reservesCreditRzr) external onlyGovernor
 
 The oracle automatically receives updates from the bridge system:
 
-- **BridgeL1** calls `setCrosschainReserves()` after LayerZero message receipt
+- **[BridgeL1](../bridge/BridgeL1.sol)** calls `setCrosschainReserves()` after LayerZero message receipt
 - **Real-time Sync**: Reserve data stays current across all networks
 - **Event Emission**: All updates logged for monitoring and transparency
 
@@ -231,7 +231,7 @@ uint256[] memory supportedChains = oracle.getEids();
 
 ### Initial Setup
 
-1. Deploy `TotalReservesOracle` contract
+1. Deploy [`TotalReservesOracle`](./TotalReservesOracle.sol) contract
 2. Initialize with authority and off-chain updater addresses
 3. Configure initial deviation and staleness parameters
 4. Register supported Layer 2 networks
@@ -253,6 +253,10 @@ uint256[] memory supportedChains = oracle.getEids();
 ## Dependencies
 
 - **LayerZero**: Cross-chain messaging infrastructure
-- **Bridge Contracts**: Source of cross-chain reserve data
+- **[Bridge Contracts](../bridge/)**: Source of cross-chain reserve data
 - **App Protocol**: Core access control and governance
 - **OpenZeppelin**: Utility libraries and data structures
+
+## License
+
+AGPL-3.0

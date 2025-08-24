@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
-import "../periphery/oft-proxy/OFTProxy.sol";
-import "./AppAccessControlled.sol";
 import "../interfaces/IAppStaking.sol";
 import "../interfaces/IStaking4626.sol";
+import "../periphery/oft/OFTProxy.sol";
+import "./AppAccessControlled.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title Staking4626
 /// @notice ERC-4626 compliant staking vault that automatically compounds rewards
@@ -54,6 +54,7 @@ contract Staking4626 is IStaking4626, OFTProxy, ReentrancyGuard, AppAccessContro
         emit BuyoutPremiumBpsUpdated(buyoutPremiumBps);
     }
 
+    /// @inheritdoc IStaking4626
     function overwriteRate(uint256 _rate) external onlyGovernor {
         rate = _rate;
         emit RateUpdated(rate);

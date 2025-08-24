@@ -29,7 +29,7 @@ contract DiaAdapterOracle is IOracleV2, IAggregatorV3 {
     }
 
     /// @inheritdoc IOracleV2
-    function getPriceForAmount(uint256 amount)
+    function getPriceForAmount(uint256)
         external
         view
         override
@@ -43,7 +43,7 @@ contract DiaAdapterOracle is IOracleV2, IAggregatorV3 {
 
     /// @inheritdoc IAggregatorV3
     function latestAnswer() external view returns (int256) {
-        (uint128 value, uint128 timestamp) = DIAL_ORACLE.getValue(key);
+        (uint128 value,) = DIAL_ORACLE.getValue(key);
         return int256(int128(value));
     }
 
@@ -64,7 +64,7 @@ contract DiaAdapterOracle is IOracleV2, IAggregatorV3 {
     }
 
     /// @inheritdoc IAggregatorV3
-    function getRoundData(uint80 _roundId)
+    function getRoundData(uint80)
         external
         view
         override

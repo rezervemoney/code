@@ -15,6 +15,10 @@ interface IStaking4626 is IERC4626 {
     /// @param amount The amount of assets to initialize the position with
     function initializePosition(uint256 amount) external;
 
+    /// @notice Overwrite the rate of the staking
+    /// @param rate The new rate
+    function overwriteRate(uint256 rate) external;
+
     /// @notice Initialize the staking contract
     /// @param _staking The address of the staking contract
     /// @param _authority The address of the authority contract

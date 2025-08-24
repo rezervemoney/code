@@ -4,7 +4,7 @@ pragma solidity 0.8.28;
 import "../../core/AppAccessControlled.sol";
 import "../../interfaces/IBridgeL2.sol";
 import "../../interfaces/IStaking4626L2.sol";
-import "../oft-proxy/OFTProxy.sol";
+import "../oft/OFTProxy.sol";
 import "@layerzerolabs/oft-evm/contracts/interfaces/IOFT.sol";
 import "@layerzerolabs/oft-evm/contracts/OFT.sol";
 import "@layerzerolabs/oft-evm/contracts/OFTCore.sol";

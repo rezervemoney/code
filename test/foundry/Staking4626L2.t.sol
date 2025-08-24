@@ -96,7 +96,6 @@ contract Staking4626L2Test is Test {
 
     function test_BridgeCanSetRate() public {
         vm.startPrank(bridge);
-        uint256 oldRate = vault.rate();
         vault.setRate(2e18);
         assertEq(vault.rate(), 2e18, "Rate should be updated");
         vm.stopPrank();

@@ -9,7 +9,6 @@ import "@layerzerolabs/oft-evm/contracts/interfaces/IOFT.sol";
 import "@layerzerolabs/oft-evm/contracts/OFT.sol";
 import "@layerzerolabs/oft-evm/contracts/OFTCore.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 

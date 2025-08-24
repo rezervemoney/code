@@ -163,7 +163,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "",
+        "name": "who",
         "type": "address"
       }
     ],
@@ -175,7 +175,7 @@
         "type": "uint256"
       }
     ],
-    "stateMutability": "pure",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -251,7 +251,7 @@
     "name": "positionManager",
     "outputs": [
       {
-        "internalType": "address",
+        "internalType": "contract IERC721",
         "name": "",
         "type": "address"
       }

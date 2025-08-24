@@ -3,7 +3,6 @@ pragma solidity 0.8.28;
 
 import "../core/AppAccessControlled.sol";
 import "../periphery/oft-proxy/OAppProxy.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 
 abstract contract OAppControlledProxy is OAppProxy, AppAccessControlled {
     function __OAppControlledProxy_init(address _lzEndpoint, address _delegate, address _authority)

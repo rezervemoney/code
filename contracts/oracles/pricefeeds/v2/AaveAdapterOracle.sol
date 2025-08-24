@@ -3,7 +3,6 @@ pragma solidity 0.8.28;
 
 import "../../../interfaces/IOracleV2.sol";
 import "../../../interfaces/IAggregatorV3.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract AaveAdapterOracle is IOracleV2 {
     IAggregatorV3 public immutable AGGREGATOR;

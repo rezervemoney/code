@@ -2,468 +2,297 @@
 
 **File**: [`RebaseController.sol`](./RebaseController.sol)
 
-**License**: AGPL-3.0
+**License**: AGPL-3.0-only
 
 **Test File**: [`test/foundry/RebaseControllerTest.t.sol`](../../test/foundry/RebaseControllerTest.t.sol)
 
 ## Overview
 
-The `RebaseController` contract is a rebase mechanism for the Rezerve.money protocol that provides supply adjustment, economic rebalancing, and market stabilization through sophisticated rebase calculations and supply management. It implements elastic supply mechanics to maintain economic equilibrium.
+The `RebaseController` contract is a bonding-curve based rebase mechanism for the Rezerve.money protocol that provides epochic supply adjustments based on backing ratio calculations. It implements a sophisticated yield distribution system that mints RZR tokens for stakers, operations treasury, and burner contracts based on protocol performance metrics.
 
 ## Purpose
 
 This contract serves as:
 
-- **Supply Adjustment**: Dynamic adjustment of RZR token supply
-- **Economic Rebalancing**: Maintain economic equilibrium and stability
-- **Market Stabilization**: Stabilize token price and market conditions
-- **Elastic Supply**: Implement elastic supply mechanics
-- **Economic Policy**: Execute rebase-based economic strategies
+- **Epochic Rebase System**: Executes rebases at regular 23-hour epochs
+- **Bonding Curve Logic**: Calculates rebase rates using piece-wise curves
+- **Yield Distribution**: Distributes minted tokens to stakers, operations, and burner
+- **Backing Ratio Management**: Maintains protocol backing ratio through supply adjustments
+- **Performance Metrics**: Provides view functions for front-end gauges and analytics
 
 ## Architecture
 
 ### Inheritance
 
 - `AppAccessControlled` - Protocol access control integration
+- `IRebaseController` - Rebase controller interface
 - `Initializable` - Upgradeable contract pattern
 
 ### Core Components
 
-- **Rebase Calculation**: Rebase amount and frequency calculations
-- **Supply Management**: Token supply adjustment mechanisms
-- **Economic Metrics**: Economic indicators and calculations
-- **Rebase Execution**: Automated and manual rebase execution
+- **Epoch Management**: 23-hour epoch system for rebase execution
+- **Bonding Curve**: Piece-wise curve calculations for yield rates
+- **Reserve Management**: Integration with total reserves oracle
+- **Distribution Logic**: Token allocation to stakers, operations, and burner
+- **Price Oracle Integration**: Floor price calculations for reserve management
 
 ## Key Functions
 
-### Rebase Management
+### Epoch Execution
 
-#### Calculate Rebase
-
-```solidity
-function calculateRebase() external view returns (uint256 rebaseAmount, bool shouldRebase)
-```
-
-**Purpose**: Calculate rebase amount and determine if rebase should occur.
-
-**Returns**:
-
-- `rebaseAmount`: Amount to adjust supply by
-- `shouldRebase`: Whether rebase should be executed
-
-**Process**: Analyzes economic conditions and calculates optimal rebase.
-
-#### Execute Rebase
+#### Execute Epoch
 
 ```solidity
-function executeRebase() external onlyRebaseManager
+function executeEpoch() external onlyExecutor
 ```
 
-**Purpose**: Execute a rebase operation to adjust token supply.
+**Purpose**: Execute a rebase epoch, minting and distributing RZR tokens.
 
-**Access Control**: Only rebase managers can execute rebases.
+**Access Control**: Only executors can execute epochs.
+
+**Requirements**: Must wait for full epoch duration (23 hours) since last execution.
 
 **Process**:
 
-1. Calculate rebase amount
-2. Adjust token supply
-3. Update rebase tracking
-4. Emit rebase executed event
+1. Verify epoch is ready for execution
+2. Calculate projected epoch rate and distribution
+3. Verify sufficient reserves for minting
+4. Mint RZR tokens and distribute to:
+   - Stakers (via staking contract)
+   - Operations treasury
+   - Burner contract
+5. Update last epoch time
+6. Emit rebase event
 
-#### Emergency Rebase
+### Configuration Management
 
-```solidity
-function emergencyRebase(uint256 amount) external onlyGovernor
-```
-
-**Purpose**: Execute emergency rebase for urgent economic adjustments.
-
-**Access Control**: Only governors can execute emergency rebases.
-
-**Parameters**: `amount` - Emergency rebase amount.
-
-**Process**: Executes immediate rebase with specified amount.
-
-### Rebase Configuration
-
-#### Set Rebase Parameters
+#### Set Target Percentages
 
 ```solidity
-function setRebaseParameters(
-    uint256 minRebaseInterval,
-    uint256 maxRebaseAmount,
-    uint256 targetPrice
+function setTargetPcts(
+    uint256 _targetOpsPct,
+    uint256 _minFloorPct,
+    uint256 _maxFloorPct,
+    uint256 _floorSlope
 ) external onlyGovernor
 ```
 
-**Purpose**: Update rebase configuration parameters.
+**Purpose**: Update target percentage parameters for token distribution.
 
-**Access Control**: Only governors can update parameters.
+**Access Control**: Only governors can update target percentages.
 
 **Parameters**:
 
-- `minRebaseInterval`: Minimum time between rebases
-- `maxRebaseAmount`: Maximum rebase amount per operation
-- `targetPrice`: Target price for economic equilibrium
+- `_targetOpsPct` - Target percentage for operations treasury
+- `_minFloorPct` - Minimum floor percentage
+- `_maxFloorPct` - Maximum floor percentage
+- `_floorSlope` - Floor slope parameter
 
 **Process**: Updates parameters and emits event.
 
-#### Get Rebase Parameters
+#### Set APR Variables
 
 ```solidity
-function getRebaseParameters() external view returns (
-    uint256 minRebaseInterval,
-    uint256 maxRebaseAmount,
-    uint256 targetPrice,
-    uint256 lastRebaseTime
+function setAprVariables(uint16 _floorApr, uint16 _ceilApr, uint16 _k1, uint16 _k2) external onlyGovernor
+```
+
+**Purpose**: Update APR calculation parameters for the bonding curve.
+
+**Access Control**: Only governors can update APR variables.
+
+**Parameters**:
+
+- `_floorApr` - Floor APR percentage (e.g., 500 for 500%)
+- `_ceilApr` - Ceiling APR percentage (e.g., 2000 for 2000%)
+- `_k1` - Curve parameter for β 1-1.5 range
+- `_k2` - Curve parameter for β 1.5-2.5 range
+
+**Process**: Updates APR parameters and emits event.
+
+### View Functions
+
+#### Current Backing Ratio
+
+```solidity
+function currentBackingRatio() external view returns (uint256)
+```
+
+**Purpose**: Get the current protocol backing ratio (β).
+
+**Returns**: Backing ratio in 1e18 format (1e18 = β=1).
+
+**Calculation**: β = PCV / supply, where PCV is protocol controlled value in USD.
+
+#### Excess Reserves
+
+```solidity
+function excessReserves() public view returns (uint256)
+```
+
+**Purpose**: Calculate excess reserves available for minting.
+
+**Returns**: Amount of excess reserves in USD terms.
+
+**Calculation**: Excess = USD reserves - (RZR supply × floor price).
+
+#### Projected Epoch Rate
+
+```solidity
+function projectedEpochRate() public view returns (
+    uint256 apr,
+    uint256 epochRate,
+    uint256 toStakers,
+    uint256 toOps,
+    uint256 toBurner
 )
 ```
 
-**Purpose**: Get current rebase configuration.
+**Purpose**: Get projected APR and token distribution for the next epoch.
 
-**Returns**: Current rebase parameters and timing.
+**Returns**: APR, epoch mint rate, and distribution amounts.
 
-### Supply Management
+**Process**: Calculates rates based on current backing ratio and staked supply.
 
-#### Get Supply Info
+#### Projected Epoch Rate Raw
 
 ```solidity
-function getSupplyInfo() external view returns (
-    uint256 currentSupply,
-    uint256 targetSupply,
-    uint256 lastRebaseAmount,
-    uint256 totalRebases
+function projectedEpochRateRaw(
+    uint256 pcv,
+    uint256 supply,
+    uint256 stakedSupply
+) public view returns (
+    uint256 apr,
+    uint256 epochMint,
+    uint256 toStakers,
+    uint256 toOps,
+    uint256 toBurner
 )
 ```
 
-**Purpose**: Get comprehensive supply information.
+**Purpose**: Calculate epoch rates with custom PCV and supply parameters.
 
-**Returns**: Current supply, target supply, and rebase history.
+**Parameters**:
 
-#### Get Rebase History
+- `pcv` - Protocol controlled value in USD
+- `supply` - RZR token supply
+- `stakedSupply` - Total staked RZR amount
 
-```solidity
-function getRebaseHistory(uint256 index) external view returns (
-    uint256 amount,
-    uint256 timestamp,
-    uint256 supplyBefore,
-    uint256 supplyAfter
-)
-```
+**Returns**: APR, epoch mint rate, and distribution amounts.
 
-**Purpose**: Get historical rebase information.
-
-**Parameters**: `index` - Index of rebase in history.
-
-**Returns**: Detailed rebase information.
-
-## Integration Points
-
-### Protocol Contracts
-
-- **RZR Token**: [`RZR.sol`](./RZR.sol) - Supply adjustment operations
-- **Treasury**: [`AppTreasury.sol`](./AppTreasury.sol) - Economic calculations
-- **Authority**: [`AppAuthority.sol`](./AppAuthority.sol) - Access control
-- **Oracle**: Oracle contracts for price feeds and economic data
-
-### External Systems
-
-- **Economic Models**: Economic analysis and modeling systems
-- **Price Feeds**: Market price and economic indicator feeds
-- **Supply Analytics**: Supply tracking and reporting systems
-- **Market Data**: Market condition and volatility data
-
-## Rebase Mechanics
-
-### Rebase Triggers
-
-- **Price Deviation**: Rebase when price deviates from target
-- **Time-Based**: Periodic rebases at regular intervals
-- **Economic Conditions**: Rebase based on economic indicators
-- **Market Volatility**: Rebase during high volatility periods
-
-### Rebase Calculations
-
-- **Supply Elasticity**: Calculate optimal supply adjustment
-- **Price Targeting**: Adjust supply to target price
-- **Market Impact**: Consider market impact of rebase
-- **Economic Equilibrium**: Maintain economic balance
-
-### Supply Adjustment
-
-- **Positive Rebase**: Increase supply (expansion)
-- **Negative Rebase**: Decrease supply (contraction)
-- **Proportional Adjustment**: Adjust all holder balances proportionally
-- **Rebase Distribution**: Distribute rebase across all holders
-
-## Economic Model
-
-### Supply Elasticity
-
-- **Elastic Supply**: Supply adjusts to maintain price stability
-- **Economic Equilibrium**: Balance supply and demand
-- **Price Targeting**: Target price maintenance
-- **Market Stabilization**: Reduce price volatility
-
-### Rebase Impact
-
-- **Holder Balances**: All holder balances adjusted proportionally
-- **Price Stability**: Reduced price volatility
-- **Economic Balance**: Maintained economic equilibrium
-- **Market Efficiency**: Improved market efficiency
-
-### Economic Indicators
-
-- **Price Deviation**: Deviation from target price
-- **Market Volatility**: Market volatility measures
-- **Supply Demand**: Supply and demand dynamics
-- **Economic Health**: Overall economic health indicators
-
-## Security Features
-
-### Access Control
-
-- **Role-Based Permissions**: Only authorized roles can manage rebases
-- **Rebase Validation**: Validate all rebase operations
-- **Parameter Limits**: Maximum limits on rebase parameters
-- **Emergency Controls**: Emergency pause and override capabilities
-
-### Economic Security
-
-- **Rebase Limits**: Maximum rebase amounts to prevent manipulation
-- **Timing Controls**: Minimum intervals between rebases
-- **Supply Validation**: Validate supply adjustments
-- **Overflow Protection**: Safe math operations for all calculations
-
-### Operational Security
-
-- **Rebase Validation**: All rebases validated before execution
-- **State Consistency**: Consistent state across all operations
-- **Event Logging**: Complete transparency of all operations
-- **Emergency Procedures**: Emergency response capabilities
+**Usage**: Used for testing and external calculations with custom parameters.
 
 ## Usage Examples
 
-### Rebase Operations
+### Epoch Execution
 
-#### Calculate Rebase
+#### Execute Epoch
 
 ```solidity
-// Calculate if rebase should occur
+// Execute a rebase epoch (executor only)
 RebaseController rebaseController = RebaseController(rebaseAddress);
 
-(uint256 rebaseAmount, bool shouldRebase) = rebaseController.calculateRebase();
-
-if (shouldRebase) {
-    console.log("Rebase needed, amount:", rebaseAmount);
-} else {
-    console.log("No rebase needed");
-}
-```
-
-#### Execute Rebase
-
-```solidity
-// Execute rebase operation
-rebaseController.executeRebase();
-```
-
-#### Emergency Rebase
-
-```solidity
-// Execute emergency rebase
-rebaseController.emergencyRebase(1000000e18); // 1M RZR
+rebaseController.executeEpoch();
 ```
 
 ### Configuration Management
 
-#### Update Rebase Parameters
+#### Update Target Percentages
 
 ```solidity
-// Update rebase configuration
-rebaseController.setRebaseParameters(
-    24 hours,        // Min 24 hours between rebases
-    10000000e18,     // Max 10M RZR per rebase
-    1e18             // Target $1 price
+// Update distribution percentages (governor only)
+rebaseController.setTargetPcts(
+    0.1e18,    // 10% to operations
+    0.15e18,   // 15% minimum floor
+    0.5e18,    // 50% maximum floor
+    0.45e18    // 45% floor slope
 );
 ```
 
-#### Check Current Parameters
+#### Update APR Variables
 
 ```solidity
-// Get current rebase parameters
-(
-    uint256 minRebaseInterval,
-    uint256 maxRebaseAmount,
-    uint256 targetPrice,
-    uint256 lastRebaseTime
-) = rebaseController.getRebaseParameters();
-
-console.log("Min Interval:", minRebaseInterval);
-console.log("Max Amount:", maxRebaseAmount);
-console.log("Target Price:", targetPrice);
+// Update APR calculation parameters (governor only)
+rebaseController.setAprVariables(
+    500,    // 500% floor APR
+    2000,   // 2000% ceiling APR
+    10,     // k1 parameter
+    1500    // k2 parameter
+);
 ```
 
-### Supply Analytics
+### Market Analytics
 
-#### Get Supply Information
+#### Check Current Backing Ratio
 
 ```solidity
-// Get comprehensive supply info
-(
-    uint256 currentSupply,
-    uint256 targetSupply,
-    uint256 lastRebaseAmount,
-    uint256 totalRebases
-) = rebaseController.getSupplyInfo();
-
-console.log("Current Supply:", currentSupply);
-console.log("Target Supply:", targetSupply);
-console.log("Last Rebase:", lastRebaseAmount);
-console.log("Total Rebases:", totalRebases);
+// Get current protocol backing ratio
+uint256 backingRatio = rebaseController.currentBackingRatio();
+console.log("Current Backing Ratio:", backingRatio);
+console.log("Backing Ratio %:", backingRatio * 100 / 1e18);
 ```
 
-#### Check Rebase History
+#### Check Excess Reserves
 
 ```solidity
-// Get specific rebase history
-(
-    uint256 amount,
-    uint256 timestamp,
-    uint256 supplyBefore,
-    uint256 supplyAfter
-) = rebaseController.getRebaseHistory(0);
+// Get available excess reserves
+uint256 excess = rebaseController.excessReserves();
+console.log("Excess Reserves:", excess);
+```
 
-console.log("Rebase Amount:", amount);
-console.log("Timestamp:", timestamp);
-console.log("Supply Before:", supplyBefore);
-console.log("Supply After:", supplyAfter);
+#### Get Projected Epoch Rates
+
+```solidity
+// Get projected rates for next epoch
+(
+    uint256 apr,
+    uint256 epochRate,
+    uint256 toStakers,
+    uint256 toOps,
+    uint256 toBurner
+) = rebaseController.projectedEpochRate();
+
+console.log("Projected APR:", apr);
+console.log("Epoch Mint Rate:", epochRate);
+console.log("To Stakers:", toStakers);
+console.log("To Operations:", toOps);
+console.log("To Burner:", toBurner);
+```
+
+#### Custom Rate Calculations
+
+```solidity
+// Calculate rates with custom parameters
+(
+    uint256 apr,
+    uint256 epochMint,
+    uint256 toStakers,
+    uint256 toOps,
+    uint256 toBurner
+) = rebaseController.projectedEpochRateRaw(
+    1000000e18,  // 1M USD PCV
+    500000e18,   // 500K RZR supply
+    300000e18    // 300K staked
+);
+
+console.log("Custom APR:", apr);
+console.log("Custom Epoch Mint:", epochMint);
 ```
 
 ## Events
 
-### Rebase Events
-
-```solidity
-event RebaseExecuted(uint256 amount, uint256 supplyBefore, uint256 supplyAfter, uint256 timestamp);
-event EmergencyRebaseExecuted(uint256 amount, string reason, uint256 timestamp);
-event RebaseCalculated(uint256 calculatedAmount, bool shouldRebase);
-```
-
 ### Configuration Events
 
 ```solidity
-event RebaseParametersUpdated(uint256 minRebaseInterval, uint256 maxRebaseAmount, uint256 targetPrice);
-event RebasePaused(bool paused);
-event RebaseManagerUpdated(address indexed oldManager, address indexed newManager);
+event TargetPctsSet(uint256 targetOpsPct, uint256 minFloorPct, uint256 maxFloorPct, uint256 floorSlope);
+event AprVariablesSet(uint16 floorApr, uint16 ceilApr, uint16 k1, uint16 k2);
 ```
 
-### Supply Events
+### Execution Events
 
 ```solidity
-event SupplyAdjusted(uint256 oldSupply, uint256 newSupply, uint256 adjustment);
-event TargetSupplyUpdated(uint256 oldTarget, uint256 newTarget);
+event Rebased(uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 toBurner);
 ```
-
-## Testing
-
-### Unit Tests
-
-- Rebase calculation accuracy
-- Supply adjustment mechanisms
-- Parameter management functionality
-- Access control validation
-
-### Integration Tests
-
-- Cross-contract rebase flows
-- Treasury integration testing
-- Oracle price feed integration
-- Authority system integration
-
-### Security Tests
-
-- Access control validation
-- Economic attack vectors
-- Supply manipulation prevention
-- Emergency procedure testing
-
-## Deployment Considerations
-
-### Initial Setup
-
-1. **Deploy Contract**: Deploy RebaseController contract
-2. **Configure Authority**: Set up access control integration
-3. **Set Parameters**: Configure rebase parameters and limits
-4. **Verify Integration**: Test with RZR token and treasury
-
-### Configuration
-
-1. **Authority Integration**: Connect to protocol authority system
-2. **Rebase Parameters**: Set appropriate rebase intervals and amounts
-3. **Economic Targets**: Configure target price and economic indicators
-4. **Monitoring Setup**: Implement rebase monitoring
-
-## Dependencies
-
-### Core Dependencies
-
-- **AppAccessControlled**: Protocol access control integration
-- **Initializable**: Upgradeable contract pattern
-- **RZR Token**: Supply adjustment operations
-
-### External Dependencies
-
-- **Treasury System**: Economic calculations and data
-- **Oracle System**: Price feeds and economic indicators
-- **Economic Models**: Economic analysis and modeling
-
-## Best Practices
-
-### Rebase Management
-
-1. **Parameter Optimization**: Optimize rebase parameters for stability
-2. **Market Impact**: Minimize market disruption from rebases
-3. **Economic Balance**: Maintain balanced economic model
-4. **Monitoring**: Continuous monitoring of rebase effectiveness
-
-### Security Considerations
-
-1. **Access Control**: Verify rebase permissions are properly restricted
-2. **Parameter Limits**: Implement and enforce rebase limits
-3. **Supply Validation**: Validate all supply adjustments
-4. **Emergency Procedures**: Test emergency response capabilities
-
-### User Experience
-
-1. **Transparency**: Provide clear visibility of rebase operations
-2. **Impact Communication**: Communicate rebase impact to users
-3. **Balance Updates**: Ensure accurate balance updates
-4. **Monitoring Tools**: Provide tools to monitor rebase operations
-
-## Testing
-
-### Unit Tests
-
-- Rebase calculations
-- Execution logic
-- Parameter management
-- History tracking
-
-**Test File**: [`test/foundry/RebaseControllerTest.t.sol`](../../test/foundry/RebaseControllerTest.t.sol)
-
-### Integration Tests
-
-- Protocol contract integration
-- Treasury interaction testing
-- Supply management validation
-
-### Security Tests
-
-- Unauthorized access attempts
-- Access control validation
-- Rebase manipulation prevention
 
 ## License
 
-AGPL-3.0
+AGPL-3.0-only

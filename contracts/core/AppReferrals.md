@@ -8,387 +8,358 @@
 
 ## Overview
 
-The `AppReferrals` contract is a referral system for the Rezerve.money protocol that tracks user referrals, calculates rewards, and manages the referral program. It provides incentives for user acquisition and community building through a sophisticated referral tracking and reward distribution system.
+The `AppReferrals` contract is a referral system for the Rezerve.money protocol that tracks user referrals through referral codes and provides referral-based staking and bonding functionality. It integrates with the protocol's staking and bonding systems to enable referral-based activities.
 
 ## Purpose
 
 This contract serves as:
 
-- **User Acquisition**: Incentivize new user onboarding
-- **Referral Tracking**: Track referral relationships and performance
-- **Reward Distribution**: Distribute rewards for successful referrals
-- **Community Building**: Foster community growth and engagement
-- **Growth Analytics**: Provide referral program analytics and insights
+- **Referral Code Management**: Generate and manage unique referral codes for users
+- **Referral Tracking**: Track referral relationships through referral codes
+- **Referral-Based Staking**: Enable staking with referral codes
+- **Referral-Based Bonding**: Enable bonding with referral codes
+- **Reward Distribution**: Distribute rewards through merkle proofs
 
 ## Architecture
 
 ### Inheritance
 
 - `AppAccessControlled` - Protocol access control integration
-- `Initializable` - Upgradeable contract pattern
+- `ReentrancyGuardUpgradeable` - Reentrancy protection
+- `IAppReferrals` - Referral system interface
 
 ### Core Components
 
-- **Referral Tracking**: User referral relationship management
-- **Reward Calculation**: Referral reward calculation and distribution
-- **Performance Analytics**: Referral performance tracking
-- **Program Management**: Referral program configuration and management
+- **Referral Code System**: Unique referral codes for users
+- **Referral Tracking**: Track referral relationships
+- **Staking Integration**: Referral-based staking operations
+- **Bonding Integration**: Referral-based bonding operations
+- **Merkle Reward System**: Off-chain calculated rewards with merkle proofs
 
 ## Key Functions
 
-### Referral Management
+### Referral Code Management
 
-#### Register Referral
+#### Register Referral Code
 
 ```solidity
-function registerReferral(address referrer, address referee) external
+function registerReferralCode(bytes8 _code) external
 ```
 
-**Purpose**: Register a new referral relationship.
+**Purpose**: Register a referral code for the caller.
 
-**Parameters**:
-
-- `referrer`: Address of the user making the referral
-- `referee`: Address of the user being referred
+**Parameters**: `_code` - The referral code to register.
 
 **Process**:
 
-1. Validate referral parameters
-2. Check referral eligibility
-3. Create referral relationship
-4. Update referral tracking
-5. Emit referral registered event
+1. Validate referral code uniqueness
+2. Check whitelist requirements if enabled
+3. Register code for the caller
+4. Emit referral code registered event
 
-#### Get Referrer
+#### Register Referral Code For
 
 ```solidity
-function getReferrer(address user) external view returns (address)
+function registerReferralCodeFor(bytes8 _code, address _referrer) external onlyExecutor
 ```
 
-**Purpose**: Get the referrer for a specific user.
+**Purpose**: Register a referral code for a specific referrer (executor only).
 
-**Parameters**: `user` - Address of the user to check.
+**Access Control**: Only executors can register codes for others.
 
-**Returns**: Address of the user's referrer, or zero if none.
+**Parameters**:
+
+- `_code` - The referral code to register
+- `_referrer` - The address to register the code for
+
+### Referral-Based Staking
+
+#### Stake With Referral
+
+```solidity
+function stakeWithReferral(
+    uint256 amount,
+    uint256 declaredValue,
+    bytes8 _referralCode,
+    address _to
+) external nonReentrant returns (uint256 tokenId, uint256 taxPaid)
+```
+
+**Purpose**: Stake RZR tokens with a referral code.
+
+**Parameters**:
+
+- `amount` - Amount of RZR to stake
+- `declaredValue` - Declared value for staking
+- `_referralCode` - Referral code to use
+- `_to` - Address to stake for
+
+**Returns**: Token ID and tax paid from staking.
+
+**Process**:
+
+1. Transfer RZR from caller to contract
+2. Register referral if code is valid
+3. Create staking position for the target address
+4. Emit referral staked event
+
+#### Stake Into LST With Referral
+
+```solidity
+function stakeIntoLSTWithReferral(
+    uint256 amount,
+    bytes8 _referralCode,
+    address _to
+) external nonReentrant returns (uint256 minted)
+```
+
+**Purpose**: Stake RZR tokens into liquid staking with a referral code.
+
+**Parameters**:
+
+- `amount` - Amount of RZR to stake
+- `_referralCode` - Referral code to use
+- `_to` - Address to stake for
+
+**Returns**: Amount of LST tokens minted.
+
+**Process**:
+
+1. Transfer RZR from caller to contract
+2. Register referral if code is valid
+3. Deposit into liquid staking for target address
+4. Emit referral staked into LST event
+
+### Referral-Based Bonding
+
+#### Bond With Referral
+
+```solidity
+function bondWithReferral(
+    uint256 _id,
+    uint256 _amount,
+    uint256 _maxPrice,
+    uint256 _minPayout,
+    bytes8 _referralCode,
+    address _to
+) external nonReentrant returns (uint256 payout_, uint256 tokenId_)
+```
+
+**Purpose**: Buy bonds with a referral code.
+
+**Parameters**:
+
+- `_id` - Bond ID to purchase
+- `_amount` - Amount of quote tokens to spend
+- `_maxPrice` - Maximum price willing to pay
+- `_minPayout` - Minimum payout required
+- `_referralCode` - Referral code to use
+- `_to` - Address to buy bonds for
+
+**Returns**: Payout amount and bond token ID.
+
+**Process**:
+
+1. Transfer quote tokens from caller to contract
+2. Register referral if code is valid
+3. Purchase bond for target address
+4. Emit referral bond bought event
+
+### Reward Management
+
+#### Claim Rewards
+
+```solidity
+function claimRewards(ClaimRewardsInput[] calldata inputs) external
+```
+
+**Purpose**: Claim rewards using merkle proofs.
+
+**Parameters**: `inputs` - Array of reward claim inputs with merkle proofs.
+
+**Process**:
+
+1. Verify merkle proof for each input
+2. Check if rewards already claimed
+3. Transfer unclaimed rewards to user
+4. Update claimed amounts tracking
+
+### Referral Tracking
 
 #### Get Referrals
 
 ```solidity
-function getReferrals(address user) external view returns (address[] memory)
+function getReferrals(address _referrer) external view returns (address[] memory referrals)
 ```
 
-**Purpose**: Get all users referred by a specific user.
+**Purpose**: Get all addresses referred by a specific referrer.
 
-**Parameters**: `user` - Address of the referrer.
+**Parameters**: `_referrer` - Address of the referrer.
 
-**Returns**: Array of addresses referred by the user.
+**Returns**: Array of referred addresses.
 
-### Reward Management
-
-#### Calculate Referral Reward
+#### Total Referrals Made
 
 ```solidity
-function calculateReferralReward(
-    address referrer,
-    address referee,
-    uint256 activityAmount
-) external view returns (uint256)
+function totalReferralsMade(address _referrer) external view returns (uint256)
 ```
 
-**Purpose**: Calculate referral reward for a specific activity.
+**Purpose**: Get total number of referrals made by a referrer.
 
-**Parameters**:
+**Parameters**: `_referrer` - Address of the referrer.
 
-- `referrer`: Address of the referrer
-- `referee`: Address of the referee
-- `activityAmount`: Amount of the activity for reward calculation
+**Returns**: Total number of referrals.
 
-**Returns**: Calculated referral reward amount.
+### Configuration Management
 
-#### Distribute Referral Reward
+#### Set Merkle Server
 
 ```solidity
-function distributeReferralReward(
-    address referrer,
-    address referee,
-    uint256 activityAmount
-) external onlyReserveManager
+function setMerkleServer(address _merkleServer) external onlyGovernor
 ```
 
-**Purpose**: Distribute referral reward for completed activity.
+**Purpose**: Set the merkle server address for reward verification.
 
-**Access Control**: Only reserve managers can distribute rewards.
+**Access Control**: Only governors can set merkle server.
 
-**Parameters**:
-
-- `referrer`: Address of the referrer
-- `referee`: Address of the referee
-- `activityAmount`: Amount of the activity
-
-**Process**:
-
-1. Calculate reward amount
-2. Transfer reward to referrer
-3. Update reward tracking
-4. Emit reward distributed event
-
-### Program Management
-
-#### Set Referral Parameters
+#### Set Enable Whitelisting
 
 ```solidity
-function setReferralParameters(
-    uint256 rewardRate,
-    uint256 maxReferrals,
-    uint256 minActivityAmount
-) external onlyGovernor
+function setEnableWhitelisting(bool _enableWhitelisting) external onlyGovernor
 ```
 
-**Purpose**: Update referral program parameters.
+**Purpose**: Enable or disable whitelist requirement for referral codes.
 
-**Access Control**: Only governors can update parameters.
+**Access Control**: Only governors can toggle whitelisting.
 
-**Parameters**:
-
-- `rewardRate`: Rate for referral rewards
-- `maxReferrals`: Maximum referrals per user
-- `minActivityAmount`: Minimum activity amount for rewards
-
-**Process**: Updates parameters and emits event.
-
-#### Get Referral Parameters
+#### Set Merkle Root
 
 ```solidity
-function getReferralParameters() external view returns (
-    uint256 rewardRate,
-    uint256 maxReferrals,
-    uint256 minActivityAmount
-)
+function setMerkleRoot(bytes32 _merkleRoot) external
 ```
 
-**Purpose**: Get current referral program parameters.
+**Purpose**: Set merkle root for reward verification.
 
-**Returns**: Current referral program configuration.
+**Access Control**: Only merkle server can set root.
 
-### Analytics and Reporting
-
-#### Get Referral Statistics
+#### Whitelist User
 
 ```solidity
-function getReferralStats(address user) external view returns (
-    uint256 totalReferrals,
-    uint256 activeReferrals,
-    uint256 totalRewards,
-    uint256 lastReferralTime
-)
+function whitelist(address _user) external onlyExecutor
 ```
 
-**Purpose**: Get comprehensive referral statistics for a user.
+**Purpose**: Add user to whitelist for referral code registration.
 
-**Parameters**: `user` - Address of the user.
-
-**Returns**: Complete referral statistics and information.
-
-#### Get Program Statistics
-
-```solidity
-function getProgramStats() external view returns (
-    uint256 totalReferrals,
-    uint256 totalRewards,
-    uint256 activeUsers,
-    uint256 totalReferrers
-)
-```
-
-**Purpose**: Get overall referral program statistics.
-
-**Returns**: Program-wide statistics and metrics.
-
-## Integration Points
-
-### Protocol Contracts
-
-- **RZR Token**: [`RZR.sol`](./RZR.sol) - Referral reward distribution
-- **Treasury**: [`AppTreasury.sol`](./AppTreasury.sol) - Reward funding
-- **Authority**: [`AppAuthority.sol`](./AppAuthority.sol) - Access control
-- **Staking**: [`AppStaking.sol`](./AppStaking.sol) - Referral activity tracking
-
-### External Systems
-
-- **User Onboarding**: New user registration systems
-- **Activity Tracking**: Protocol activity monitoring
-- **Reward Distribution**: Automated reward distribution
-- **Analytics**: Referral program analytics and reporting
-
-## Referral Program Mechanics
-
-### Referral Eligibility
-
-- **New Users**: Only new users can be referred
-- **Referrer Limits**: Maximum referrals per referrer
-- **Activity Requirements**: Minimum activity for reward eligibility
-- **Time Restrictions**: Referral time limits and restrictions
-
-### Reward Structure
-
-- **Activity-Based**: Rewards based on referee activity
-- **Percentage-Based**: Reward percentage of activity amount
-- **Tiered Rewards**: Different reward rates for different activities
-- **Cumulative Rewards**: Rewards accumulate over time
-
-### Performance Tracking
-
-- **Referral Count**: Number of successful referrals
-- **Activity Volume**: Total activity from referrals
-- **Reward Earnings**: Total rewards earned
-- **Success Rate**: Referral success metrics
-
-## Security Features
-
-### Access Control
-
-- **Role-Based Permissions**: Only authorized roles can manage referrals
-- **Referral Validation**: Validate all referral relationships
-- **Reward Controls**: Controlled reward distribution
-- **Emergency Controls**: Emergency pause and override capabilities
-
-### Referral Security
-
-- **Self-Referral Prevention**: Prevent users from referring themselves
-- **Duplicate Prevention**: Prevent duplicate referral relationships
-- **Eligibility Validation**: Validate referral eligibility
-- **Fraud Prevention**: Anti-fraud mechanisms and monitoring
-
-### Operational Security
-
-- **Referral Validation**: All referrals validated before registration
-- **State Consistency**: Consistent state across all operations
-- **Event Logging**: Complete transparency of all operations
-- **Emergency Procedures**: Emergency response capabilities
+**Access Control**: Only executors can whitelist users.
 
 ## Usage Examples
 
-### Referral Management
+### Referral Code Management
 
-#### Register New Referral
+#### Register Your Referral Code
 
 ```solidity
-// Register a new referral
+// Register a referral code for yourself
 AppReferrals referrals = AppReferrals(referralsAddress);
 
-referrals.registerReferral(
-    referrerAddress,  // User making referral
-    refereeAddress    // User being referred
-);
+referrals.registerReferralCode(0x12345678); // Your unique code
 ```
 
-#### Check Referral Status
+#### Check Referral Code
 
 ```solidity
-// Check if user has a referrer
-address referrer = referrals.getReferrer(userAddress);
-
+// Check if a referral code exists
+address referrer = referrals.referralCodes(0x12345678);
 if (referrer != address(0)) {
-    console.log("User referred by:", referrer);
-} else {
-    console.log("User has no referrer");
+    console.log("Code belongs to:", referrer);
 }
 ```
 
-#### Get User Referrals
+### Referral-Based Staking
+
+#### Stake With Referral Code
 
 ```solidity
-// Get all users referred by a specific user
-address[] memory userReferrals = referrals.getReferrals(referrerAddress);
-console.log("User has referred", userReferrals.length, "users");
-```
-
-### Reward Operations
-
-#### Calculate Referral Reward
-
-```solidity
-// Calculate reward for staking activity
-uint256 reward = referrals.calculateReferralReward(
-    referrerAddress,
-    refereeAddress,
-    1000e18  // 1000 RZR staked
+// Stake RZR with a referral code
+(uint256 tokenId, uint256 taxPaid) = referrals.stakeWithReferral(
+    1000e18,        // 1000 RZR
+    1000e18,        // Declared value
+    0x12345678,     // Referral code
+    msg.sender      // Stake for yourself
 );
 
-console.log("Referral reward:", reward);
+console.log("Staked, Token ID:", tokenId);
+console.log("Tax Paid:", taxPaid);
 ```
 
-#### Distribute Referral Reward
+#### Stake Into Liquid Staking With Referral
 
 ```solidity
-// Distribute reward for completed activity
-referrals.distributeReferralReward(
-    referrerAddress,
-    refereeAddress,
-    1000e18  // Activity amount
+// Stake into LST with referral code
+uint256 minted = referrals.stakeIntoLSTWithReferral(
+    1000e18,        // 1000 RZR
+    0x12345678,     // Referral code
+    msg.sender      // Stake for yourself
 );
+
+console.log("LST Minted:", minted);
 ```
 
-### Program Management
+### Referral-Based Bonding
 
-#### Update Referral Parameters
+#### Buy Bonds With Referral
 
 ```solidity
-// Update referral program parameters
-referrals.setReferralParameters(
-    5e16,     // 5% reward rate
-    10,       // Max 10 referrals per user
-    100e18    // Minimum 100 RZR activity
+// Buy bonds with referral code
+(uint256 payout, uint256 tokenId) = referrals.bondWithReferral(
+    1,              // Bond ID
+    1000e6,         // 1000 USDC
+    100e18,         // Max price
+    50e18,          // Min payout
+    0x12345678,     // Referral code
+    msg.sender      // Buy for yourself
 );
+
+console.log("Bond Payout:", payout);
+console.log("Bond Token ID:", tokenId);
 ```
 
-#### Check Program Parameters
+### Referral Tracking
+
+#### Check Your Referrals
 
 ```solidity
-// Get current program parameters
-(
-    uint256 rewardRate,
-    uint256 maxReferrals,
-    uint256 minActivityAmount
-) = referrals.getReferralParameters();
+// Get all users you've referred
+address[] memory yourReferrals = referrals.getReferrals(msg.sender);
+console.log("You have referred", yourReferrals.length, "users");
 
-console.log("Reward Rate:", rewardRate);
-console.log("Max Referrals:", maxReferrals);
-console.log("Min Activity:", minActivityAmount);
+for (uint256 i = 0; i < yourReferrals.length; i++) {
+    console.log("Referred:", yourReferrals[i]);
+}
 ```
 
-### Analytics and Reporting
-
-#### Get User Referral Stats
+#### Check Total Referrals
 
 ```solidity
-// Get comprehensive referral statistics
-(
-    uint256 totalReferrals,
-    uint256 activeReferrals,
-    uint256 totalRewards,
-    uint256 lastReferralTime
-) = referrals.getReferralStats(userAddress);
-
-console.log("Total Referrals:", totalReferrals);
-console.log("Active Referrals:", activeReferrals);
-console.log("Total Rewards:", totalRewards);
+// Get total referrals made
+uint256 totalRefs = referrals.totalReferralsMade(msg.sender);
+console.log("Total referrals made:", totalRefs);
 ```
 
-#### Get Program Statistics
+### Reward Claims
+
+#### Claim Rewards
 
 ```solidity
-// Get overall program statistics
-(
-    uint256 totalReferrals,
-    uint256 totalRewards,
-    uint256 activeUsers,
-    uint256 totalReferrers
-) = referrals.getProgramStats();
+// Claim rewards using merkle proof
+ClaimRewardsInput[] memory inputs = new ClaimRewardsInput[](1);
+inputs[0] = ClaimRewardsInput({
+    user: msg.sender,
+    amount: 100e18,
+    proofs: merkleProof
+});
 
-console.log("Program Total Referrals:", totalReferrals);
-console.log("Program Total Rewards:", totalRewards);
-console.log("Active Users:", activeUsers);
+referrals.claimRewards(inputs);
 ```
 
 ## Events
@@ -396,124 +367,27 @@ console.log("Active Users:", activeUsers);
 ### Referral Events
 
 ```solidity
-event ReferralRegistered(address indexed referrer, address indexed referee, uint256 timestamp);
-event ReferralRewardDistributed(address indexed referrer, address indexed referee, uint256 amount);
-event ReferralCompleted(address indexed referrer, address indexed referee, uint256 activityAmount);
+event ReferralCodeRegistered(address indexed referrer, bytes8 indexed code);
+event ReferralRegistered(address indexed user, address indexed referrer, bytes8 indexed code);
+event ReferralStaked(address indexed user, uint256 amount, uint256 declaredValue, bytes8 indexed code);
+event ReferralStakedIntoLST(address indexed user, uint256 amount, bytes8 indexed code);
+event ReferralBondBought(address indexed user, uint256 payout, bytes8 indexed code);
 ```
 
 ### Management Events
 
 ```solidity
-event ReferralParametersUpdated(uint256 rewardRate, uint256 maxReferrals, uint256 minActivityAmount);
-event ReferralProgramPaused(bool paused);
-event ReferralRewardRateUpdated(uint256 oldRate, uint256 newRate);
+event MerkleServerSet(address indexed merkleServer);
+event EnableWhitelistingSet(bool enableWhitelisting);
+event MerkleRootSet(bytes32 indexed merkleRoot);
+event Whitelisted(address indexed user);
 ```
 
-### Analytics Events
+### Reward Events
 
 ```solidity
-event ReferralStatsUpdated(address indexed user, uint256 totalReferrals, uint256 totalRewards);
-event ProgramStatsUpdated(uint256 totalReferrals, uint256 totalRewards, uint256 activeUsers);
+event RewardsClaimed(address indexed user, uint256 amount, bytes32 indexed merkleRoot);
 ```
-
-## Testing
-
-### Unit Tests
-
-- Referral registration and management functionality
-- Reward calculation accuracy
-- Parameter management mechanisms
-- Access control validation
-
-### Integration Tests
-
-- Cross-contract referral flows
-- Treasury integration testing
-- Staking integration testing
-- Authority system integration
-
-### Security Tests
-
-- Access control validation
-- Referral manipulation prevention
-- Fraud prevention mechanisms
-- Emergency procedure testing
-
-## Deployment Considerations
-
-### Initial Setup
-
-1. **Deploy Contract**: Deploy AppReferrals contract
-2. **Configure Authority**: Set up access control integration
-3. **Set Parameters**: Configure referral program parameters
-4. **Verify Integration**: Test with RZR token and treasury
-
-### Configuration
-
-1. **Authority Integration**: Connect to protocol authority system
-2. **Referral Parameters**: Set appropriate reward rates and limits
-3. **Integration Setup**: Connect with activity tracking systems
-4. **Monitoring Setup**: Implement referral monitoring
-
-## Dependencies
-
-### Core Dependencies
-
-- **AppAccessControlled**: Protocol access control integration
-- **Initializable**: Upgradeable contract pattern
-- **RZR Token**: Referral reward distribution
-
-### External Dependencies
-
-- **Treasury System**: Reward funding and distribution
-- **Activity Tracking**: Protocol activity monitoring systems
-- **User Management**: User registration and management systems
-
-## Best Practices
-
-### Referral Management
-
-1. **Eligibility Validation**: Validate all referral eligibility criteria
-2. **Fraud Prevention**: Implement anti-fraud mechanisms
-3. **Performance Monitoring**: Monitor referral program performance
-4. **User Experience**: Ensure smooth referral process
-
-### Security Considerations
-
-1. **Access Control**: Verify referral management permissions
-2. **Referral Validation**: Validate all referral relationships
-3. **Reward Security**: Secure reward distribution mechanisms
-4. **Emergency Procedures**: Test emergency response capabilities
-
-### User Experience
-
-1. **Clear Process**: Provide clear referral instructions
-2. **Reward Transparency**: Show clear reward calculations
-3. **Progress Tracking**: Track referral progress and rewards
-4. **Support Tools**: Provide tools for referral management
-
-## Testing
-
-### Unit Tests
-
-- Referral registration
-- Reward calculations
-- Parameter management
-- Statistics tracking
-
-**Test File**: [`test/foundry/AppReferrals.t.sol`](../../test/foundry/AppReferrals.t.sol)
-
-### Integration Tests
-
-- Protocol contract integration
-- Treasury interaction testing
-- Reward distribution validation
-
-### Security Tests
-
-- Unauthorized access attempts
-- Access control validation
-- Fraud prevention mechanisms
 
 ## License
 

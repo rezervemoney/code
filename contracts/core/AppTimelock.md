@@ -2,11 +2,11 @@
 
 **File**: [`AppTimelock.sol`](./AppTimelock.sol)
 
-**License**: AGPL-3.0
+**License**: AGPL-3.0-or-later
 
 ## Overview
 
-The `AppTimelock` contract is a time-delay mechanism for governance actions in the Rezerve.money protocol. It provides a security layer by delaying the execution of critical governance decisions, allowing time for review and potential cancellation of proposed actions.
+The `AppTimelock` contract is a time-delay mechanism for governance actions in the Rezerve.money protocol. It extends OpenZeppelin's `TimelockController` to provide a security layer by delaying the execution of critical governance decisions, allowing time for review and potential cancellation of proposed actions.
 
 ## Purpose
 
@@ -15,193 +15,151 @@ This contract serves as:
 - **Governance Security**: Delays execution of critical governance actions
 - **Review Period**: Provides time for community review of proposals
 - **Cancellation Mechanism**: Allows cancellation of proposed actions
-- **Batch Operations**: Supports multiple action execution
-- **Emergency Controls**: Emergency override capabilities for urgent situations
+- **Role Management**: Manages proposer, executor, and admin roles
+- **Batch Operations**: Supports multiple action execution through OpenZeppelin's implementation
 
 ## Architecture
 
 ### Inheritance
 
-- `AppAccessControlled` - Protocol access control integration
-- `Initializable` - Upgradeable contract pattern
+- `AccessControlEnumerable` - Role-based access control with enumerable members
+- `TimelockController` - OpenZeppelin's timelock implementation
 
 ### Core Components
 
-- **Delay Management**: Configurable delay periods for different action types
-- **Action Queue**: Queue of pending actions awaiting execution
+- **Role Management**: Access control for timelock operations
+- **Timelock Mechanics**: Delay and execution mechanisms from OpenZeppelin
 - **Batch Execution**: Support for executing multiple actions together
-- **Emergency Controls**: Emergency override mechanisms
+- **Role Enumeration**: Query capabilities for role members
 
 ## Key Functions
 
-### Action Management
+### Role Management
 
-#### Queue Action
+#### Grant Role
 
 ```solidity
-function queueAction(
-    address target,
-    uint256 value,
-    string calldata signature,
-    bytes calldata data,
-    uint256 eta
-) external onlyGovernor
+function _grantRole(bytes32 role, address account) internal virtual override returns (bool)
 ```
 
-**Purpose**: Queue a governance action for delayed execution.
+**Purpose**: Grant a role to an account.
 
-**Access Control**: Only governors can queue actions.
+**Access Control**: Internal function, can only be called by contract logic.
 
 **Parameters**:
 
-- `target`: Target contract for the action
-- `value`: ETH value to send with the action
-- `signature`: Function signature
-- `data`: Encoded function parameters
-- `eta`: Execution timestamp
+- `role` - Role identifier to grant
+- `account` - Address to grant the role to
 
-**Process**:
+**Returns**: `true` if role was granted, `false` otherwise.
 
-1. Validate action parameters
-2. Calculate execution time based on delay
-3. Queue action for execution
-4. Emit action queued event
+**Process**: Grants the specified role to the account and emits role granted event.
 
-#### Execute Action
+#### Revoke Role
 
 ```solidity
-function executeAction(
-    address target,
-    uint256 value,
-    string calldata signature,
-    bytes calldata data,
-    uint256 eta
-) external onlyGovernor
+function _revokeRole(bytes32 role, address account) internal override returns (bool)
 ```
 
-**Purpose**: Execute a queued action after delay period.
+**Purpose**: Revoke a role from an account.
 
-**Access Control**: Only governors can execute actions.
+**Access Control**: Internal function, can only be called by contract logic.
 
-**Requirements**: Action must be queued and delay period must have passed.
+**Parameters**:
 
-**Process**:
+- `role` - Role identifier to revoke
+- `account` - Address to revoke the role from
 
-1. Verify action is queued and ready
-2. Execute action on target contract
-3. Remove action from queue
-4. Emit action executed event
+**Returns**: `true` if role was revoked, `false` otherwise.
 
-#### Cancel Action
+**Process**: Revokes the specified role from the account and emits role revoked event.
+
+### Interface Support
+
+#### Supports Interface
 
 ```solidity
-function cancelAction(
-    address target,
-    uint256 value,
-    string calldata signature,
-    bytes calldata data,
-    uint256 eta
-) external onlyGovernor
+function supportsInterface(bytes4 interfaceId) public view override returns (bool)
 ```
 
-**Purpose**: Cancel a queued action before execution.
+**Purpose**: Check if the contract supports a specific interface.
 
-**Access Control**: Only governors can cancel actions.
+**Parameters**: `interfaceId` - Interface identifier to check.
 
-**Process**:
+**Returns**: `true` if interface is supported, `false` otherwise.
 
-1. Verify action exists in queue
-2. Remove action from queue
-3. Emit action cancelled event
+**Usage**: Used to verify contract capabilities and compatibility.
 
-### Batch Operations
+### Role Enumeration
 
-#### Queue Batch Actions
+#### Get All Candidates
 
 ```solidity
-function queueBatchActions(
-    address[] calldata targets,
-    uint256[] calldata values,
-    string[] calldata signatures,
-    bytes[] calldata data,
-    uint256 eta
-) external onlyGovernor
+function getAllCandidates(bytes32 role) public view returns (address[] memory candidates)
 ```
 
-**Purpose**: Queue multiple actions for batch execution.
+**Purpose**: Get all addresses that have a specific role.
 
-**Parameters**: Arrays of action parameters for batch processing.
+**Parameters**: `role` - Role identifier to query.
 
-**Process**: Queues all actions with the same execution time.
+**Returns**: Array of addresses with the specified role.
 
-#### Execute Batch Actions
+**Process**: Enumerates all role members and returns them as an array.
+
+#### Get All Proposers
 
 ```solidity
-function executeBatchActions(
-    address[] calldata targets,
-    uint256[] calldata values,
-    string[] calldata signatures,
-    bytes[] calldata data,
-    uint256 eta
-) external onlyGovernor
+function getAllProposers() public view returns (address[] memory proposers)
 ```
 
-**Purpose**: Execute multiple queued actions together.
+**Purpose**: Get all addresses with the proposer role.
 
-**Requirements**: All actions must be queued and ready for execution.
+**Returns**: Array of all proposer addresses.
 
-**Process**: Executes all actions in sequence.
+**Usage**: Convenience function to get all users who can propose timelock actions.
 
-### Query Functions
-
-#### Get Action Hash
+#### Get All Executors
 
 ```solidity
-function getActionHash(
-    address target,
-    uint256 value,
-    string calldata signature,
-    bytes calldata data,
-    uint256 eta
-) public pure returns (bytes32)
+function getAllExecutors() public view returns (address[] memory executors)
 ```
 
-**Purpose**: Calculate unique hash for an action.
+**Purpose**: Get all addresses with the executor role.
 
-**Returns**: Keccak256 hash of action parameters.
+**Returns**: Array of all executor addresses.
 
-**Usage**: Used to identify and track specific actions.
+**Usage**: Convenience function to get all users who can execute timelock actions.
 
-#### Is Action Queued
+#### Get All Admins
 
 ```solidity
-function isActionQueued(bytes32 actionHash) public view returns (bool)
+function getAllAdmins() public view returns (address[] memory admins)
 ```
 
-**Purpose**: Check if an action is currently queued.
+**Purpose**: Get all addresses with the admin role.
 
-**Parameters**: `actionHash` - Hash of the action to check.
+**Returns**: Array of all admin addresses.
 
-**Returns**: `true` if action is queued, `false` otherwise.
+**Usage**: Convenience function to get all users with administrative privileges.
 
-#### Get Action ETA
+#### Get All Cancellers
 
 ```solidity
-function getActionETA(bytes32 actionHash) public view returns (uint256)
+function getAllCancellers() public view returns (address[] memory cancelers)
 ```
 
-**Purpose**: Get execution time for a queued action.
+**Purpose**: Get all addresses with the canceller role.
 
-**Parameters**: `actionHash` - Hash of the action.
+**Returns**: Array of all canceller addresses.
 
-**Returns**: Execution timestamp for the action.
+**Usage**: Convenience function to get all users who can cancel timelock actions.
 
 ## Integration Points
 
 ### Protocol Contracts
 
 - **All Governance Contracts**: Contracts that require timelock protection
-- **Authority**: [`AppAuthority.sol`](./AppAuthority.sol) - Access control
+- **Authority**: [`AppAuthority.sol`](./AppAuthority.sol) - Access control integration
 - **Proxy Contracts**: [`AppProxy.sol`](./AppProxy.sol) - Upgrade protection
 
 ### External Systems
@@ -212,270 +170,126 @@ function getActionETA(bytes32 actionHash) public view returns (uint256)
 
 ## Timelock Mechanics
 
-### Delay Periods
+The contract inherits all timelock functionality from OpenZeppelin's `TimelockController`, including:
 
-- **Configurable Delays**: Different delay periods for different action types
-- **Minimum Delays**: Minimum required delays for security
-- **Maximum Delays**: Maximum allowed delays for usability
-- **Dynamic Adjustment**: Delays can be updated by governance
+### Core Timelock Functions
 
-### Action Lifecycle
-
-1. **Proposal**: Action proposed by governance
-2. **Queue**: Action queued with execution timestamp
-3. **Review**: Community review period during delay
-4. **Execution**: Action executed after delay period
-5. **Cancellation**: Action can be cancelled before execution
-
-### Batch Processing
-
-- **Multiple Actions**: Support for executing multiple actions together
-- **Same Delay**: All actions in batch have same execution time
-- **Atomic Execution**: All actions execute or none execute
-- **Efficiency**: Reduces gas costs for multiple actions
-
-## Security Features
-
-### Access Control
-
-- **Governance Only**: Only governors can queue and execute actions
-- **Action Validation**: All actions are validated before queuing
-- **Delay Enforcement**: Strict enforcement of delay periods
-- **Emergency Controls**: Emergency override capabilities
-
-### Timelock Security
-
-- **Minimum Delays**: Prevents immediate execution of critical actions
-- **Review Period**: Provides time for community review
-- **Cancellation Rights**: Allows cancellation of proposed actions
-- **Hash Verification**: Unique action identification and tracking
-
-### Operational Security
-
-- **Action Tracking**: Complete tracking of all queued actions
-- **State Validation**: Verification of action readiness
-- **Event Logging**: Complete transparency of all operations
-- **Emergency Procedures**: Emergency response capabilities
+- **`schedule()`**: Schedule an action for execution after a delay
+- **`execute()`**: Execute a scheduled action after the delay period
+- **`cancel()`**: Cancel a scheduled action before execution
+- **`revoke()`**: Revoke a role from an account
 
 ## Usage Examples
 
-### Basic Timelock Operations
+### Role Management
 
-#### Queue a Governance Action
+#### Check Role Members
 
 ```solidity
-// Queue an action to upgrade a contract
+// Get all proposers
 AppTimelock timelock = AppTimelock(timelockAddress);
 
-timelock.queueAction(
-    contractAddress,           // Target contract
-    0,                         // No ETH value
-    "upgradeTo(address)",      // Function signature
-    abi.encode(newImpl),       // Encoded parameters
-    block.timestamp + 24 hours // Execute in 24 hours
+address[] memory proposers = timelock.getAllProposers();
+console.log("Total proposers:", proposers.length);
+
+for (uint256 i = 0; i < proposers.length; i++) {
+    console.log("Proposer:", proposers[i]);
+}
+```
+
+#### Check All Role Types
+
+```solidity
+// Get all executors
+address[] memory executors = timelock.getAllExecutors();
+console.log("Total executors:", executors.length);
+
+// Get all admins
+address[] memory admins = timelock.getAllAdmins();
+console.log("Total admins:", admins.length);
+
+// Get all cancellers
+address[] memory cancellers = timelock.getAllCancellers();
+console.log("Total cancellers:", cancellers.length);
+```
+
+### Timelock Operations
+
+The contract inherits all timelock operations from OpenZeppelin's `TimelockController`:
+
+#### Schedule an Action
+
+```solidity
+// Schedule an action (requires proposer role)
+timelock.schedule(
+    targetContract,           // Target contract
+    value,                    // ETH value to send
+    data,                     // Encoded function call
+    predecessor,              // Predecessor action (0 for none)
+    salt,                     // Unique identifier
+    delay                     // Delay before execution
 );
 ```
 
-#### Execute Queued Action
+#### Execute a Scheduled Action
 
 ```solidity
-// Execute action after delay period
-timelock.executeAction(
-    contractAddress,
-    0,
-    "upgradeTo(address)",
-    abi.encode(newImpl),
-    eta
+// Execute action after delay period (requires executor role)
+timelock.execute(
+    targetContract,           // Target contract
+    value,                    // ETH value to send
+    data,                     // Encoded function call
+    predecessor,              // Predecessor action
+    salt                      // Unique identifier
 );
 ```
 
-#### Cancel Queued Action
+#### Cancel a Scheduled Action
 
 ```solidity
-// Cancel action before execution
-timelock.cancelAction(
-    contractAddress,
-    0,
-    "upgradeTo(address)",
-    abi.encode(newImpl),
-    eta
+// Cancel action before execution (requires canceller role)
+timelock.cancel(
+    targetContract,           // Target contract
+    value,                    // ETH value to send
+    data,                     // Encoded function call
+    predecessor,              // Predecessor action
+    salt                      // Unique identifier
 );
 ```
 
-### Batch Operations
+### Role Verification
 
-#### Queue Multiple Actions
-
-```solidity
-// Queue multiple actions for batch execution
-address[] memory targets = new address[](2);
-uint256[] memory values = new uint256[](2);
-string[] memory signatures = new string[](2);
-bytes[] memory data = new bytes[](2);
-
-targets[0] = contract1;
-targets[1] = contract2;
-signatures[0] = "setParameter(uint256)";
-signatures[1] = "updateConfig(bytes)";
-data[0] = abi.encode(100);
-data[1] = abi.encode(configData);
-
-timelock.queueBatchActions(targets, values, signatures, data, eta);
-```
-
-#### Execute Batch Actions
+#### Check Interface Support
 
 ```solidity
-// Execute all queued actions together
-timelock.executeBatchActions(targets, values, signatures, data, eta);
-```
-
-### Action Queries
-
-#### Check Action Status
-
-```solidity
-// Check if action is queued
-bytes32 actionHash = timelock.getActionHash(
-    contractAddress,
-    0,
-    "upgradeTo(address)",
-    abi.encode(newImpl),
-    eta
-);
-
-bool isQueued = timelock.isActionQueued(actionHash);
-uint256 executionTime = timelock.getActionETA(actionHash);
-
-if (isQueued) {
-    console.log("Action is queued for execution at:", executionTime);
+// Check if contract supports a specific interface
+bool supportsAccessControl = timelock.supportsInterface(0x7965db0b);
+if (supportsAccessControl) {
+    console.log("Contract supports AccessControl interface");
 }
 ```
 
 ## Events
 
-### Action Events
+The contract inherits all events from OpenZeppelin's `TimelockController` and `AccessControl`:
+
+### Timelock Events
 
 ```solidity
-event ActionQueued(bytes32 indexed actionHash, address indexed target, uint256 value, string signature, bytes data, uint256 eta);
-event ActionExecuted(bytes32 indexed actionHash, address indexed target, uint256 value, string signature, bytes data, uint256 eta);
-event ActionCancelled(bytes32 indexed actionHash, address indexed target, uint256 value, string signature, bytes data, uint256 eta);
+event CallScheduled(bytes32 indexed id, uint256 indexed index, address target, uint256 value, bytes data, bytes32 predecessor, bytes32 salt, uint256 delay);
+event CallExecuted(bytes32 indexed id, uint256 indexed index, address target, uint256 value, bytes data);
+event Cancelled(bytes32 indexed id);
+event MinDelayChange(uint256 oldDuration, uint256 newDuration);
 ```
 
-### Batch Events
+### Access Control Events
 
 ```solidity
-event BatchActionsQueued(bytes32[] indexed actionHashes, uint256 eta);
-event BatchActionsExecuted(bytes32[] indexed actionHashes);
-event BatchActionsCancelled(bytes32[] indexed actionHashes);
+event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);
+event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender);
+event RoleAdminChanged(bytes32 indexed role, bytes32 indexed previousAdminRole, bytes32 indexed newAdminRole);
 ```
-
-### Management Events
-
-```solidity
-event DelayUpdated(uint256 oldDelay, uint256 newDelay);
-event EmergencyExecuted(bytes32 indexed actionHash, address indexed target);
-```
-
-## Testing
-
-### Unit Tests
-
-- Action queuing and execution functionality
-- Delay period enforcement
-- Batch operation handling
-- Access control validation
-
-### Integration Tests
-
-- Cross-contract action execution
-- Governance integration testing
-- Emergency procedure testing
-- Authority system integration
-
-### Security Tests
-
-- Access control validation
-- Delay manipulation prevention
-- Action replay prevention
-- Emergency response testing
-
-## Deployment Considerations
-
-### Initial Setup
-
-1. **Deploy Contract**: Deploy AppTimelock contract
-2. **Configure Authority**: Set up access control integration
-3. **Set Delays**: Configure delay periods for different action types
-4. **Verify Functionality**: Test timelock mechanics
-
-### Configuration
-
-1. **Authority Integration**: Connect to governance system
-2. **Delay Configuration**: Set appropriate delay periods
-3. **Emergency Setup**: Configure emergency override procedures
-4. **Monitoring Setup**: Implement action monitoring
-
-## Dependencies
-
-### Core Dependencies
-
-- **AppAccessControlled**: Protocol access control integration
-- **Initializable**: Upgradeable contract pattern
-- **Governance System**: Access control for timelock operations
-
-### External Dependencies
-
-- **Governance Tools**: Tools for managing timelock actions
-- **Monitoring Systems**: Systems for monitoring queued actions
-- **Alert Systems**: Alert systems for pending actions
-
-## Best Practices
-
-### Timelock Management
-
-1. **Appropriate Delays**: Set delays appropriate for action criticality
-2. **Community Communication**: Communicate all queued actions
-3. **Review Periods**: Ensure adequate review time for actions
-4. **Cancellation Rights**: Maintain ability to cancel actions
-
-### Security Considerations
-
-1. **Access Control**: Verify timelock permissions are properly restricted
-2. **Delay Enforcement**: Ensure delay periods are strictly enforced
-3. **Action Validation**: Validate all actions before queuing
-4. **Emergency Procedures**: Test emergency response capabilities
-
-### User Experience
-
-1. **Action Transparency**: Provide clear visibility of queued actions
-2. **Execution Tracking**: Track action execution status
-3. **Cancellation Process**: Clear process for cancelling actions
-4. **Monitoring Tools**: Provide tools to monitor timelock status
-
-## Testing
-
-### Unit Tests
-
-- Action queuing
-- Execution timing
-- Batch operations
-- Cancellation logic
-
-**Test File**: [`test/foundry/AccessControlTest.t.sol`](../../test/foundry/AccessControlTest.t.sol)
-
-### Integration Tests
-
-- Protocol contract integration
-- Governance interaction testing
-- Timelock mechanics validation
-
-### Security Tests
-
-- Unauthorized access attempts
-- Access control validation
-- Timing manipulation prevention
 
 ## License
 
-AGPL-3.0
+AGPL-3.0-or-later

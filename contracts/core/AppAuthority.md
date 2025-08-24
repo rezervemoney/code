@@ -254,44 +254,6 @@ if (authority.isReserveManager(msg.sender)) {
 }
 ```
 
-## Deployment Considerations
-
-### Initial Setup
-
-1. **Deploy Contract**: Deploy `AppAuthority` with deployer as initial governor
-2. **Configure Roles**: Add initial role members for each role type
-3. **Set Addresses**: Configure treasury, bridge, and operations treasury addresses
-4. **Verify Permissions**: Test all role-based access controls
-
-### Role Assignment Strategy
-
-- **Multi-Signature**: Use multi-sig wallets for governor roles
-- **Role Separation**: Separate operational roles from governance roles
-- **Emergency Access**: Ensure guardians have emergency access but limited powers
-
-## Testing
-
-### Unit Tests
-
-- Role addition and removal functionality
-- Access control modifier validation
-- Emergency pause/unpause functionality
-- Role hierarchy and permission checks
-
-**Test File**: [`test/foundry/AccessControlTest.t.sol`](../../test/foundry/AccessControlTest.t.sol)
-
-### Integration Tests
-
-- Cross-contract permission verification
-- Role-based function access
-- Emergency control integration
-
-### Security Tests
-
-- Role escalation prevention
-- Unauthorized access attempts
-- Emergency procedure validation
-
 ## License
 
 AGPL-3.0

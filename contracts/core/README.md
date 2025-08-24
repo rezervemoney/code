@@ -141,6 +141,8 @@ The core contracts implement the fundamental architecture and business logic of 
 - **Mechanics**: Conversion ratios, vesting schedules, debt tracking
 
 **File**: [`AppConvertibles.sol`](./AppConvertibles.sol)
+**Interface**: [`IAppConvertibles.sol`](../interfaces/IAppConvertibles.sol)
+**Tests**: [`test/AppConvertibles.test.ts`](../../test/AppConvertibles.test.ts)
 
 #### [RebaseController](./RebaseController.md)
 
@@ -152,6 +154,8 @@ The core contracts implement the fundamental architecture and business logic of 
 - **Effects**: Supply elasticity, price stabilization
 
 **File**: [`RebaseController.sol`](./RebaseController.sol)
+**Interface**: [`IRebaseController.sol`](../interfaces/IRebaseController.sol)
+**Tests**: [`test/RebaseController.test.ts`](../../test/RebaseController.test.ts)
 
 ### Utility & Infrastructure
 
@@ -165,6 +169,8 @@ The core contracts implement the fundamental architecture and business logic of 
 - **Security**: Controlled upgrades through governance
 
 **File**: [`AppProxy.sol`](./AppProxy.sol)
+**Interface**: [`IAppProxy.sol`](../interfaces/IAppProxy.sol)
+**Tests**: [`test/AppProxy.test.ts`](../../test/AppProxy.test.ts)
 
 #### [AppTimelock](./AppTimelock.md)
 
@@ -176,6 +182,8 @@ The core contracts implement the fundamental architecture and business logic of 
 - **Governance**: Integration with authority system
 
 **File**: [`AppTimelock.sol`](./AppTimelock.sol)
+**Interface**: [`IAppTimelock.sol`](../interfaces/IAppTimelock.sol)
+**Tests**: [`test/AppTimelock.test.ts`](../../test/AppTimelock.test.ts)
 
 #### [AppOracle](./AppOracle.md)
 

@@ -5,6 +5,7 @@ import "../../../interfaces/IAppOracle.sol";
 import "../../../interfaces/IOracleV2.sol";
 import "../../../libraries/SushiV3PositionHelper.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 /**
  * @title SushiV3LPPosOracle
@@ -19,7 +20,7 @@ contract SushiV3LPPosOracle is IOracleV2, IERC20Metadata, SushiV3PositionHelper 
 
     string public name;
     string public symbol;
-    address public positionManager;
+    IERC721 public positionManager;
     uint256 public tokenId;
     address public poolAddress;
 
@@ -35,7 +36,7 @@ contract SushiV3LPPosOracle is IOracleV2, IERC20Metadata, SushiV3PositionHelper 
     ) {
         name = _name;
         symbol = _symbol;
-        positionManager = _positionManager;
+        positionManager = IERC721(_positionManager);
         poolAddress = _poolAddress;
         tokenId = _tokenId;
         appOracle = _appOracle;
@@ -52,8 +53,8 @@ contract SushiV3LPPosOracle is IOracleV2, IERC20Metadata, SushiV3PositionHelper 
         return 1e18;
     }
 
-    function balanceOf(address) external pure override returns (uint256) {
-        return 1e18;
+    function balanceOf(address who) external view override returns (uint256) {
+        return positionManager.ownerOf(tokenId) == who ? 1e18 : 0;
     }
 
     function allowance(address, address) external pure override returns (uint256) {
@@ -80,7 +81,7 @@ contract SushiV3LPPosOracle is IOracleV2, IERC20Metadata, SushiV3PositionHelper 
         returns (uint256 rzrAssets, uint256 usdAssets, uint256 lastUpdatedAt)
     {
         (uint256 amountA, uint256 amountB, address token0, address token1) =
-            getPositionAmounts(positionManager, poolAddress, tokenId);
+            getPositionAmounts(address(positionManager), poolAddress, tokenId);
 
         if (token0 == address(0)) token0 = weth;
         if (token1 == address(0)) token1 = weth;

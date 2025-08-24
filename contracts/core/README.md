@@ -84,7 +84,7 @@ The core contracts implement the fundamental architecture and business logic of 
 - **Integration**: Treasury, staking, bonds, and oracle systems
 
 **File**: [`RZR.sol`](./RZR.sol)
-**Interface**: [`IRZR.sol`](../interfaces/IRZR.sol)
+**Interface**: No interface file exists
 
 #### [sRZR](./sRZR.md)
 
@@ -96,7 +96,7 @@ The core contracts implement the fundamental architecture and business logic of 
 - **Benefits**: Secure position tracking, integration with staking system
 
 **File**: [`sRZR.sol`](./sRZR.sol)
-**Interface**: [`IsRZR.sol`](../interfaces/IsRZR.sol)
+**Interface**: No interface file exists
 
 #### [Staking4626](./Staking4626.md)
 
@@ -190,8 +190,6 @@ The core contracts implement the fundamental architecture and business logic of 
 - **Security**: Controlled upgrades through governance
 
 **File**: [`AppProxy.sol`](./AppProxy.sol)
-**Interface**: [`IAppProxy.sol`](../interfaces/IAppProxy.sol)
-**Tests**: [`test/foundry/AccessControlTest.t.sol`](../../test/foundry/AccessControlTest.t.sol)
 
 #### [AppTimelock](./AppTimelock.md)
 
@@ -203,8 +201,6 @@ The core contracts implement the fundamental architecture and business logic of 
 - **Governance**: Integration with authority system and role management
 
 **File**: [`AppTimelock.sol`](./AppTimelock.sol)
-**Interface**: [`IAppTimelock.sol`](../interfaces/IAppTimelock.sol)
-**Tests**: [`test/foundry/AccessControlTest.t.sol`](../../test/foundry/AccessControlTest.t.sol)
 
 #### [AppOracle](./AppOracle.md)
 
@@ -243,7 +239,7 @@ The core contracts implement the fundamental architecture and business logic of 
 
 **File**: [`AppReferrals.sol`](./AppReferrals.sol)
 **Interface**: [`IAppReferrals.sol`](../interfaces/IAppReferrals.sol)
-**Tests**: [`test/foundry/AppReferrals.t.sol`](../../test/foundry/AppReferrals.t.sol)
+**Tests**: [`test/foundry/AppReferrals.t.sol`](../../test/foundry/AppReferrals.t.sol) (Note: This is a test file, not a test suite)
 
 ## Testing & Development
 
@@ -263,11 +259,9 @@ All core contracts include comprehensive test suites covering:
 - **AppBondDepository**: [`test/foundry/AppBondDepositoryTest.t.sol`](../../test/foundry/AppBondDepositoryTest.t.sol)
 - **AppConvertibles**: [`test/foundry/AppConvertiblesTest.t.sol`](../../test/foundry/AppConvertiblesTest.t.sol)
 - **RebaseController**: [`test/foundry/RebaseControllerTest.t.sol`](../../test/foundry/RebaseControllerTest.t.sol)
-- **AppProxy**: [`test/foundry/AccessControlTest.t.sol`](../../test/foundry/AccessControlTest.t.sol)
-- **AppTimelock**: [`test/foundry/AccessControlTest.t.sol`](../../test/foundry/AccessControlTest.t.sol)
 - **AppOracle**: [`test/foundry/AppOracleTest.t.sol`](../../test/foundry/AppOracleTest.t.sol)
 - **AppBurner**: [`test/foundry/AppBurnerTest.t.sol`](../../test/foundry/AppBurnerTest.t.sol)
-- **AppReferrals**: [`test/foundry/AppReferrals.t.sol`](../../test/foundry/AppReferrals.t.sol)
+- **AppReferrals**: [`test/foundry/AppReferrals.t.sol`](../../test/foundry/AppReferrals.t.sol) (Note: This is a test file, not a test suite)
 
 ### Interface Definitions
 

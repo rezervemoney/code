@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity 0.8.28;
 
-import "../core/AppAccessControlled.sol";
+import "../../core/AppAccessControlled.sol";
 import "@layerzerolabs/oft-evm/contracts/OFTAdapter.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract RZROFTAdapter is OFTAdapter, AppAccessControlled {
+contract lstRZROFTAdapter is OFTAdapter, AppAccessControlled {
     constructor(address _oft, address _lzEndpoint, address _authority)
         OFTAdapter(_oft, _lzEndpoint, msg.sender)
         Ownable(msg.sender)

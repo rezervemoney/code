@@ -2,7 +2,7 @@
 pragma solidity 0.8.28;
 pragma abicoder v2;
 
-import "../core/AppOracle.sol";
+import "../../core/AppOracle.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 contract HoldersAnalysis {

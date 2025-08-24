@@ -4,8 +4,8 @@ pragma solidity 0.8.28;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
-import "./oft-proxy/OFTProxy.sol";
-import "../core/AppAccessControlled.sol";
+import "../periphery/oft-proxy/OFTProxy.sol";
+import "./AppAccessControlled.sol";
 import "../interfaces/IAppStaking.sol";
 import "../interfaces/IStaking4626.sol";
 

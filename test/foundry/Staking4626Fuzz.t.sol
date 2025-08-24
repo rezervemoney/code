@@ -2,7 +2,7 @@
 pragma solidity 0.8.28;
 
 import "./BaseTest.sol";
-import "../../contracts/periphery/Staking4626.sol";
+import "../../contracts/core/Staking4626.sol";
 import "../../contracts/interfaces/IAppStaking.sol";
 import "forge-std/console.sol";
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity 0.8.28;
 
-import "../interfaces/IAppConvertibles.sol";
+import "../../interfaces/IAppConvertibles.sol";
 
 contract BoostedBalanceChecker {
     IAppConvertibles public immutable convertible;

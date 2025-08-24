@@ -85,20 +85,18 @@ The core contracts implement the fundamental architecture and business logic of 
 
 **File**: [`RZR.sol`](./RZR.sol)
 **Interface**: [`IRZR.sol`](../interfaces/IRZR.sol)
-**Tests**: [`test/foundry/Staking4626.t.sol`](../../test/foundry/Staking4626.t.sol)
 
 #### [sRZR](./sRZR.md)
 
-**Staking derivative token representing staked RZR positions**
+**Non-transferable staking token representing staked RZR positions**
 
-- **Purpose**: Liquid staking token for RZR stakers
-- **Key Features**: ERC4626 vault standard, yield generation, liquid staking
-- **Mechanics**: Share-based staking, automatic yield distribution
-- **Benefits**: Maintains liquidity while earning staking rewards
+- **Purpose**: Staking derivative token that tracks staked positions
+- **Key Features**: ERC20Permit standard, controlled minting/burning, non-transferable
+- **Mechanics**: Only staking contract can mint/burn, prevents position trading
+- **Benefits**: Secure position tracking, integration with staking system
 
 **File**: [`sRZR.sol`](./sRZR.sol)
 **Interface**: [`IsRZR.sol`](../interfaces/IsRZR.sol)
-**Tests**: [`test/foundry/Staking4626.t.sol`](../../test/foundry/Staking4626.t.sol)
 
 #### [Staking4626](./Staking4626.md)
 
@@ -143,12 +141,12 @@ The core contracts implement the fundamental architecture and business logic of 
 
 #### [AppBondDepository](./AppBondDepository.md)
 
-**Bond issuance and management system for protocol funding**
+**NFT-based bond issuance and management system for protocol funding**
 
-- **Purpose**: Bond issuance, debt management, funding operations
-- **Key Features**: Bond creation, vesting schedules, debt tracking
-- **Integration**: Treasury system, RZR token, governance
-- **Mechanics**: Bond pricing, vesting, redemption
+- **Purpose**: Bond issuance, position management, funding operations
+- **Key Features**: NFT-based positions, dynamic pricing, direct staking integration
+- **Integration**: Treasury system, RZR token, staking contract, loyalty system
+- **Mechanics**: Time-based pricing, vesting schedules, position staking
 
 **File**: [`AppBondDepository.sol`](./AppBondDepository.sol)
 **Interface**: [`IAppBondDepository.sol`](../interfaces/IAppBondDepository.sol)
@@ -156,12 +154,12 @@ The core contracts implement the fundamental architecture and business logic of 
 
 #### [AppConvertibles](./AppConvertibles.md)
 
-**Convertible bond and debt instrument management**
+**NFT-based convertible debt position management system**
 
-- **Purpose**: Convertible debt instruments, debt-equity conversion
-- **Key Features**: Conversion mechanisms, debt management, equity distribution
-- **Integration**: Bond system, treasury, governance
-- **Mechanics**: Conversion ratios, vesting schedules, debt tracking
+- **Purpose**: Convertible debt positions, debt-equity conversion, interest distribution
+- **Key Features**: NFT positions, conversion mechanics, fixed interest rates
+- **Integration**: Bond system, treasury, staking integration, oracle pricing
+- **Mechanics**: Price-based conversion, vesting schedules, position splitting
 
 **File**: [`AppConvertibles.sol`](./AppConvertibles.sol)
 **Interface**: [`IAppConvertibles.sol`](../interfaces/IAppConvertibles.sol)
@@ -169,12 +167,12 @@ The core contracts implement the fundamental architecture and business logic of 
 
 #### [RebaseController](./RebaseController.md)
 
-**Rebase mechanism for token supply adjustments**
+**Bonding-curve based epochic rebase mechanism for supply adjustments**
 
-- **Purpose**: Supply adjustment, economic rebalancing, market stabilization
-- **Key Features**: Rebase calculations, supply adjustments, market mechanics
-- **Integration**: RZR token, treasury, economic policy
-- **Effects**: Supply elasticity, price stabilization
+- **Purpose**: Epochic supply adjustments, yield distribution, backing ratio management
+- **Key Features**: 23-hour epochs, bonding curve calculations, token distribution
+- **Integration**: RZR token, treasury, staking contract, reserves oracle
+- **Effects**: Automated yield distribution, economic equilibrium maintenance
 
 **File**: [`RebaseController.sol`](./RebaseController.sol)
 **Interface**: [`IRebaseController.sol`](../interfaces/IRebaseController.sol)
@@ -197,12 +195,12 @@ The core contracts implement the fundamental architecture and business logic of 
 
 #### [AppTimelock](./AppTimelock.md)
 
-**Time-delay mechanism for governance actions**
+**OpenZeppelin-based timelock controller with role management**
 
-- **Purpose**: Delayed execution of governance decisions
-- **Key Features**: Configurable delays, batch operations, emergency controls
+- **Purpose**: Delayed execution of governance decisions with role-based access
+- **Key Features**: Inherits OpenZeppelin TimelockController, role enumeration
 - **Security**: Prevents immediate execution of critical changes
-- **Governance**: Integration with authority system
+- **Governance**: Integration with authority system and role management
 
 **File**: [`AppTimelock.sol`](./AppTimelock.sol)
 **Interface**: [`IAppTimelock.sol`](../interfaces/IAppTimelock.sol)
@@ -236,12 +234,12 @@ The core contracts implement the fundamental architecture and business logic of 
 
 #### [AppReferrals](./AppReferrals.md)
 
-**Referral system for protocol user acquisition**
+**Referral code system for protocol user acquisition and activity tracking**
 
-- **Purpose**: User referral tracking, reward distribution, growth incentives
-- **Key Features**: Referral tracking, reward calculation, user management
-- **Integration**: Staking system, treasury, user onboarding
-- **Benefits**: Growth incentives, user acquisition, community building
+- **Purpose**: Referral code management, activity tracking, referral-based operations
+- **Key Features**: Unique referral codes, referral-based staking/bonding, merkle rewards
+- **Integration**: Staking system, bonding system, liquid staking, treasury
+- **Benefits**: User acquisition, activity attribution, community growth
 
 **File**: [`AppReferrals.sol`](./AppReferrals.sol)
 **Interface**: [`IAppReferrals.sol`](../interfaces/IAppReferrals.sol)
@@ -259,8 +257,6 @@ All core contracts include comprehensive test suites covering:
 
 ### Test Files
 
-- **RZR**: [`test/foundry/Staking4626.t.sol`](../../test/foundry/Staking4626.t.sol)
-- **sRZR**: [`test/foundry/Staking4626.t.sol`](../../test/foundry/Staking4626.t.sol)
 - **Staking4626**: [`test/foundry/Staking4626.t.sol`](../../test/foundry/Staking4626.t.sol)
 - **AppTreasury**: [`test/foundry/AppTreasuryTest.t.sol`](../../test/foundry/AppTreasuryTest.t.sol)
 - **AppStaking**: [`test/foundry/AppStakingTest.t.sol`](../../test/foundry/AppStakingTest.t.sol)
@@ -283,4 +279,4 @@ All contracts implement standardized interfaces:
 
 ## License
 
-All core contracts are licensed under **AGPL-3.0** to ensure open source compliance and community contribution.
+All core contracts are licensed under **AGPL-3.0-or-later** to ensure open source compliance and community contribution.

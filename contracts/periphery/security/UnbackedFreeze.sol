@@ -1,6 +1,6 @@
 pragma solidity 0.8.28;
 
-// SPDX-License-Identifier: AGPL-3.0
+// SPDX-License-Identifier: AGPL-3.0-or-later
 
 import "../../core/AppAccessControlled.sol";
 import "../../interfaces/IAppTreasury.sol";

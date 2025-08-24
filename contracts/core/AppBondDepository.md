@@ -2,51 +2,59 @@
 
 **File**: [`AppBondDepository.sol`](./AppBondDepository.sol)
 
-**License**: AGPL-3.0
+**License**: AGPL-3.0-or-later
 
 **Test File**: [`test/foundry/AppBondDepositoryTest.t.sol`](../../test/foundry/AppBondDepositoryTest.t.sol)
 
 ## Overview
 
-The `AppBondDepository` contract is the bond issuance and management system for the Rezerve.money protocol. It enables the protocol to raise funds through bond sales while providing investors with discounted RZR tokens and managing debt obligations through sophisticated bond mechanics.
+The `AppBondDepository` contract is the bond issuance and management system for the Rezerve.money protocol. It enables the protocol to raise funds through bond sales while providing investors with discounted RZR tokens and managing debt obligations through sophisticated bond mechanics. The system uses NFT-based positions to track individual bond holdings.
 
 ## Purpose
 
 This contract serves as:
 
 - **Bond Issuance**: Primary mechanism for protocol funding through bond sales
-- **Debt Management**: Tracking and management of protocol debt obligations
-- **Investor Relations**: Providing investment opportunities with discounted tokens
-- **Protocol Funding**: Raising capital for development and operations
-- **Economic Policy**: Implementing debt-based economic strategies
+- **NFT-Based Positions**: Bond positions represented as ERC721 tokens
+- **Dynamic Pricing**: Time-based bond pricing with initial and final prices
+- **Vesting Management**: Gradual token distribution over vesting periods
+- **Staking Integration**: Direct staking of bond positions
 
 ## Architecture
 
 ### Inheritance
 
+- `IAppBondDepository` - Bond depository interface
 - `AppAccessControlled` - Protocol access control integration
-- `Initializable` - Upgradeable contract pattern
+- `ERC721EnumerableUpgradeable` - NFT position management
+- `ReentrancyGuardUpgradeable` - Reentrancy protection
 
 ### Core Components
 
-- **Bond Management**: Bond creation, tracking, and redemption
-- **Debt Tracking**: Protocol debt obligation management
-- **Vesting Schedules**: Bond token vesting and distribution
-- **Pricing Mechanisms**: Dynamic bond pricing and discount calculations
+- **Bond Management**: Bond creation, tracking, and management
+- **NFT Positions**: ERC721 tokens representing bond holdings
+- **Dynamic Pricing**: Time-based price calculations
+- **Vesting System**: Gradual token distribution
+- **Staking Integration**: Direct staking of bond positions
 
 ## Key Functions
 
-### Bond Issuance
+### Bond Management
 
 #### Create Bond
 
 ```solidity
-function createBond(
-    uint256 principal,
-    uint256 discount,
-    uint256 vestingPeriod,
-    uint256 maxBonds
-) external onlyBondManager
+function create(
+    IERC20 _quoteToken,
+    uint256 _capacity,
+    uint256 _initialPrice,
+    uint256 _finalPrice,
+    uint256 _minPrice,
+    uint256 _duration,
+    uint256 _vestingPeriod,
+    uint256 _stakingLockPeriod,
+    bool _isLoyaltyBond
+) external onlyBondManager returns (uint256 id_)
 ```
 
 **Purpose**: Create a new bond offering with specified parameters.
@@ -55,296 +63,369 @@ function createBond(
 
 **Parameters**:
 
-- `principal`: Principal amount of the bond
-- `discount`: Discount percentage for bond purchasers
-- `vestingPeriod`: Duration of token vesting period
-- `maxBonds`: Maximum number of bonds that can be sold
+- `_quoteToken` - Token used to purchase bonds (e.g., USDC)
+- `_capacity` - Maximum bond capacity
+- `_initialPrice` - Starting price for the bond
+- `_finalPrice` - Final price at bond end
+- `_minPrice` - Minimum allowed price
+- `_duration` - Bond duration in seconds
+- `_vestingPeriod` - Token vesting period
+- `_stakingLockPeriod` - Minimum staking lock period
+- `_isLoyaltyBond` - Whether this is a loyalty bond
 
-**Process**:
+**Returns**: Bond ID for the created bond.
 
-1. Validate bond parameters
-2. Create bond offering
-3. Set bond terms and conditions
-4. Emit bond creation event
+**Process**: Creates bond with time-based pricing and vesting schedule.
 
-#### Purchase Bond
+#### Update Bond Price
 
 ```solidity
-function purchaseBond(uint256 bondId, uint256 amount) external
+function updateBondPrice(uint256 _id, uint256 _initialPrice, uint256 _finalPrice) external onlyBondManager
 ```
 
-**Purpose**: Purchase bonds with specified amount.
+**Purpose**: Update bond pricing parameters.
+
+**Access Control**: Only bond managers can update prices.
 
 **Parameters**:
 
-- `bondId`: ID of the bond to purchase
-- `amount`: Amount to invest in the bond
+- `_id` - Bond ID to update
+- `_initialPrice` - New initial price
+- `_finalPrice` - New final price
 
-**Process**:
+**Requirements**: Both prices must be above minimum price.
 
-1. Validate bond availability and terms
-2. Transfer investment tokens from user
-3. Calculate discounted RZR tokens
-4. Create bond position for user
+#### Update Bond End Date
 
-### Bond Management
+```solidity
+function updateBondEndDate(uint256 _id, uint256 _endTime) external onlyBondManager
+```
+
+**Purpose**: Extend or modify bond end date.
+
+**Access Control**: Only bond managers can update end dates.
+
+**Parameters**:
+
+- `_id` - Bond ID to update
+- `_endTime` - New end time
+
+**Requirements**: End time must be in the future.
+
+#### Disable Bond
+
+```solidity
+function disable(uint256 _id) external onlyBondManager
+```
+
+**Purpose**: Disable a bond, preventing further deposits.
+
+**Access Control**: Only bond managers can disable bonds.
+
+**Parameters**: `_id` - Bond ID to disable.
+
+### Bond Operations
+
+#### Deposit (Purchase Bond)
+
+```solidity
+function deposit(
+    uint256 _id,
+    uint256 _amount,
+    uint256 _maxPrice,
+    uint256 _minPayout,
+    address _user
+) external nonReentrant returns (uint256 payout_, uint256 tokenId_)
+```
+
+**Purpose**: Purchase bonds with specified parameters.
+
+**Parameters**:
+
+- `_id` - Bond ID to purchase
+- `_amount` - Amount of quote tokens to spend
+- `_maxPrice` - Maximum price willing to pay
+- `_minPayout` - Minimum payout required
+- `_user` - Address to receive the bond position
+
+**Returns**: Payout amount and bond position token ID.
+
+**Process**: Calculates current price, validates parameters, creates NFT position.
+
+#### Claim Tokens
+
+```solidity
+function claim(uint256 _tokenId) external nonReentrant
+```
+
+**Purpose**: Claim vested tokens from a bond position.
+
+**Parameters**: `_tokenId` - NFT token ID of the bond position.
+
+**Requirements**: Position must not be blacklisted or staked.
+
+**Process**: Calculates claimable amount and transfers RZR tokens to owner.
+
+#### Stake Position
+
+```solidity
+function stake(uint256 _tokenId, uint256 _declaredValue) external nonReentrant
+```
+
+**Purpose**: Stake a bond position directly into the staking contract.
+
+**Parameters**:
+
+- `_tokenId` - NFT token ID of the bond position
+- `_declaredValue` - Declared value for staking
+
+**Requirements**: Must own the position and not already staked.
+
+**Process**: Stakes unclaimed tokens with minimum lock period.
+
+#### Complete Bond Vesting
+
+```solidity
+function completeBondVesting(uint256 _tokenId) external onlyBondManager
+```
+
+**Purpose**: Complete vesting for a bond position (emergency function).
+
+**Access Control**: Only bond managers can complete vesting.
+
+**Parameters**: `_tokenId` - NFT token ID of the bond position.
+
+**Requirements**: Vesting must not already be completed.
+
+### View Functions
 
 #### Get Bond Information
 
 ```solidity
-function getBond(uint256 bondId) external view returns (
-    uint256 principal,
-    uint256 discount,
-    uint256 vestingPeriod,
-    uint256 maxBonds,
-    uint256 soldBonds,
-    uint256 startTime,
-    bool active
-)
+function getBond(uint256 _id) external view returns (Bond memory)
 ```
 
-**Purpose**: Get detailed information about a specific bond.
+**Purpose**: Get complete bond information.
 
-**Parameters**: `bondId` - ID of the bond to query.
+**Parameters**: `_id` - Bond ID to query.
 
-**Returns**: Complete bond information including terms and status.
+**Returns**: Complete bond data structure.
 
-#### Get User Bonds
+#### Get Bond Position
 
 ```solidity
-function getUserBonds(address user) external view returns (uint256[] memory)
+function positions(uint256 tokenId) external view returns (BondPosition memory position)
 ```
 
-**Purpose**: Get all bond IDs owned by a specific user.
+**Purpose**: Get bond position information for a token ID.
 
-**Parameters**: `user` - Address of the user.
+**Parameters**: `tokenId` - NFT token ID.
 
-**Returns**: Array of bond IDs owned by the user.
+**Returns**: Complete bond position data.
 
-### Vesting and Redemption
-
-#### Check Vesting Status
+#### Check Bond Status
 
 ```solidity
-function getVestingInfo(uint256 bondId, address user) external view returns (
-    uint256 totalTokens,
-    uint256 vestedTokens,
-    uint256 claimableTokens,
-    uint256 vestingStartTime
-)
+function isLive(uint256 _id) external view returns (bool)
 ```
 
-**Purpose**: Get vesting information for a user's bond position.
+**Purpose**: Check if a bond is currently active and accepting deposits.
+
+**Parameters**: `_id` - Bond ID to check.
+
+**Returns**: `true` if bond is live, `false` otherwise.
+
+#### Get Current Price
+
+```solidity
+function currentPrice(uint256 _id) external view returns (uint256)
+```
+
+**Purpose**: Get current bond price based on time elapsed.
+
+**Parameters**: `_id` - Bond ID to query.
+
+**Returns**: Current bond price in quote token terms.
+
+#### Get Claimable Amount
+
+```solidity
+function claimableAmount(uint256 _tokenId) external view returns (uint256)
+```
+
+**Purpose**: Get amount of tokens that can be claimed from a position.
+
+**Parameters**: `_tokenId` - NFT token ID.
+
+**Returns**: Claimable token amount.
+
+#### Get Bond Length
+
+```solidity
+function bondLength() external view returns (uint256)
+```
+
+**Purpose**: Get total number of bonds created.
+
+**Returns**: Total bond count.
+
+#### Calculate Payout and Profit
+
+```solidity
+function calculatePayoutAndProfit(
+    IERC20 _token,
+    uint256 _price,
+    uint256 _amount
+) external view returns (uint256 payout, uint256 profit)
+```
+
+**Purpose**: Calculate payout and profit for a given deposit.
 
 **Parameters**:
 
-- `bondId`: ID of the bond
-- `user`: Address of the bond holder
+- `_token` - Quote token
+- `_price` - Bond price
+- `_amount` - Deposit amount
 
-**Returns**: Detailed vesting information and status.
+**Returns**: Payout amount and profit amount.
 
-#### Claim Vested Tokens
+### Administrative Functions
 
-```solidity
-function claimVestedTokens(uint256 bondId) external
-```
-
-**Purpose**: Claim vested RZR tokens from a bond position.
-
-**Parameters**: `bondId` - ID of the bond to claim from.
-
-**Requirements**: Must have vested tokens available.
-
-**Process**:
-
-1. Calculate claimable vested tokens
-2. Transfer RZR tokens to user
-3. Update vesting tracking
-4. Emit claim event
-
-### Debt Management
-
-#### Get Total Debt
+#### Toggle Blacklist
 
 ```solidity
-function getTotalDebt() external view returns (uint256)
+function toggleBlacklist(uint256 _id) external onlyGuardian
 ```
 
-**Purpose**: Get total protocol debt from all active bonds.
+**Purpose**: Blacklist or unblacklist a bond position.
 
-**Returns**: Total debt amount across all bonds.
+**Access Control**: Only guardians can toggle blacklist status.
 
-#### Get Bond Debt
+**Parameters**: `_id` - Bond position ID to toggle.
 
-```solidity
-function getBondDebt(uint256 bondId) external view returns (uint256)
-```
-
-**Purpose**: Get debt amount for a specific bond.
-
-**Parameters**: `bondId` - ID of the bond.
-
-**Returns**: Debt amount for the specified bond.
-
-## Integration Points
-
-### Protocol Contracts
-
-- **RZR Token**: [`RZR.sol`](./RZR.sol) - Bond token distribution
-- **Treasury**: [`AppTreasury.sol`](./AppTreasury.sol) - Bond funding and debt management
-- **Authority**: [`AppAuthority.sol`](./AppAuthority.sol) - Access control
-- **Oracle**: Oracle contracts for pricing and economic calculations
-
-### External Systems
-
-- **Investment Tokens**: Various tokens accepted for bond purchases
-- **Vesting System**: Automated vesting and distribution
-- **Debt Analytics**: Debt tracking and reporting systems
-
-## Economic Model
-
-### Bond Pricing
-
-- **Discount Mechanism**: Bonds sold at discount to face value
-- **Dynamic Pricing**: Pricing based on market conditions and demand
-- **Vesting Schedule**: Gradual token distribution over time
-- **Yield Calculation**: Effective yield based on discount and vesting
-
-### Debt Structure
-
-- **Principal Amount**: Face value of issued bonds
-- **Interest Obligation**: Implicit interest through token appreciation
-- **Maturity Schedule**: Vesting-based maturity structure
-- **Debt Service**: Token distribution as debt service
-
-### Investment Returns
-
-- **Discount Capture**: Investors benefit from discounted token prices
-- **Vesting Benefits**: Gradual distribution reduces market impact
-- **Token Appreciation**: Potential for token value increase
-- **Protocol Participation**: Bond holders become protocol stakeholders
-
-## Security Features
-
-### Access Control
-
-- **Role-Based Permissions**: Only authorized roles can manage bonds
-- **Bond Creation**: Controlled bond issuance through bond managers
-- **Parameter Updates**: Governance-controlled parameter changes
-- **Emergency Controls**: Emergency pause and override capabilities
-
-### Economic Security
-
-- **Debt Limits**: Maximum debt limits to prevent over-leverage
-- **Vesting Enforcement**: Strict vesting schedule enforcement
-- **Token Validation**: All token transfers validated
-- **Overflow Protection**: Safe math operations for all calculations
-
-### Operational Security
-
-- **Bond Validation**: All bond parameters validated
-- **State Consistency**: Consistent state across all operations
-- **Event Logging**: Complete transparency of all operations
-- **Emergency Procedures**: Emergency response capabilities
+**Process**: Toggles blacklist status and emits event.
 
 ## Usage Examples
 
-### Bond Management
+### Bond Creation
 
 #### Create New Bond
 
 ```solidity
-// Create a bond with 10% discount and 12-month vesting
+// Create a bond with 6-month duration and 12-month vesting
 AppBondDepository bondDepository = AppBondDepository(bondAddress);
 
-bondDepository.createBond(
-    1000000e18,  // 1M principal
-    10e16,        // 10% discount
-    365 days,     // 12-month vesting
-    1000          // Max 1000 bonds
+uint256 bondId = bondDepository.create(
+    USDC,           // Quote token
+    1000000e18,     // 1M capacity
+    1e18,           // $1 initial price
+    0.8e18,         // $0.80 final price
+    0.7e18,         // $0.70 minimum price
+    180 days,       // 6-month duration
+    365 days,       // 12-month vesting
+    30 days,        // 30-day staking lock
+    false           // Not a loyalty bond
 );
+
+console.log("Bond created with ID:", bondId);
 ```
+
+### Bond Purchase
 
 #### Purchase Bond
 
 ```solidity
 // Purchase bond with 1000 USDC
-uint256 bondId = 1;
-uint256 amount = 1000e6; // 1000 USDC
+(uint256 payout, uint256 tokenId) = bondDepository.deposit(
+    bondId,         // Bond ID
+    1000e6,         // 1000 USDC
+    1e18,           // Max $1 price
+    800e18,         // Min 800 RZR payout
+    msg.sender      // Receive position
+);
 
-bondDepository.purchaseBond(bondId, amount);
+console.log("Payout:", payout);
+console.log("Token ID:", tokenId);
 ```
 
-### Bond Information
+### Position Management
 
-#### Get Bond Details
+#### Check Bond Status
 
 ```solidity
-// Get bond information
-(
-    uint256 principal,
-    uint256 discount,
-    uint256 vestingPeriod,
-    uint256 maxBonds,
-    uint256 soldBonds,
-    uint256 startTime,
-    bool active
-) = bondDepository.getBond(bondId);
+// Check if bond is live
+bool isLive = bondDepository.isLive(bondId);
+console.log("Bond is live:", isLive);
 
-console.log("Principal:", principal);
-console.log("Discount:", discount);
-console.log("Vesting Period:", vestingPeriod);
+// Get current price
+uint256 currentPrice = bondDepository.currentPrice(bondId);
+console.log("Current price:", currentPrice);
 ```
 
-#### Check User Bonds
+#### Get Position Information
 
 ```solidity
-// Get user's bond positions
-uint256[] memory userBonds = bondDepository.getUserBonds(msg.sender);
-console.log("User has", userBonds.length, "bonds");
+// Get bond position details
+BondPosition memory position = bondDepository.positions(tokenId);
+console.log("Bond ID:", position.bondId);
+console.log("Amount:", position.amount);
+console.log("Quote Amount:", position.quoteAmount);
+console.log("Start Time:", position.startTime);
+console.log("Is Staked:", position.isStaked);
 ```
 
-### Vesting and Claims
+### Token Claims
 
-#### Check Vesting Status
+#### Check Claimable Amount
 
 ```solidity
-// Get vesting information for user's bond
-(
-    uint256 totalTokens,
-    uint256 vestedTokens,
-    uint256 claimableTokens,
-    uint256 vestingStartTime
-) = bondDepository.getVestingInfo(bondId, msg.sender);
-
-console.log("Total Tokens:", totalTokens);
-console.log("Vested Tokens:", vestedTokens);
-console.log("Claimable Tokens:", claimableTokens);
+// Get claimable tokens
+uint256 claimable = bondDepository.claimableAmount(tokenId);
+console.log("Claimable tokens:", claimable);
 ```
 
-#### Claim Vested Tokens
+#### Claim Tokens
 
 ```solidity
 // Claim vested tokens
-bondDepository.claimVestedTokens(bondId);
+bondDepository.claim(tokenId);
 ```
 
-### Debt Analytics
+### Staking Integration
 
-#### Get Total Protocol Debt
+#### Stake Bond Position
 
 ```solidity
-// Check total protocol debt
-uint256 totalDebt = bondDepository.getTotalDebt();
-console.log("Total Protocol Debt:", totalDebt);
+// Stake bond position directly
+bondDepository.stake(tokenId, 1000e18); // Declare $1000 value
 ```
 
-#### Get Bond-Specific Debt
+### Bond Analytics
+
+#### Get Bond Information
 
 ```solidity
-// Check debt for specific bond
-uint256 bondDebt = bondDepository.getBondDebt(bondId);
-console.log("Bond Debt:", bondDebt);
+// Get complete bond details
+Bond memory bond = bondDepository.getBond(bondId);
+console.log("Capacity:", bond.capacity);
+console.log("Sold:", bond.sold);
+console.log("Initial Price:", bond.initialPrice);
+console.log("Final Price:", bond.finalPrice);
+console.log("Vesting Period:", bond.vestingPeriod);
+```
+
+#### Calculate Payout
+
+```solidity
+// Calculate expected payout for 1000 USDC
+(uint256 payout, uint256 profit) = bondDepository.calculatePayoutAndProfit(
+    USDC,           // Quote token
+    0.9e18,         // Bond price
+    1000e6          // 1000 USDC
+);
+
+console.log("Payout:", payout);
+console.log("Profit:", profit);
 ```
 
 ## Events
@@ -352,124 +433,22 @@ console.log("Bond Debt:", bondDebt);
 ### Bond Events
 
 ```solidity
-event BondCreated(uint256 indexed bondId, uint256 principal, uint256 discount, uint256 vestingPeriod);
-event BondPurchased(uint256 indexed bondId, address indexed buyer, uint256 amount, uint256 tokens);
-event BondRedeemed(uint256 indexed bondId, address indexed user, uint256 amount);
-```
-
-### Vesting Events
-
-```solidity
-event TokensVested(uint256 indexed bondId, address indexed user, uint256 amount);
-event TokensClaimed(uint256 indexed bondId, address indexed user, uint256 amount);
+event CreateBond(uint256 indexed id, address indexed quoteToken, uint256 initialPrice, uint256 capacity);
+event BondCreated(uint256 indexed id, uint256 amount, uint256 price);
+event Claimed(uint256 indexed tokenId, uint256 amount);
+event Staked(uint256 indexed tokenId, uint256 amount);
 ```
 
 ### Management Events
 
 ```solidity
-event BondParametersUpdated(uint256 indexed bondId, uint256 discount, uint256 vestingPeriod);
-event BondStatusUpdated(uint256 indexed bondId, bool active);
+event UpdateBondPrice(uint256 indexed id, uint256 initialPrice, uint256 finalPrice);
+event UpdateBondEndDate(uint256 indexed id, uint256 endTime);
+event CompleteBondVesting(uint256 indexed tokenId);
+event DisableBond(uint256 indexed id);
+event Blacklisted(uint256 indexed id, bool blacklisted);
 ```
-
-## Testing
-
-### Unit Tests
-
-- Bond creation and management functionality
-- Purchase and redemption mechanisms
-- Vesting calculation accuracy
-- Debt tracking and management
-
-### Integration Tests
-
-- Cross-contract token flows
-- Treasury integration testing
-- Oracle price feed integration
-- Authority system integration
-
-### Security Tests
-
-- Access control validation
-- Economic attack vectors
-- Vesting manipulation prevention
-- Emergency procedure testing
-
-## Deployment Considerations
-
-### Initial Setup
-
-1. **Deploy Contract**: Deploy AppBondDepository contract
-2. **Configure Authority**: Set up access control integration
-3. **Set Parameters**: Configure bond parameters and limits
-4. **Verify Integration**: Test with RZR token and treasury
-
-### Configuration
-
-1. **Authority Integration**: Connect to protocol authority system
-2. **Bond Parameters**: Set default bond terms and conditions
-3. **Debt Limits**: Configure maximum debt limits
-4. **Vesting Schedules**: Set up vesting period options
-
-## Dependencies
-
-### Core Dependencies
-
-- **AppAccessControlled**: Protocol access control integration
-- **Initializable**: Upgradeable contract pattern
-- **RZR Token**: Bond token distribution
-
-### External Dependencies
-
-- **Treasury System**: Bond funding and debt management
-- **Oracle System**: Pricing and economic calculations
-- **Investment Tokens**: Various tokens for bond purchases
-
-## Best Practices
-
-### Bond Management
-
-1. **Parameter Validation**: Validate all bond parameters before creation
-2. **Debt Monitoring**: Monitor total protocol debt levels
-3. **Vesting Enforcement**: Strictly enforce vesting schedules
-4. **Investor Communication**: Clear communication of bond terms
-
-### Security Considerations
-
-1. **Access Control**: Verify all bond operations are properly authorized
-2. **Debt Limits**: Implement and enforce maximum debt limits
-3. **Vesting Security**: Protect against vesting manipulation
-4. **Emergency Procedures**: Test emergency response capabilities
-
-### User Experience
-
-1. **Clear Documentation**: Provide clear bond investment instructions
-2. **Vesting Transparency**: Show clear vesting schedules and progress
-3. **Claim Automation**: Automate token claiming where possible
-4. **Investment Tracking**: Provide tools to track bond performance
-
-## Testing
-
-### Unit Tests
-
-- Bond creation
-- Purchase operations
-- Vesting calculations
-- Debt management
-
-**Test File**: [`test/foundry/AppBondDepositoryTest.t.sol`](../../test/foundry/AppBondDepositoryTest.t.sol)
-
-### Integration Tests
-
-- Protocol contract integration
-- Treasury interaction testing
-- Oracle operations
-
-### Security Tests
-
-- Unauthorized access attempts
-- Access control validation
-- Bond manipulation prevention
 
 ## License
 
-AGPL-3.0
+AGPL-3.0-or-later

@@ -57,7 +57,7 @@ contract AppUIHelperWrite is AppUIHelperBase {
         for (uint256 i = 0; i < balance; i++) {
             uint256 tokenId = convertibles.tokenOfOwnerByIndex(user, i);
             if (tokenId == 0) continue;
-            (uint256 interestClaimable, uint256 totalInterestClaimed) = convertibles.claimableInterest(tokenId);
+            (uint256 interestClaimable,) = convertibles.claimableInterest(tokenId);
             amount += interestClaimable;
         }
 

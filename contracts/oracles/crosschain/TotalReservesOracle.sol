@@ -55,7 +55,7 @@ contract TotalReservesOracle is AppAccessControlled, ITotalReservesOracle {
     }
 
     /// @inheritdoc ITotalReservesOracle
-    function initialize(address _authority, address _offchainUpdater) external reinitializer(3) {
+    function initialize(address _authority, address _offchainUpdater) external reinitializer(4) {
         __AppAccessControlled_init(_authority);
         offchainUpdater = _offchainUpdater;
         maxDeviation = 1e16; // 1% max deviation (100 basis points)

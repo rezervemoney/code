@@ -1,0 +1,41 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "pool",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "maxAmountsIn",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "uint256",
+        "name": "exactBptAmountOut",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "wethIsEth",
+        "type": "bool"
+      },
+      {
+        "internalType": "bytes",
+        "name": "userData",
+        "type": "bytes"
+      }
+    ],
+    "name": "addLiquidityProportional",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "amountsIn",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  }
+]

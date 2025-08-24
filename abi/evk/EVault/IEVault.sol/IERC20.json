@@ -1,59 +1,9 @@
 [
   {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "spender",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "value",
-        "type": "uint256"
-      }
-    ],
-    "name": "Approval",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "from",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "value",
-        "type": "uint256"
-      }
-    ],
-    "name": "Transfer",
-    "type": "event"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
-        "name": "owner",
+        "name": "holder",
         "type": "address"
       },
       {
@@ -82,7 +32,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "value",
+        "name": "amount",
         "type": "uint256"
       }
     ],
@@ -118,12 +68,12 @@
   },
   {
     "inputs": [],
-    "name": "getNormalizedWeights",
+    "name": "decimals",
     "outputs": [
       {
-        "internalType": "uint256[]",
+        "internalType": "uint8",
         "name": "",
-        "type": "uint256[]"
+        "type": "uint8"
       }
     ],
     "stateMutability": "view",
@@ -131,44 +81,12 @@
   },
   {
     "inputs": [],
-    "name": "getTokenInfo",
+    "name": "name",
     "outputs": [
       {
-        "internalType": "contract IERC20[]",
-        "name": "tokens",
-        "type": "address[]"
-      },
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "balancesRaw",
-            "type": "uint256"
-          },
-          {
-            "internalType": "address",
-            "name": "tokens",
-            "type": "address"
-          },
-          {
-            "internalType": "bool",
-            "name": "what",
-            "type": "bool"
-          }
-        ],
-        "internalType": "struct IBalancerPool.BalancerTokenInfo[]",
-        "name": "tokenInfo",
-        "type": "tuple[]"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "balancesRaw",
-        "type": "uint256[]"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "lastBalancesLiveScaled18",
-        "type": "uint256[]"
+        "internalType": "string",
+        "name": "",
+        "type": "string"
       }
     ],
     "stateMutability": "view",
@@ -176,12 +94,12 @@
   },
   {
     "inputs": [],
-    "name": "getTokens",
+    "name": "symbol",
     "outputs": [
       {
-        "internalType": "contract IERC20[]",
+        "internalType": "string",
         "name": "",
-        "type": "address[]"
+        "type": "string"
       }
     ],
     "stateMutability": "view",
@@ -209,7 +127,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "value",
+        "name": "amount",
         "type": "uint256"
       }
     ],
@@ -238,7 +156,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "value",
+        "name": "amount",
         "type": "uint256"
       }
     ],

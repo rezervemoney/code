@@ -16,7 +16,7 @@ import "../../contracts/core/AppBondDepository.sol";
 import "../../contracts/core/AppOracle.sol";
 import "../../contracts/core/AppBurner.sol";
 import "../../contracts/core/Staking4626.sol";
-import "../../contracts/periphery/LoyaltyList.sol";
+import "../../contracts/periphery/misc/LoyaltyList.sol";
 import "../../contracts/oracles/crosschain/TotalReservesOracle.sol";
 import "../../contracts/periphery/bridge/BridgeL1.sol";
 

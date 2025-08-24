@@ -2,8 +2,8 @@
 pragma solidity 0.8.28;
 pragma abicoder v2;
 
-import "../interfaces/IAppStaking.sol";
-import "../core/AppAccessControlled.sol";
+import "../../interfaces/IAppStaking.sol";
+import "../../core/AppAccessControlled.sol";
 
 interface IAppStakingMigrator {
     function mint(address to, IAppStaking.Position memory position) external;

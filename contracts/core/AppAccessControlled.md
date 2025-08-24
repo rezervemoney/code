@@ -292,68 +292,6 @@ contract StakingContract is AppAccessControlled {
 3. **Pause Testing**: Verify pause state integration
 4. **Emergency Procedures**: Test emergency function access
 
-## Testing
-
-### Unit Tests
-
-- Authority address initialization
-- Pause state checking functionality
-- Modifier behavior validation
-- Role verification delegation
-
-### Integration Tests
-
-- Cross-contract permission checking
-- Pause state propagation
-- Role-based access control
-- Emergency function access
-
-### Security Tests
-
-- Unauthorized access attempts
-- Role escalation prevention
-- Pause state manipulation
-- Authority contract integration
-
-## Dependencies
-
-### Core Dependencies
-
-- **IAppAccessControlled**: Core interface definition
-- **IAppAuthority**: Authority contract interface
-- **AppAuthority**: Central authority contract implementation
-
-### External Dependencies
-
-- **OpenZeppelin**: Access control and modifier patterns
-- **Solidity**: Language features and modifier system
-
-## Events
-
-### Authority Events
-
-Events are inherited from the `IAppAccessControlled` interface and typically include:
-
-- Authority initialization events
-- Role verification events
-- Pause state change events
-
-## Error Handling
-
-### Common Errors
-
-- **Invalid Authority**: Authority address is zero or invalid
-- **Unauthorized Access**: Caller lacks required role
-- **Protocol Paused**: Function called while protocol is paused
-- **Role Verification Failed**: Role check delegation failed
-
-### Error Prevention
-
-- **Constructor Validation**: Verify authority address during deployment
-- **Modifier Protection**: Apply appropriate access control modifiers
-- **Pause State Checking**: Verify pause state before critical operations
-- **Role Verification**: Delegate all permission checks to authority contract
-
 ## Deployment Considerations
 
 ### Initial Setup
@@ -362,13 +300,6 @@ Events are inherited from the `IAppAccessControlled` interface and typically inc
 2. **Contract Deployment**: Pass authority address to all `AppAccessControlled` contracts
 3. **Role Configuration**: Configure roles in authority contract before use
 4. **Testing**: Verify all access control functionality
-
-### Configuration
-
-1. **Authority Address**: Verify correct authority contract address
-2. **Role Assignment**: Ensure all required roles are properly assigned
-3. **Pause State**: Verify pause functionality integration
-4. **Access Control**: Test all role-based permissions
 
 ## License
 

@@ -2,8 +2,8 @@
 pragma solidity 0.8.28;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "../core/AppAccessControlled.sol";
-import "../interfaces/ILoyaltyList.sol";
+import "../../core/AppAccessControlled.sol";
+import "../../interfaces/ILoyaltyList.sol";
 
 /// @title LoyaltyList
 /// @notice This contract manages a list of loyalty wallets and provides verification functionality

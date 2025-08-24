@@ -84,6 +84,8 @@ The core contracts implement the fundamental architecture and business logic of 
 - **Integration**: Treasury, staking, bonds, and oracle systems
 
 **File**: [`RZR.sol`](./RZR.sol)
+**Interface**: [`IRZR.sol`](../interfaces/IRZR.sol)
+**Tests**: [`test/foundry/Staking4626.t.sol`](../../test/foundry/Staking4626.t.sol)
 
 #### [sRZR](./sRZR.md)
 
@@ -95,6 +97,8 @@ The core contracts implement the fundamental architecture and business logic of 
 - **Benefits**: Maintains liquidity while earning staking rewards
 
 **File**: [`sRZR.sol`](./sRZR.sol)
+**Interface**: [`IsRZR.sol`](../interfaces/IsRZR.sol)
+**Tests**: [`test/foundry/Staking4626.t.sol`](../../test/foundry/Staking4626.t.sol)
 
 #### [Staking4626](./Staking4626.md)
 
@@ -106,6 +110,8 @@ The core contracts implement the fundamental architecture and business logic of 
 - **Standards**: Full ERC4626 compliance for DeFi integration
 
 **File**: [`Staking4626.sol`](./Staking4626.sol)
+**Interface**: [`IStaking4626.sol`](../interfaces/IStaking4626.sol)
+**Tests**: [`test/foundry/Staking4626.t.sol`](../../test/foundry/Staking4626.t.sol)
 
 ### Core Protocol Contracts
 
@@ -119,6 +125,8 @@ The core contracts implement the fundamental architecture and business logic of 
 - **Integration**: Oracle system, staking contracts, bond system
 
 **File**: [`AppTreasury.sol`](./AppTreasury.sol)
+**Interface**: [`IAppTreasury.sol`](../interfaces/IAppTreasury.sol)
+**Tests**: [`test/foundry/AppTreasuryTest.t.sol`](../../test/foundry/AppTreasuryTest.t.sol)
 
 #### [AppStaking](./AppStaking.md)
 
@@ -130,6 +138,21 @@ The core contracts implement the fundamental architecture and business logic of 
 - **Integration**: RZR token, treasury, oracle system
 
 **File**: [`AppStaking.sol`](./AppStaking.sol)
+**Interface**: [`IAppStaking.sol`](../interfaces/IAppStaking.sol)
+**Tests**: [`test/foundry/AppStakingTest.t.sol`](../../test/foundry/AppStakingTest.t.sol)
+
+#### [AppBondDepository](./AppBondDepository.md)
+
+**Bond issuance and management system for protocol funding**
+
+- **Purpose**: Bond issuance, debt management, funding operations
+- **Key Features**: Bond creation, vesting schedules, debt tracking
+- **Integration**: Treasury system, RZR token, governance
+- **Mechanics**: Bond pricing, vesting, redemption
+
+**File**: [`AppBondDepository.sol`](./AppBondDepository.sol)
+**Interface**: [`IAppBondDepository.sol`](../interfaces/IAppBondDepository.sol)
+**Tests**: [`test/foundry/AppBondDepositoryTest.t.sol`](../../test/foundry/AppBondDepositoryTest.t.sol)
 
 #### [AppConvertibles](./AppConvertibles.md)
 
@@ -142,7 +165,7 @@ The core contracts implement the fundamental architecture and business logic of 
 
 **File**: [`AppConvertibles.sol`](./AppConvertibles.sol)
 **Interface**: [`IAppConvertibles.sol`](../interfaces/IAppConvertibles.sol)
-**Tests**: [`test/AppConvertibles.test.ts`](../../test/AppConvertibles.test.ts)
+**Tests**: [`test/foundry/AppConvertiblesTest.t.sol`](../../test/foundry/AppConvertiblesTest.t.sol)
 
 #### [RebaseController](./RebaseController.md)
 
@@ -155,7 +178,7 @@ The core contracts implement the fundamental architecture and business logic of 
 
 **File**: [`RebaseController.sol`](./RebaseController.sol)
 **Interface**: [`IRebaseController.sol`](../interfaces/IRebaseController.sol)
-**Tests**: [`test/RebaseController.test.ts`](../../test/RebaseController.test.ts)
+**Tests**: [`test/foundry/RebaseControllerTest.t.sol`](../../test/foundry/RebaseControllerTest.t.sol)
 
 ### Utility & Infrastructure
 
@@ -170,7 +193,7 @@ The core contracts implement the fundamental architecture and business logic of 
 
 **File**: [`AppProxy.sol`](./AppProxy.sol)
 **Interface**: [`IAppProxy.sol`](../interfaces/IAppProxy.sol)
-**Tests**: [`test/AppProxy.test.ts`](../../test/AppProxy.test.ts)
+**Tests**: [`test/foundry/AccessControlTest.t.sol`](../../test/foundry/AccessControlTest.t.sol)
 
 #### [AppTimelock](./AppTimelock.md)
 
@@ -183,7 +206,7 @@ The core contracts implement the fundamental architecture and business logic of 
 
 **File**: [`AppTimelock.sol`](./AppTimelock.sol)
 **Interface**: [`IAppTimelock.sol`](../interfaces/IAppTimelock.sol)
-**Tests**: [`test/AppTimelock.test.ts`](../../test/AppTimelock.test.ts)
+**Tests**: [`test/foundry/AccessControlTest.t.sol`](../../test/foundry/AccessControlTest.t.sol)
 
 #### [AppOracle](./AppOracle.md)
 
@@ -195,6 +218,8 @@ The core contracts implement the fundamental architecture and business logic of 
 - **Standards**: Oracle interface compliance
 
 **File**: [`AppOracle.sol`](./AppOracle.sol)
+**Interface**: [`IAppOracle.sol`](../interfaces/IAppOracle.sol)
+**Tests**: [`test/foundry/AppOracleTest.t.sol`](../../test/foundry/AppOracleTest.t.sol)
 
 #### [AppBurner](./AppBurner.md)
 
@@ -206,6 +231,8 @@ The core contracts implement the fundamental architecture and business logic of 
 - **Effects**: Deflationary pressure, value appreciation
 
 **File**: [`AppBurner.sol`](./AppBurner.sol)
+**Interface**: [`IAppBurner.sol`](../interfaces/IAppBurner.sol)
+**Tests**: [`test/foundry/AppBurnerTest.t.sol`](../../test/foundry/AppBurnerTest.t.sol)
 
 #### [AppReferrals](./AppReferrals.md)
 
@@ -217,6 +244,42 @@ The core contracts implement the fundamental architecture and business logic of 
 - **Benefits**: Growth incentives, user acquisition, community building
 
 **File**: [`AppReferrals.sol`](./AppReferrals.sol)
+**Interface**: [`IAppReferrals.sol`](../interfaces/IAppReferrals.sol)
+**Tests**: [`test/foundry/AppReferrals.t.sol`](../../test/foundry/AppReferrals.t.sol)
+
+## Testing & Development
+
+### Test Coverage
+
+All core contracts include comprehensive test suites covering:
+
+- **Unit Tests**: Individual contract functionality and edge cases
+- **Integration Tests**: Cross-contract interactions and workflows
+- **Security Tests**: Access control, economic attacks, and emergency procedures
+
+### Test Files
+
+- **RZR**: [`test/foundry/Staking4626.t.sol`](../../test/foundry/Staking4626.t.sol)
+- **sRZR**: [`test/foundry/Staking4626.t.sol`](../../test/foundry/Staking4626.t.sol)
+- **Staking4626**: [`test/foundry/Staking4626.t.sol`](../../test/foundry/Staking4626.t.sol)
+- **AppTreasury**: [`test/foundry/AppTreasuryTest.t.sol`](../../test/foundry/AppTreasuryTest.t.sol)
+- **AppStaking**: [`test/foundry/AppStakingTest.t.sol`](../../test/foundry/AppStakingTest.t.sol)
+- **AppBondDepository**: [`test/foundry/AppBondDepositoryTest.t.sol`](../../test/foundry/AppBondDepositoryTest.t.sol)
+- **AppConvertibles**: [`test/foundry/AppConvertiblesTest.t.sol`](../../test/foundry/AppConvertiblesTest.t.sol)
+- **RebaseController**: [`test/foundry/RebaseControllerTest.t.sol`](../../test/foundry/RebaseControllerTest.t.sol)
+- **AppProxy**: [`test/foundry/AccessControlTest.t.sol`](../../test/foundry/AccessControlTest.t.sol)
+- **AppTimelock**: [`test/foundry/AccessControlTest.t.sol`](../../test/foundry/AccessControlTest.t.sol)
+- **AppOracle**: [`test/foundry/AppOracleTest.t.sol`](../../test/foundry/AppOracleTest.t.sol)
+- **AppBurner**: [`test/foundry/AppBurnerTest.t.sol`](../../test/foundry/AppBurnerTest.t.sol)
+- **AppReferrals**: [`test/foundry/AppReferrals.t.sol`](../../test/foundry/AppReferrals.t.sol)
+
+### Interface Definitions
+
+All contracts implement standardized interfaces:
+
+- **Core Interfaces**: [`../interfaces/`](../interfaces/) - Protocol interface definitions
+- **ERC Standards**: OpenZeppelin ERC20, ERC4626, and other standard interfaces
+- **Custom Interfaces**: Protocol-specific interface implementations
 
 ## License
 

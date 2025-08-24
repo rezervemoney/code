@@ -14,11 +14,11 @@ The treasury helper contracts are designed to streamline complex treasury operat
 
 ## Contract Architecture
 
-### BaseTreasuryHelper.sol
+### [BaseTreasuryHelper.sol](./BaseTreasuryHelper.sol)
 
 **Abstract base contract providing core treasury functionality**
 
-- **Access Control**: Inherits from `AppAccessControlled` for role-based permissions
+- **Access Control**: Inherits from [`AppAccessControlled`](../core/AppAccessControlled.sol) for role-based permissions
 - **Treasury Interface**: Provides access to the main treasury contract
 - **RZR Token Management**: Handles minting and burning of RZR tokens
 - **Safety Features**: Includes kill switch functionality for emergency situations
@@ -30,7 +30,7 @@ The treasury helper contracts are designed to streamline complex treasury operat
   - `_burnPendingBalance()`: Burns all pending RZR balance
   - `kill()`: Emergency function to disable the contract
 
-### EulerBorrowerHelper.sol
+### [EulerBorrowerHelper.sol](./EulerBorrowerHelper.sol)
 
 **Abstract contract for Euler Finance borrowing operations**
 
@@ -46,7 +46,7 @@ The treasury helper contracts are designed to streamline complex treasury operat
   - `_addCollateral()`: Creates batch item for adding collateral
   - `_removeCollateral()`: Creates batch item for removing collateral
 
-### BalancerBorrowAndAdd.sol
+### [BalancerBorrowAndAdd.sol](./BalancerBorrowAndAdd.sol)
 
 **Concrete implementation for Balancer liquidity operations**
 

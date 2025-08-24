@@ -1,7 +1,10 @@
 # AppReferrals
 
 **File**: [`AppReferrals.sol`](./AppReferrals.sol)
+
 **License**: AGPL-3.0
+
+**Test File**: [`test/foundry/AppReferrals.t.sol`](../../test/foundry/AppReferrals.t.sol)
 
 ## Overview
 
@@ -488,6 +491,29 @@ event ProgramStatsUpdated(uint256 totalReferrals, uint256 totalRewards, uint256 
 2. **Reward Transparency**: Show clear reward calculations
 3. **Progress Tracking**: Track referral progress and rewards
 4. **Support Tools**: Provide tools for referral management
+
+## Testing
+
+### Unit Tests
+
+- Referral registration
+- Reward calculations
+- Parameter management
+- Statistics tracking
+
+**Test File**: [`test/foundry/AppReferrals.t.sol`](../../test/foundry/AppReferrals.t.sol)
+
+### Integration Tests
+
+- Protocol contract integration
+- Treasury interaction testing
+- Reward distribution validation
+
+### Security Tests
+
+- Unauthorized access attempts
+- Access control validation
+- Fraud prevention mechanisms
 
 ## License
 

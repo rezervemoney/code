@@ -1,7 +1,10 @@
 # AppBondDepository
 
 **File**: [`AppBondDepository.sol`](./AppBondDepository.sol)
+
 **License**: AGPL-3.0
+
+**Test File**: [`test/foundry/AppBondDepositoryTest.t.sol`](../../test/foundry/AppBondDepositoryTest.t.sol)
 
 ## Overview
 
@@ -443,6 +446,29 @@ event BondStatusUpdated(uint256 indexed bondId, bool active);
 2. **Vesting Transparency**: Show clear vesting schedules and progress
 3. **Claim Automation**: Automate token claiming where possible
 4. **Investment Tracking**: Provide tools to track bond performance
+
+## Testing
+
+### Unit Tests
+
+- Bond creation
+- Purchase operations
+- Vesting calculations
+- Debt management
+
+**Test File**: [`test/foundry/AppBondDepositoryTest.t.sol`](../../test/foundry/AppBondDepositoryTest.t.sol)
+
+### Integration Tests
+
+- Protocol contract integration
+- Treasury interaction testing
+- Oracle operations
+
+### Security Tests
+
+- Unauthorized access attempts
+- Access control validation
+- Bond manipulation prevention
 
 ## License
 

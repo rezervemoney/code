@@ -175,7 +175,7 @@ All oracles must implement this interface to provide:
 uint256 amountA = balanceA * amount / totalSupply;
 uint256 amountB = balanceB * amount / totalSupply;
 
-// Get individual token prices
+// Get individual token prices via [AppOracle](../../../core/AppOracle.sol)
 (uint256 rzrA, uint256 usdA,) = appOracle.getPriceForAmount(tokenA, amountA);
 (uint256 rzrB, uint256 usdB,) = appOracle.getPriceForAmount(tokenB, amountB);
 
@@ -187,7 +187,7 @@ usdAssets = usdA + usdB;
 ### Yield Token Pricing
 
 ```solidity
-// Calculate underlying asset value
+// Calculate underlying asset value via [AppOracle](../../../core/AppOracle.sol)
 uint256 underlyingAmount = convertToAssets(shares);
 (uint256 rzrValue, uint256 usdValue,) = appOracle.getPriceForAmount(underlying, underlyingAmount);
 
@@ -242,7 +242,7 @@ FixedOracle fallback = FixedOracle(address);
 
 ```solidity
 // Most LP oracles use the app oracle for underlying token pricing
-IAppOracle public immutable appOracle;
+[IAppOracle](../../../interfaces/IAppOracle.sol) public immutable appOracle;
 
 // Get individual token prices
 (uint256 rzrAmount, uint256 usdAmount,) = appOracle.getPriceForAmount(token, amount);

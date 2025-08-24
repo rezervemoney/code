@@ -1,6 +1,7 @@
 # AppTimelock
 
 **File**: [`AppTimelock.sol`](./AppTimelock.sol)
+
 **License**: AGPL-3.0
 
 ## Overview
@@ -451,6 +452,29 @@ event EmergencyExecuted(bytes32 indexed actionHash, address indexed target);
 2. **Execution Tracking**: Track action execution status
 3. **Cancellation Process**: Clear process for cancelling actions
 4. **Monitoring Tools**: Provide tools to monitor timelock status
+
+## Testing
+
+### Unit Tests
+
+- Action queuing
+- Execution timing
+- Batch operations
+- Cancellation logic
+
+**Test File**: [`test/foundry/AccessControlTest.t.sol`](../../test/foundry/AccessControlTest.t.sol)
+
+### Integration Tests
+
+- Protocol contract integration
+- Governance interaction testing
+- Timelock mechanics validation
+
+### Security Tests
+
+- Unauthorized access attempts
+- Access control validation
+- Timing manipulation prevention
 
 ## License
 

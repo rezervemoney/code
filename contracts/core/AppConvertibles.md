@@ -1,7 +1,10 @@
 # AppConvertibles
 
 **File**: [`AppConvertibles.sol`](./AppConvertibles.sol)
+
 **License**: AGPL-3.0
+
+**Test File**: [`test/foundry/AppConvertiblesTest.t.sol`](../../test/foundry/AppConvertiblesTest.t.sol)
 
 ## Overview
 
@@ -33,130 +36,119 @@ This contract serves as:
 
 ## Key Functions
 
-### Convertible Management
+### Staking and Conversion
 
-#### Create Convertible
-
-```solidity
-function createConvertible(
-    uint256 principal,
-    uint256 conversionRate,
-    uint256 vestingPeriod,
-    uint256 maxConvertibles
-) external onlyBondManager
-```
-
-**Purpose**: Create a new convertible debt offering.
-
-**Access Control**: Only bond managers can create convertibles.
-
-**Parameters**:
-
-- `principal`: Principal amount of the convertible
-- `conversionRate`: Rate for converting debt to equity
-- `vestingPeriod`: Duration of token vesting period
-- `maxConvertibles`: Maximum number of convertibles that can be sold
-
-**Process**:
-
-1. Validate convertible parameters
-2. Create convertible offering
-3. Set conversion terms and vesting schedule
-4. Emit convertible creation event
-
-#### Purchase Convertible
+#### Stake for Convertibles
 
 ```solidity
-function purchaseConvertible(uint256 convertibleId, uint256 amount) external
-```
-
-**Purpose**: Purchase convertible debt instruments.
-
-**Parameters**:
-
-- `convertibleId`: ID of the convertible to purchase
-- `amount`: Amount to invest in the convertible
-
-**Process**:
-
-1. Validate convertible availability and terms
-2. Transfer investment tokens from user
-3. Create convertible position for user
-4. Update tracking and emit event
-
-### Conversion Operations
-
-#### Convert Debt to Equity
-
-```solidity
-function convertToEquity(uint256 convertibleId, uint256 amount) external
-```
-
-**Purpose**: Convert convertible debt to equity tokens.
-
-**Parameters**:
-
-- `convertibleId`: ID of the convertible to convert
-- `amount`: Amount of debt to convert
-
-**Requirements**: Must have sufficient convertible debt and meet conversion criteria.
-
-**Process**:
-
-1. Calculate equity tokens based on conversion rate
-2. Burn convertible debt tokens
-3. Mint equity tokens to user
-4. Update conversion tracking
-
-#### Get Conversion Info
-
-```solidity
-function getConversionInfo(uint256 convertibleId, address user) external view returns (
-    uint256 convertibleAmount,
-    uint256 equityAmount,
-    uint256 conversionRate,
-    bool canConvert
+function stake(uint256 amount, uint256 lockDuration, address receiver) external returns (
+    uint256 tokenId,
+    uint256 conversionPrice,
+    uint256 conversionAmount,
+    uint256 fixedInterestRate,
+    uint256 fixedInterestRateAmount
 )
 ```
 
-**Purpose**: Get conversion information for a user's convertible position.
+**Purpose**: Stake loan tokens to receive convertible debt positions.
 
 **Parameters**:
 
-- `convertibleId`: ID of the convertible
-- `user`: Address of the convertible holder
+- `amount`: Amount of loan tokens to stake
+- `lockDuration`: Duration to lock staked tokens
+- `receiver`: Address to receive the position NFT
 
-**Returns**: Detailed conversion information and eligibility.
+**Returns**: Position details including conversion terms and interest rates.
 
-### Vesting Management
+**Process**: Creates NFT position, calculates conversion terms, mints tracking tokens.
 
-#### Check Vesting Status
+#### Convert to Equity
 
 ```solidity
-function getVestingInfo(uint256 convertibleId, address user) external view returns (
-    uint256 totalTokens,
-    uint256 vestedTokens,
-    uint256 claimableTokens,
-    uint256 vestingStartTime
-)
+function convert(uint256 tokenId) external
 ```
 
-**Purpose**: Get vesting information for a user's convertible position.
+**Purpose**: Convert convertible debt to RZR equity tokens.
+
+**Parameters**: `tokenId` - NFT token ID of the position.
+
+**Requirements**: Must meet minimum lock duration and price conversion criteria.
+
+**Process**: Burns NFT, transfers loan tokens to treasury, mints RZR tokens.
+
+#### Redeem Position
+
+```solidity
+function redeem(uint256 tokenId) external
+```
+
+**Purpose**: Redeem staked tokens with accumulated interest.
+
+**Parameters**: `tokenId` - NFT token ID of the position.
+
+**Requirements**: Must meet lock duration requirement.
+
+**Process**: Burns NFT, returns staked tokens plus interest, burns tracking tokens.
+
+### Position Management
+
+#### Split Position
+
+```solidity
+function split(uint256 tokenId, uint256 percentageE18) external
+```
+
+**Purpose**: Split a position into two separate positions.
 
 **Parameters**:
 
-- `convertibleId`: ID of the convertible
-- `user`: Address of the convertible holder
+- `tokenId` - Original position ID
+- `percentageE18` - Percentage to split (0-1e18)
 
-**Returns**: Detailed vesting information and status.
+**Process**: Creates new NFT with split amounts, updates original position.
 
-#### Claim Vested Tokens
+#### Claim Interest
 
 ```solidity
-function claimVestedTokens(uint256 convertibleId) external
+function claimInterest(uint256 tokenId) external returns (uint256 interestClaimed, uint256 totalInterestClaimed)
 ```
 
-**Purpose**: Claim vested tokens from a convertible position.
+**Purpose**: Claim accumulated fixed interest on a position.
+
+**Parameters**: `tokenId` - NFT token ID of the position.
+
+**Returns**: Interest claimed and total interest claimed.
+
+**Process**: Calculates claimable interest, transfers loan tokens to owner.
+
+### Configuration
+
+#### Update Oracles
+
+```solidity
+function updateOracle(address _oracle, address _twapOracle) external onlyGovernor
+```
+
+**Purpose**: Update oracle addresses for price feeds.
+
+**Access Control**: Only governors can update oracles.
+
+#### Set Variables
+
+```solidity
+function setVariables(
+    uint256 _minConversionPremium,
+    uint256 _maxConversionPremium,
+    uint256 _minFixedInterestRate,
+    uint256 _maxFixedInterestRate,
+    uint256 _supplyCap,
+    uint256 _debtCap
+) external onlyGovernor
+```
+
+**Purpose**: Update protocol configuration parameters.
+
+**Access Control**: Only governors can update variables.
 
 **Parameters**: `convertibleId` - ID of the convertible to claim from.
 
@@ -449,6 +441,29 @@ event ConvertibleStatusUpdated(uint256 indexed convertibleId, bool active);
 2. **Vesting Transparency**: Show clear vesting schedules and progress
 3. **Conversion Process**: Simplify debt to equity conversion
 4. **Investment Tracking**: Provide tools to track convertible performance
+
+## Testing
+
+### Unit Tests
+
+- Convertible creation
+- Purchase operations
+- Conversion logic
+- Vesting calculations
+
+**Test File**: [`test/foundry/AppConvertiblesTest.t.sol`](../../test/foundry/AppConvertiblesTest.t.sol)
+
+### Integration Tests
+
+- Protocol contract integration
+- Treasury interaction testing
+- Oracle operations
+
+### Security Tests
+
+- Unauthorized access attempts
+- Access control validation
+- Conversion manipulation prevention
 
 ## License
 

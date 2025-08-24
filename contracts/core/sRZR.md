@@ -326,6 +326,29 @@ event Approval(address indexed owner, address indexed spender, uint256 value);
 3. **Error Handling**: Provide clear error messages for failed operations
 4. **Monitoring Tools**: Offer tools to track staking performance
 
+## Testing
+
+### Unit Tests
+
+- Staking functionality
+- Unstaking operations
+- Reward distribution
+- Penalty calculations
+
+**Test File**: [`test/foundry/Staking4626.t.sol`](../../test/foundry/Staking4626.t.sol)
+
+### Integration Tests
+
+- Protocol contract integration
+- Treasury interaction testing
+- Staking vault operations
+
+### Security Tests
+
+- Unauthorized staking attempts
+- Access control validation
+- Reward manipulation prevention
+
 ## License
 
 AGPL-3.0

@@ -1,6 +1,7 @@
 # RZR Token
 
 **File**: [`RZR.sol`](./RZR.sol)
+
 **License**: AGPL-3.0
 
 ## Overview
@@ -325,6 +326,29 @@ event Permit(address indexed owner, address indexed spender, uint256 value, uint
 2. **Standard Compliance**: Full ERC20 standard implementation
 3. **Wallet Support**: Ensure compatibility with major wallets
 4. **Documentation**: Provide clear usage instructions
+
+## Testing
+
+### Unit Tests
+
+- Token minting functionality
+- Burning operations
+- Permit functionality
+- Access control validation
+
+**Test File**: [`test/foundry/Staking4626.t.sol`](../../test/foundry/Staking4626.t.sol)
+
+### Integration Tests
+
+- Protocol contract integration
+- DEX interaction testing
+- Treasury operations
+
+### Security Tests
+
+- Unauthorized minting attempts
+- Access control validation
+- Permit signature verification
 
 ## License
 

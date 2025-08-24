@@ -1,7 +1,10 @@
 # AppBurner
 
 **File**: [`AppBurner.sol`](./AppBurner.sol)
+
 **License**: AGPL-3.0
+
+**Test File**: [`test/foundry/AppBurnerTest.t.sol`](../../test/foundry/AppBurnerTest.t.sol)
 
 ## Overview
 
@@ -26,146 +29,97 @@ This contract serves as:
 
 ### Core Components
 
-- **Burning Mechanisms**: Various token burning strategies
-- **Supply Tracking**: Token supply monitoring and management
-- **Strategy Management**: Configurable burning strategies
-- **Integration Points**: Connection with other protocol contracts
+- **Balance Burning**: Burns entire RZR balance of the contract
+- **Floor Price Updates**: Automatically updates RZR floor price after burning
+- **Price Calculation**: Exponential formula for floor price updates
+- **Token Recovery**: ERC20 token recovery functionality
+- **Contract Execution**: Arbitrary function execution capability
 
 ## Key Functions
 
 ### Burning Operations
 
-#### Burn Tokens
+#### Burn Contract Balance
 
 ```solidity
-function burn(uint256 amount) external onlyReserveManager
+function burn() external onlyExecutor
 ```
 
-**Purpose**: Burn a specified amount of RZR tokens.
+**Purpose**: Burn the entire balance of RZR tokens held by the burner contract.
 
-**Access Control**: Only reserve managers can burn tokens.
-
-**Parameters**: `amount` - Amount of RZR tokens to burn.
+**Access Control**: Only executors can burn tokens.
 
 **Process**:
 
-1. Validate burn amount
-2. Transfer tokens from treasury to burner
-3. Burn tokens permanently
-4. Update supply tracking
-5. Emit burn event
+1. Get current RZR balance of the contract
+2. Calculate new floor price based on burn amount
+3. Validate floor price increase constraints
+4. Burn all tokens and update floor price
+5. Emit burn event with amount and new floor price
 
-#### Burn From Treasury
+### Floor Price Management
 
-```solidity
-function burnFromTreasury(uint256 amount) external onlyReserveManager
-```
-
-**Purpose**: Burn tokens directly from treasury reserves.
-
-**Access Control**: Only reserve managers can burn from treasury.
-
-**Parameters**: `amount` - Amount of tokens to burn from treasury.
-
-**Process**:
-
-1. Calculate available treasury balance
-2. Burn tokens from treasury
-3. Update supply and treasury tracking
-4. Emit burn event
-
-### Strategy Management
-
-#### Set Burning Strategy
+#### Calculate Floor Update
 
 ```solidity
-function setBurningStrategy(
-    uint256 strategyId,
-    uint256 burnRate,
-    bool active
-) external onlyGovernor
+function calculateFloorUpdate(uint256 amountToBurn, uint256 totalSupply, uint256 floorPrice) public pure returns (uint256 newFloorPrice)
 ```
 
-**Purpose**: Configure burning strategies and parameters.
-
-**Access Control**: Only governors can set burning strategies.
+**Purpose**: Calculate new floor price based on burn amount and total supply.
 
 **Parameters**:
 
-- `strategyId`: ID of the burning strategy
-- `burnRate`: Rate of burning for this strategy
-- `active`: Whether the strategy is active
+- `amountToBurn`: Amount of tokens to burn
+- `totalSupply`: Total supply of RZR tokens
+- `floorPrice`: Current floor price
 
-**Process**:
+**Returns**: New calculated floor price.
 
-1. Validate strategy parameters
-2. Update strategy configuration
-3. Emit strategy updated event
+**Process**: Uses exponential formula to calculate price multiplier based on burn percentage.
 
-#### Execute Burning Strategy
+### Contract Management
 
-```solidity
-function executeBurningStrategy(uint256 strategyId) external onlyExecutor
-```
-
-**Purpose**: Execute a configured burning strategy.
-
-**Access Control**: Only executors can execute strategies.
-
-**Parameters**: `strategyId` - ID of the strategy to execute.
-
-**Process**:
-
-1. Validate strategy is active
-2. Calculate burn amount based on strategy
-3. Execute burning operation
-4. Update strategy execution tracking
-
-### Supply Management
-
-#### Get Total Burned
+#### Recover ERC20 Tokens
 
 ```solidity
-function getTotalBurned() external view returns (uint256)
+function recoverERC20(address token, uint256 amount) external onlyGovernor
 ```
 
-**Purpose**: Get total amount of RZR tokens burned.
+**Purpose**: Recover ERC20 tokens from the contract.
 
-**Returns**: Total amount of tokens burned since inception.
+**Access Control**: Only governors can recover tokens.
 
-#### Get Burned This Period
+**Parameters**:
+
+- `token`: Address of the token to recover
+- `amount`: Amount of tokens to recover
+
+**Process**: Transfers tokens to operations treasury.
+
+#### Execute Function
 
 ```solidity
-function getBurnedThisPeriod() external view returns (uint256)
+function execute(address _to, uint256 _value, bytes calldata _data) external onlyGovernor
 ```
 
-**Purpose**: Get amount of tokens burned in current period.
+**Purpose**: Execute arbitrary function calls on other contracts.
 
-**Returns**: Amount of tokens burned in current period.
+**Access Control**: Only governors can execute functions.
 
-#### Get Burning Statistics
+**Parameters**:
 
-```solidity
-function getBurningStats() external view returns (
-    uint256 totalBurned,
-    uint256 burnedThisPeriod,
-    uint256 lastBurnTime,
-    uint256 activeStrategies
-)
-```
-
-**Purpose**: Get comprehensive burning statistics.
-
-**Returns**: Complete burning statistics and information.
+- `_to`: Target contract address
+- `_value`: ETH value to send
+- `_data`: Function call data
 
 ## Integration Points
 
 ### Protocol Contracts
 
 - **RZR Token**: [`RZR.sol`](./RZR.sol) - Token burning operations
-- **Treasury**: [`AppTreasury.sol`](./AppTreasury.sol) - Treasury integration
+- **AppOracle**: [`AppOracle.sol`](./AppOracle.sol) - Floor price management
 - **Authority**: [`AppAuthority.sol`](./AppAuthority.sol) - Access control
-- **Staking**: [`AppStaking.sol`](./AppStaking.sol) - Staking integration
+- **App Contract**: Main protocol contract for token operations
 
 ### External Systems
 
@@ -177,74 +131,45 @@ function getBurningStats() external view returns (
 
 ### Basic Burning Operations
 
-#### Burn Tokens
+#### Burn Contract Balance
 
 ```solidity
-// Burn 1000 RZR tokens
+// Burn all RZR tokens in the burner contract
 AppBurner burner = AppBurner(burnerAddress);
 
-burner.burn(1000e18);
+burner.burn();
 ```
 
-#### Burn From Treasury
+### Floor Price Calculations
+
+#### Calculate New Floor Price
 
 ```solidity
-// Burn 500 RZR tokens from treasury
-burner.burnFromTreasury(500e18);
-```
-
-### Strategy Management
-
-#### Set Burning Strategy
-
-```solidity
-// Set up automatic burning strategy
-burner.setBurningStrategy(
-    1,              // Strategy ID
-    5e16,           // 5% burn rate
-    true            // Active
+// Calculate new floor price for burning 1000 tokens
+uint256 newFloorPrice = burner.calculateFloorUpdate(
+    1000e18,        // Amount to burn
+    1000000e18,     // Total supply
+    1e18            // Current floor price
 );
+
+console.log("New Floor Price:", newFloorPrice);
 ```
 
-#### Execute Strategy
+### Contract Management
+
+#### Recover ERC20 Tokens
 
 ```solidity
-// Execute burning strategy
-burner.executeBurningStrategy(1);
+// Recover USDC tokens from the contract
+burner.recoverERC20(usdcAddress, 1000e6);
 ```
 
-### Supply Analytics
-
-#### Check Burning Statistics
+#### Execute Function Call
 
 ```solidity
-// Get comprehensive burning stats
-(
-    uint256 totalBurned,
-    uint256 burnedThisPeriod,
-    uint256 lastBurnTime,
-    uint256 activeStrategies
-) = burner.getBurningStats();
-
-console.log("Total Burned:", totalBurned);
-console.log("Burned This Period:", burnedThisPeriod);
-console.log("Active Strategies:", activeStrategies);
-```
-
-#### Get Total Burned
-
-```solidity
-// Check total tokens burned
-uint256 totalBurned = burner.getTotalBurned();
-console.log("Total Tokens Burned:", totalBurned);
-```
-
-#### Get Period Burned
-
-```solidity
-// Check current period burning
-uint256 periodBurned = burner.getBurnedThisPeriod();
-console.log("Tokens Burned This Period:", periodBurned);
+// Execute a function on another contract
+bytes memory data = abi.encodeWithSignature("someFunction(uint256)", 123);
+burner.execute(targetContract, 0, data);
 ```
 
 ## Events
@@ -252,23 +177,7 @@ console.log("Tokens Burned This Period:", periodBurned);
 ### Burning Events
 
 ```solidity
-event TokensBurned(uint256 amount, uint256 timestamp);
-event TreasuryBurned(uint256 amount, uint256 timestamp);
-event StrategyExecuted(uint256 indexed strategyId, uint256 amount);
-```
-
-### Strategy Events
-
-```solidity
-event BurningStrategySet(uint256 indexed strategyId, uint256 burnRate, bool active);
-event BurningStrategyUpdated(uint256 indexed strategyId, uint256 oldRate, uint256 newRate);
-```
-
-### Management Events
-
-```solidity
-event BurnerParametersUpdated(uint256 maxBurnRate, uint256 maxBurnAmount);
-event EmergencyBurnExecuted(uint256 amount, string reason);
+event Burned(uint256 amount, uint256 newFloorPrice);
 ```
 
 ## Testing
@@ -276,22 +185,22 @@ event EmergencyBurnExecuted(uint256 amount, string reason);
 ### Unit Tests
 
 - Token burning functionality
-- Strategy management mechanisms
-- Supply tracking accuracy
+- Floor price calculation accuracy
 - Access control validation
+- ERC20 recovery functionality
 
 ### Integration Tests
 
 - Cross-contract burning flows
-- Treasury integration testing
-- Staking integration testing
+- Oracle integration testing
+- App contract integration testing
 - Authority system integration
 
 ### Security Tests
 
 - Access control validation
-- Economic attack vectors
-- Supply manipulation prevention
+- Floor price manipulation prevention
+- Burn percentage validation
 - Emergency procedure testing
 
 ## Deployment Considerations
@@ -300,14 +209,14 @@ event EmergencyBurnExecuted(uint256 amount, string reason);
 
 1. **Deploy Contract**: Deploy AppBurner contract
 2. **Configure Authority**: Set up access control integration
-3. **Set Strategies**: Configure initial burning strategies
-4. **Verify Integration**: Test with RZR token and treasury
+3. **Set Oracle**: Configure AppOracle integration
+4. **Verify Integration**: Test with RZR token and oracle
 
 ### Configuration
 
 1. **Authority Integration**: Connect to protocol authority system
-2. **Burning Strategies**: Set up effective burning strategies
-3. **Supply Limits**: Configure maximum burning limits
+2. **Oracle Integration**: Set up AppOracle for floor price management
+3. **Burn Constraints**: Configure floor price increase limits
 4. **Monitoring Setup**: Implement burning monitoring
 
 ## Dependencies
@@ -315,12 +224,12 @@ event EmergencyBurnExecuted(uint256 amount, string reason);
 ### Core Dependencies
 
 - **AppAccessControlled**: Protocol access control integration
-- **Initializable**: Upgradeable contract pattern
-- **RZR Token**: Token burning operations
+- **IAppOracle**: Oracle interface for floor price management
+- **IApp**: Main protocol contract interface
 
 ### External Dependencies
 
-- **Treasury System**: Treasury integration for burning
+- **Oracle System**: Price feed integration for floor price updates
 - **Economic Models**: Economic analysis and modeling
 - **Supply Analytics**: Supply tracking and reporting
 
@@ -328,24 +237,47 @@ event EmergencyBurnExecuted(uint256 amount, string reason);
 
 ### Burning Management
 
-1. **Strategy Optimization**: Optimize burning strategies for goals
-2. **Supply Monitoring**: Monitor token supply and burning impact
+1. **Balance Monitoring**: Monitor contract RZR balance for burning opportunities
+2. **Floor Price Impact**: Understand floor price update calculations
 3. **Market Impact**: Minimize market disruption from burning
 4. **Economic Balance**: Maintain balanced economic model
 
 ### Security Considerations
 
 1. **Access Control**: Verify burning permissions are properly restricted
-2. **Supply Limits**: Implement and enforce maximum burning limits
-3. **Strategy Validation**: Validate all burning strategies
+2. **Floor Price Constraints**: Ensure floor price increases are within limits
+3. **Burn Percentage Limits**: Prevent burning more than 100% of supply
 4. **Emergency Procedures**: Test emergency response capabilities
 
 ### User Experience
 
 1. **Transparency**: Provide clear visibility of burning operations
-2. **Impact Communication**: Communicate burning impact to users
-3. **Strategy Visibility**: Show active burning strategies
+2. **Floor Price Updates**: Communicate floor price impact to users
+3. **Burn Visibility**: Show burn amounts and new floor prices
 4. **Monitoring Tools**: Provide tools to monitor burning operations
+
+## Testing
+
+### Unit Tests
+
+- Burning operations
+- Strategy management
+- Statistics tracking
+- Treasury integration
+
+**Test File**: [`test/foundry/AppBurnerTest.t.sol`](../../test/foundry/AppBurnerTest.t.sol)
+
+### Integration Tests
+
+- Protocol contract integration
+- Treasury interaction testing
+- Token supply management
+
+### Security Tests
+
+- Unauthorized access attempts
+- Access control validation
+- Burning manipulation prevention
 
 ## License
 

@@ -1,7 +1,10 @@
 # AppAccessControlled
 
 **File**: [`AppAccessControlled.sol`](./AppAccessControlled.sol)
+
 **License**: AGPL-3.0
+
+**Test File**: [`test/foundry/AccessControlTest.t.sol`](../../test/foundry/AccessControlTest.t.sol)
 
 ## Overview
 
@@ -300,6 +303,29 @@ contract StakingContract is AppAccessControlled {
 2. **Contract Deployment**: Pass authority address to all `AppAccessControlled` contracts
 3. **Role Configuration**: Configure roles in authority contract before use
 4. **Testing**: Verify all access control functionality
+
+## Testing
+
+### Unit Tests
+
+- Authority address initialization
+- Pause state checking functionality
+- Access control modifier validation
+- Role verification mechanisms
+
+**Test File**: [`test/foundry/AccessControlTest.t.sol`](../../test/foundry/AccessControlTest.t.sol)
+
+### Integration Tests
+
+- Cross-contract permission checking
+- Pause state propagation
+- Authority system integration
+
+### Security Tests
+
+- Unauthorized access attempts
+- Role escalation prevention
+- Emergency procedure validation
 
 ## License
 

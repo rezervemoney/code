@@ -1,7 +1,10 @@
 # RebaseController
 
 **File**: [`RebaseController.sol`](./RebaseController.sol)
+
 **License**: AGPL-3.0
+
+**Test File**: [`test/foundry/RebaseControllerTest.t.sol`](../../test/foundry/RebaseControllerTest.t.sol)
 
 ## Overview
 
@@ -437,6 +440,29 @@ event TargetSupplyUpdated(uint256 oldTarget, uint256 newTarget);
 2. **Impact Communication**: Communicate rebase impact to users
 3. **Balance Updates**: Ensure accurate balance updates
 4. **Monitoring Tools**: Provide tools to monitor rebase operations
+
+## Testing
+
+### Unit Tests
+
+- Rebase calculations
+- Execution logic
+- Parameter management
+- History tracking
+
+**Test File**: [`test/foundry/RebaseControllerTest.t.sol`](../../test/foundry/RebaseControllerTest.t.sol)
+
+### Integration Tests
+
+- Protocol contract integration
+- Treasury interaction testing
+- Supply management validation
+
+### Security Tests
+
+- Unauthorized access attempts
+- Access control validation
+- Rebase manipulation prevention
 
 ## License
 

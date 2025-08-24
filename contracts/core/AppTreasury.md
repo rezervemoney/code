@@ -1,7 +1,10 @@
 # AppTreasury
 
 **File**: [`AppTreasury.sol`](./AppTreasury.sol)
+
 **License**: AGPL-3.0
+
+**Test File**: [`test/foundry/AppTreasuryTest.t.sol`](../../test/foundry/AppTreasuryTest.t.sol)
 
 ## Overview
 
@@ -64,105 +67,34 @@ function syncReserves() external returns (uint256 usdReserves, uint256 rzrReserv
 
 **Process**: Updates reserve calculations and emits events for monitoring.
 
-### Economic Policy Execution
+### Reserve Management
 
-#### Policy Implementation
-
-```solidity
-function executePolicy(bytes calldata policyData) external onlyPolicy
-```
-
-**Purpose**: Execute economic policies approved by governance.
-
-**Access Control**: Only policy role members can execute policies.
-
-**Parameters**: `policyData` - Encoded policy parameters and actions.
-
-**Process**: Decodes policy data and executes approved economic actions.
-
-#### Reserve Allocation
+#### Token Management
 
 ```solidity
-function allocateReserves(uint256 amount, address recipient) external onlyReserveManager
+function enable(address _address) external onlyGovernor
+function disable(address _toDisable) external onlyGuardianOrGovernor
 ```
 
-**Purpose**: Allocate reserves for specific protocol operations.
+**Purpose**: Enable or disable tokens for treasury operations.
 
-**Access Control**: Only reserve managers can allocate reserves.
+**Access Control**: Only governors can enable tokens, guardians or governors can disable.
 
-**Parameters**:
+**Parameters**: `_address` - Token address to enable/disable.
 
-- `amount`: Amount of reserves to allocate
-- `recipient`: Address to receive allocated reserves
+**Process**: Validates token prices and manages treasury token list.
 
-**Process**: Transfers allocated reserves and updates tracking.
-
-### Funding Distribution
-
-#### Staking Rewards
+#### Reserve Calculation
 
 ```solidity
-function distributeStakingRewards(uint256 amount) external onlyReserveManager
+function calculateReserves() public view returns (uint256 usdReserves, uint256 rzrReserves)
 ```
 
-**Purpose**: Distribute RZR tokens for staking rewards.
+**Purpose**: Calculate current reserves across all enabled tokens.
 
-**Access Control**: Only reserve managers can distribute staking rewards.
+**Returns**: Total USD and RZR reserve values.
 
-**Parameters**: `amount` - Amount of RZR to distribute as rewards.
-
-**Process**: Mints RZR tokens and distributes to staking contract.
-
-#### Bond Funding
-
-```solidity
-function fundBondIssuance(uint256 amount) external onlyBondManager
-```
-
-**Purpose**: Provide funding for bond issuance operations.
-
-**Access Control**: Only bond managers can request bond funding.
-
-**Parameters**: `amount` - Amount of funding required for bonds.
-
-**Process**: Allocates reserves for bond operations and updates tracking.
-
-### Reserve Operations
-
-#### Reserve Deposits
-
-```solidity
-function depositReserves(address token, uint256 amount) external onlyReserveDepositor
-```
-
-**Purpose**: Add new reserves to the treasury.
-
-**Access Control**: Only reserve depositors can add reserves.
-
-**Parameters**:
-
-- `token`: Address of the token being deposited
-- `amount`: Amount of tokens to deposit
-
-**Process**: Transfers tokens to treasury and updates reserve tracking.
-
-#### Reserve Withdrawals
-
-```solidity
-function withdrawReserves(address token, uint256 amount, address recipient) external onlyReserveManager
-```
-
-**Purpose**: Withdraw reserves for protocol operations.
-
-**Access Control**: Only reserve managers can withdraw reserves.
-
-**Parameters**:
-
-- `token`: Address of the token to withdraw
-- `amount`: Amount of tokens to withdraw
-- `recipient`: Address to receive withdrawn tokens
-
-**Process**: Transfers tokens from treasury and updates tracking.
+**Process**: Iterates through enabled tokens and calculates total reserves.
 
 ## Integration Points
 
@@ -188,35 +120,35 @@ function withdrawReserves(address token, uint256 amount, address recipient) exte
 - **RZR Backing**: RZR tokens as primary reserve asset
 - **Liquidity Management**: Balanced reserve allocation for operations
 
-### Policy Framework
+### Reserve Framework
 
-- **Governance Approval**: All policies require governance approval
-- **Parameter Control**: Configurable economic parameters
-- **Execution Monitoring**: Full transparency of policy execution
-- **Emergency Controls**: Emergency policy override capabilities
+- **Token Management**: Governors can enable/disable tokens for treasury operations
+- **Fee Structure**: Configurable reserve fees for deposits
+- **Price Validation**: All tokens must have valid oracle prices
+- **Emergency Controls**: Guardians can disable tokens in emergencies
 
-### Funding Mechanisms
+### Reserve Operations
 
-- **Staking Rewards**: Automated distribution to stakers
-- **Bond Funding**: Funding for debt issuance operations
-- **Protocol Development**: Funding for protocol improvements
-- **Emergency Reserves**: Maintained for emergency situations
+- **Deposit Management**: Reserve depositors can add new reserves
+- **Token Withdrawal**: Reserve managers can withdraw tokens for operations
+- **Reserve Synchronization**: Bridge contracts can sync cross-chain reserves
+- **Executive Actions**: Governors can execute arbitrary calls for complex operations
 
 ## Security Features
 
 ### Access Control
 
 - **Role-Based Permissions**: Granular access control for all operations
-- **Policy Execution**: Only authorized roles can execute policies
+- **Token Management**: Only governors can enable tokens, guardians can disable
 - **Reserve Management**: Controlled access to reserve operations
 - **Emergency Controls**: Emergency pause and override capabilities
 
 ### Economic Security
 
-- **Reserve Validation**: All reserve calculations verified
-- **Policy Limits**: Maximum limits on policy execution
+- **Reserve Validation**: All reserve calculations verified via oracle prices
+- **Token Validation**: All enabled tokens must have valid oracle prices
+- **Fee Limits**: Reserve fees capped at 100% (1e18)
 - **Audit Trail**: Complete transparency of all operations
-- **Emergency Procedures**: Emergency response capabilities
 
 ### Operational Security
 
@@ -390,6 +322,29 @@ event ReservesWithdrawn(address indexed token, uint256 amount, address indexed r
 2. **Policy Limits**: Implement maximum limits on policy execution
 3. **Monitoring**: Continuous monitoring of all operations
 4. **Emergency Procedures**: Test emergency response capabilities
+
+## Testing
+
+### Unit Tests
+
+- Reserve calculations
+- Policy execution
+- Reserve allocation
+- Staking reward distribution
+
+**Test File**: [`test/foundry/AppTreasuryTest.t.sol`](../../test/foundry/AppTreasuryTest.t.sol)
+
+### Integration Tests
+
+- Protocol contract integration
+- Oracle interaction testing
+- Staking contract operations
+
+### Security Tests
+
+- Unauthorized access attempts
+- Access control validation
+- Reserve manipulation prevention
 
 ## License
 

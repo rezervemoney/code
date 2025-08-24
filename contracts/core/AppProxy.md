@@ -1,6 +1,7 @@
 # AppProxy
 
 **File**: [`AppProxy.sol`](./AppProxy.sol)
+
 **License**: AGPL-3.0
 
 ## Overview
@@ -181,6 +182,29 @@ try proxy.implementation() returns (address impl) {
     console.log("Proxy has issues");
 }
 ```
+
+## Testing
+
+### Unit Tests
+
+- Proxy functionality
+- Upgrade operations
+- Fallback handling
+- Implementation management
+
+**Test File**: [`test/foundry/AccessControlTest.t.sol`](../../test/foundry/AccessControlTest.t.sol)
+
+### Integration Tests
+
+- Protocol contract integration
+- Upgrade process testing
+- State preservation validation
+
+### Security Tests
+
+- Unauthorized upgrade attempts
+- Access control validation
+- Storage collision prevention
 
 ## License
 

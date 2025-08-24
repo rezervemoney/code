@@ -1,7 +1,10 @@
 # Staking4626
 
 **File**: [`Staking4626.sol`](./Staking4626.sol)
+
 **License**: AGPL-3.0
+
+**Test File**: [`test/foundry/Staking4626.t.sol`](../../test/foundry/Staking4626.t.sol)
 
 ## Overview
 
@@ -411,6 +414,29 @@ event YieldDistributed(uint256 totalYield, uint256 timestamp);
 2. **Gas Optimization**: Optimize gas costs for common operations
 3. **Error Handling**: Provide clear error messages for failed operations
 4. **Monitoring Tools**: Offer tools to track vault performance
+
+## Testing
+
+### Unit Tests
+
+- ERC4626 compliance
+- Deposit and withdrawal operations
+- Share calculations
+- Preview functions
+
+**Test File**: [`test/foundry/Staking4626.t.sol`](../../test/foundry/Staking4626.t.sol)
+
+### Integration Tests
+
+- Protocol contract integration
+- Treasury interaction testing
+- Staking vault operations
+
+### Security Tests
+
+- Unauthorized access attempts
+- Access control validation
+- Reentrancy protection
 
 ## License
 

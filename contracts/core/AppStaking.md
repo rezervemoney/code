@@ -1,7 +1,10 @@
 # AppStaking
 
 **File**: [`AppStaking.sol`](./AppStaking.sol)
+
 **License**: AGPL-3.0
+
+**Test File**: [`test/foundry/AppStakingTest.t.sol`](../../test/foundry/AppStakingTest.t.sol)
 
 ## Overview
 
@@ -35,124 +38,172 @@ This contract serves as:
 
 ### Staking Operations
 
-#### Stake Tokens
+#### Create Position
 
 ```solidity
-function stake(uint256 amount, uint256 lockDuration) external
+function createPosition(address to, uint256 amount, uint256 declaredValue, uint256 minLockDuration) external returns (uint256 tokenId, uint256 taxPaid)
 ```
 
-**Purpose**: Stake RZR tokens for a specified lock duration.
+**Purpose**: Create a new staking position as an NFT.
 
 **Parameters**:
 
-- `amount`: Amount of RZR tokens to stake
-- `lockDuration`: Duration to lock staked tokens (in seconds)
+- `to` - Address to receive the position NFT
+- `amount` - Amount of RZR tokens to stake
+- `declaredValue` - Declared value for tax calculation
+- `minLockDuration` - Minimum lock duration for the position
 
-**Process**:
+**Returns**: `tokenId` - NFT token ID, `taxPaid` - Deposit fee paid
 
-1. Transfer RZR tokens from user to staking contract
-2. Create staking position with lock duration
-3. Calculate reward multiplier based on lock duration
-4. Update user staking balance and total staked
+**Process**: Transfers RZR tokens, mints NFT, calculates streaming tax rate
 
-#### Unstake Tokens
-
-```solidity
-function unstake(uint256 amount) external
-```
-
-**Purpose**: Unstake RZR tokens after lock period expires.
-
-**Parameters**: `amount` - Amount of RZR tokens to unstake.
-
-**Requirements**: Lock period must have expired.
-
-**Process**:
-
-1. Verify lock period has expired
-2. Calculate rewards for the position
-3. Transfer RZR tokens and rewards to user
-4. Update staking position and total staked
-
-#### Emergency Unstake
+#### Start Unstaking
 
 ```solidity
-function emergencyUnstake(uint256 amount) external
+function startUnstaking(uint256 tokenId) external
 ```
 
-**Purpose**: Unstake tokens before lock period with penalty.
+**Purpose**: Begin the unstaking process for a position.
 
-**Parameters**: `amount` - Amount of RZR tokens to emergency unstake.
+**Parameters**: `tokenId` - NFT token ID of the position.
 
-**Penalty**: Early withdrawal penalty applied to rewards.
+**Requirements**: Must be position owner, not already in cooldown.
 
-**Process**:
+**Process**: Starts withdrawal cooldown period.
 
-1. Calculate early withdrawal penalty
-2. Transfer RZR tokens and reduced rewards
-3. Apply penalty to protocol treasury
-4. Update staking position
+#### Complete Unstaking
+
+```solidity
+function completeUnstaking(uint256 tokenId) external
+```
+
+**Purpose**: Complete unstaking after cooldown period.
+
+**Parameters**: `tokenId` - NFT token ID of the position.
+
+**Requirements**: Cooldown period must have expired.
+
+**Process**: Transfers RZR tokens back to user and burns NFT.
+
+### Position Management
+
+#### Buy Position
+
+```solidity
+function buyPosition(uint256 tokenId) external
+```
+
+**Purpose**: Buy an existing staking position from another user.
+
+**Parameters**: `tokenId` - NFT token ID to purchase.
+
+**Requirements**: Cannot buy own position, position not in buy cooldown.
+
+**Process**: Transfers RZR tokens, pays resell fee, transfers NFT.
+
+#### Split Position
+
+```solidity
+function splitPosition(uint256 tokenId, uint256 splitRatio, address to) external returns (uint256 newTokenId)
+```
+
+**Purpose**: Split a position into two separate positions.
+
+**Parameters**:
+
+- `tokenId` - Original position ID
+- `splitRatio` - Ratio to split (0-1e18)
+- `to` - Recipient of new position
+
+**Returns**: `newTokenId` - ID of the new split position.
+
+#### Merge Positions
+
+```solidity
+function mergePositions(uint256 tokenId1, uint256 tokenId2) external returns (uint256 mergedTokenId)
+```
+
+**Purpose**: Merge two positions owned by the same user.
+
+**Parameters**: `tokenId1`, `tokenId2` - Position IDs to merge.
+
+**Returns**: `mergedTokenId` - ID of the merged position.
+
+**Requirements**: Must own both positions, neither in cooldown.
 
 ### Reward Management
 
 #### Claim Rewards
 
 ```solidity
-function claimRewards() external
+function claimRewards(uint256 tokenId) external returns (uint256 reward)
 ```
 
-**Purpose**: Claim accumulated staking rewards.
+**Purpose**: Claim accumulated rewards for a specific position.
 
-**Process**:
+**Parameters**: `tokenId` - NFT token ID of the position.
 
-1. Calculate user's accumulated rewards
-2. Transfer RZR rewards to user
-3. Update reward tracking for user's position
-4. Reset accumulated rewards
+**Returns**: `reward` - Amount of rewards claimed.
+
+**Process**: Calculates and transfers accumulated rewards to position owner.
 
 #### Calculate Rewards
 
 ```solidity
-function calculateRewards(address user) public view returns (uint256)
+function earned(uint256 tokenId) public view returns (uint256)
 ```
 
-**Purpose**: Calculate current rewards for a specific user.
+**Purpose**: Calculate current unclaimed rewards for a position.
 
-**Parameters**: `user` - Address of the user to calculate rewards for.
+**Parameters**: `tokenId` - NFT token ID of the position.
 
 **Returns**: Amount of accumulated rewards.
 
-**Process**: Calculates rewards based on staking amount, duration, and time.
+**Process**: Calculates rewards based on staking amount and time.
 
-### Position Management
-
-#### Get Staking Position
+#### Notify Reward Amount
 
 ```solidity
-function getStakingPosition(address user) external view returns (
-    uint256 stakedAmount,
-    uint256 lockStartTime,
-    uint256 lockDuration,
-    uint256 rewardMultiplier,
-    uint256 accumulatedRewards
-)
+function notifyRewardAmount(uint256 reward) external onlyPolicy
 ```
 
-**Purpose**: Get detailed information about a user's staking position.
+**Purpose**: Add new rewards to the staking pool.
 
-**Parameters**: `user` - Address of the user.
+**Parameters**: `reward` - Amount of RZR tokens to add as rewards.
 
-**Returns**: Complete staking position information.
+**Access Control**: Only policy role members can add rewards.
 
-#### Get Total Staked
+**Process**: Updates reward rate and distribution period.
+
+### Tax Management
+
+#### Collect Streaming Tax
 
 ```solidity
-function getTotalStaked() external view returns (uint256)
+function collectStreamingTax(uint256 id) external returns (uint256 tax, uint256 credit)
 ```
 
-**Purpose**: Get total amount of RZR tokens currently staked.
+**Purpose**: Collect streaming tax from a position.
 
-**Returns**: Total staked amount across all users.
+**Parameters**: `id` - NFT token ID of the position.
+
+**Returns**: `tax` - Tax amount collected, `credit` - Credit used.
+
+**Process**: Calculates and collects harberger tax, burns taxed tokens.
+
+#### Calculate Streaming Tax
+
+```solidity
+function calculateStreamingTax(uint256 id) external view returns (uint256 tax)
+```
+
+**Purpose**: Calculate streaming tax owed for a position.
+
+**Parameters**: `id` - NFT token ID of the position.
+
+**Returns**: Amount of tax owed.
+
+**Process**: Calculates tax based on declared value and time elapsed.
 
 ## Integration Points
 
@@ -171,26 +222,26 @@ function getTotalStaked() external view returns (uint256)
 
 ## Economic Model
 
-### Reward Multipliers
+### Harberger Tax System
 
-- **Time-Based Multipliers**: Longer lock periods = higher rewards
-- **Multiplier Calculation**: Based on lock duration and base rate
-- **Maximum Multiplier**: Cap on maximum reward multiplier
-- **Dynamic Adjustment**: Multipliers can be updated by governance
+- **Streaming Tax**: Continuous tax based on declared position value
+- **Tax Rate**: Configurable harberger tax rate (default: 5%)
+- **Declared Value**: Users declare their position value for tax calculation
+- **Tax Collection**: Automatic tax collection with configurable intervals
 
-### Penalty System
+### Position Trading
 
-- **Early Withdrawal Penalty**: Penalty for unstaking before lock expires
-- **Penalty Calculation**: Based on remaining lock time and staked amount
-- **Penalty Distribution**: Penalties sent to protocol treasury
-- **Penalty Rates**: Configurable penalty rates by governance
+- **Buy/Sell Positions**: Users can buy and sell existing staking positions
+- **Resell Fees**: 1% fee on position sales to prevent gaming
+- **Cooldown Periods**: Buy and withdrawal cooldowns to prevent manipulation
+- **Position Splitting**: Users can split positions into smaller ones
 
 ### Staking Mechanics
 
-- **Lock Periods**: Configurable staking lock durations
-- **Minimum Stakes**: Minimum staking amounts
-- **Maximum Stakes**: Maximum staking limits per user
-- **Compound Rewards**: Rewards can be restaked for compounding
+- **NFT-Based**: Each staking position is a unique NFT
+- **Lock Periods**: Configurable minimum lock durations
+- **Cooldown System**: Withdrawal cooldown periods for stability
+- **Tracking Tokens**: Separate tracking tokens for position management
 
 ## Security Features
 
@@ -203,9 +254,9 @@ function getTotalStaked() external view returns (uint256)
 
 ### Economic Security
 
-- **Penalty Enforcement**: Automatic penalty calculation and collection
+- **Tax Enforcement**: Automatic harberger tax calculation and collection
 - **Reward Validation**: All reward calculations verified
-- **Lock Enforcement**: Lock periods strictly enforced
+- **Cooldown Enforcement**: Cooldown periods strictly enforced
 - **Overflow Protection**: Safe math operations for all calculations
 
 ### Operational Security
@@ -392,6 +443,29 @@ event LockDurationUpdated(uint256 oldDuration, uint256 newDuration);
 2. **Reward Transparency**: Show clear reward calculations
 3. **Penalty Awareness**: Clearly communicate penalty implications
 4. **Monitoring Tools**: Offer tools to track staking performance
+
+## Testing
+
+### Unit Tests
+
+- Staking functionality
+- Unstaking operations
+- Reward calculations
+- Penalty system
+
+**Test File**: [`test/foundry/AppStakingTest.t.sol`](../../test/foundry/AppStakingTest.t.sol)
+
+### Integration Tests
+
+- Protocol contract integration
+- Treasury interaction testing
+- Oracle operations
+
+### Security Tests
+
+- Unauthorized access attempts
+- Access control validation
+- Reward manipulation prevention
 
 ## License
 

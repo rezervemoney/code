@@ -13,7 +13,7 @@ The bridge contracts establish a decentralized cross-chain communication network
 
 ## Contract Architecture
 
-### BridgeL1.sol
+### [BridgeL1.sol](./BridgeL1.sol)
 
 **Mainnet bridge contract that coordinates cross-chain data synchronization**
 
@@ -28,7 +28,7 @@ The bridge contracts establish a decentralized cross-chain communication network
   - `flushRZR()`: Converts RZR to lstRZR and bridges to L2s
   - `_lzReceive()`: Processes incoming data from L2 chains
 
-### BridgeL2.sol
+### [BridgeL2.sol](./BridgeL2.sol)
 
 **Layer 2 bridge contract that responds to mainnet read requests**
 
@@ -42,7 +42,7 @@ The bridge contracts establish a decentralized cross-chain communication network
   - `data()`: Returns local chain reserves and chain ID
   - `_lzReceive()`: Processes rate updates from mainnet
 
-### Staking4626L2.sol
+### [Staking4626L2.sol](./Staking4626L2.sol)
 
 **ERC4626-compliant liquid staking vault for Layer 2 networks**
 

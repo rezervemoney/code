@@ -1,7 +1,10 @@
 # AppOracle
 
 **File**: [`AppOracle.sol`](./AppOracle.sol)
+
 **License**: AGPL-3.0
+
+**Test File**: [`test/foundry/AppOracleTest.t.sol`](../../test/foundry/AppOracleTest.t.sol)
 
 ## Overview
 
@@ -26,157 +29,145 @@ This contract serves as:
 
 ### Core Components
 
-- **Oracle Registry**: Management of oracle sources and configurations
-- **Data Aggregation**: Aggregation of data from multiple sources
-- **Validation Logic**: Data validation and staleness checks
-- **Price Feeds**: Price feed management and distribution
+- **Oracle Registry**: Mapping of tokens to their oracle contracts
+- **Staleness Management**: Configurable staleness thresholds per token
+- **Price Validation**: Automatic staleness checking for all price queries
+- **Floor Price System**: RZR token floor price management
+- **Dual Pricing**: Support for both RZR and USD denominated prices
 
 ## Key Functions
 
 ### Oracle Management
 
-#### Register Oracle
+#### Update Oracle
 
 ```solidity
-function registerOracle(
-    address oracle,
-    uint256 weight,
-    bool active
-) external onlyGovernor
+function updateOracle(address _token, address _oracle, uint256 _maxStaleness) external onlyGovernor
 ```
 
-**Purpose**: Register a new oracle source with specified weight.
+**Purpose**: Update or register an oracle for a specific token.
 
-**Access Control**: Only governors can register oracles.
+**Access Control**: Only governors can update oracles.
 
 **Parameters**:
 
-- `oracle`: Address of the oracle contract
-- `weight`: Weight for this oracle in aggregation
-- `active`: Whether the oracle is active
+- `_token`: Address of the token
+- `_oracle`: Address of the oracle contract
+- `_maxStaleness`: Maximum staleness threshold for the oracle
 
 **Process**:
 
-1. Validate oracle address
-2. Set oracle weight and status
-3. Add to oracle registry
-4. Emit oracle registered event
-
-#### Update Oracle Weight
-
-```solidity
-function updateOracleWeight(address oracle, uint256 newWeight) external onlyGovernor
-```
-
-**Purpose**: Update the weight of a registered oracle.
-
-**Access Control**: Only governors can update oracle weights.
-
-**Parameters**:
-
-- `oracle`: Address of the oracle to update
-- `newWeight`: New weight for the oracle
-
-**Process**: Updates oracle weight and emits event.
+1. Validate token and oracle addresses
+2. Set oracle for the token
+3. Configure staleness threshold
+4. Validate oracle price data
+5. Emit oracle updated event
 
 ### Price Data Management
 
-#### Get Asset Price
+#### Get Price
 
 ```solidity
-function getAssetPrice(address asset) external view returns (uint256 price, uint256 timestamp)
+function getPrice(address token) public view returns (uint256 rzrAmount, uint256 usdAmount, uint256 lastUpdatedAt)
 ```
 
-**Purpose**: Get current price for a specific asset.
+**Purpose**: Get current price for a specific token (1e18 amount).
 
-**Parameters**: `asset` - Address of the asset token.
+**Parameters**: `token` - Address of the token.
 
 **Returns**:
 
-- `price`: Current asset price
-- `timestamp`: Timestamp of price data
+- `rzrAmount`: Price in RZR terms
+- `usdAmount`: Price in USD terms
+- `lastUpdatedAt`: Timestamp of price data
 
-**Process**: Aggregates prices from all active oracles.
+**Process**: Retrieves price from registered oracle for 1e18 token amount.
 
-#### Get Asset Price with Validation
-
-```solidity
-function getValidatedAssetPrice(address asset) external view returns (uint256 price, uint256 timestamp)
-```
-
-**Purpose**: Get validated price data with staleness and deviation checks.
-
-**Parameters**: `asset` - Address of the asset token.
-
-**Returns**: Validated price data meeting quality criteria.
-
-**Process**: Applies validation filters to price data.
-
-### Data Validation
-
-#### Check Data Staleness
+#### Get Price for Amount
 
 ```solidity
-function isDataStale(uint256 timestamp) public view returns (bool)
+function getPriceForAmount(address token, uint256 amount) public view returns (uint256 rzrAmount, uint256 usdAmount, uint256 lastUpdatedAt)
 ```
 
-**Purpose**: Check if data is stale based on configured staleness threshold.
-
-**Parameters**: `timestamp` - Timestamp of the data.
-
-**Returns**: `true` if data is stale, `false` otherwise.
-
-**Process**: Compares timestamp with current time and threshold.
-
-#### Validate Price Deviation
-
-```solidity
-function validatePriceDeviation(
-    uint256 price1,
-    uint256 price2,
-    uint256 maxDeviation
-) public pure returns (bool)
-```
-
-**Purpose**: Validate that price deviation is within acceptable limits.
+**Purpose**: Get price for a specific token amount.
 
 **Parameters**:
 
-- `price1`: First price for comparison
-- `price2`: Second price for comparison
-- `maxDeviation`: Maximum allowed deviation
+- `token` - Address of the token
+- `amount` - Amount of tokens to price
 
-**Returns**: `true` if deviation is acceptable, `false` otherwise.
+**Returns**: Price data for the specified amount.
 
-**Process**: Calculates percentage deviation and compares to threshold.
+**Process**: Retrieves price from registered oracle and validates staleness.
 
-### Oracle Configuration
-
-#### Get Oracle Info
+#### Get Price in USD
 
 ```solidity
-function getOracleInfo(address oracle) external view returns (
-    uint256 weight,
-    bool active,
-    uint256 lastUpdate
-)
+function getPriceUsd(address token) external view returns (uint256 usdAmount)
 ```
 
-**Purpose**: Get information about a registered oracle.
+**Purpose**: Get USD price for a token.
 
-**Parameters**: `oracle` - Address of the oracle.
+**Parameters**: `token` - Address of the token.
 
-**Returns**: Oracle weight, active status, and last update time.
+**Returns**: USD price of the token.
 
-#### Get Active Oracles
+#### Get Price in RZR
 
 ```solidity
-function getActiveOracles() external view returns (address[] memory)
+function getPriceRzr(address token) external view returns (uint256 rzrAmount)
 ```
 
-**Purpose**: Get list of all active oracle addresses.
+**Purpose**: Get RZR price for a token.
 
-**Returns**: Array of active oracle addresses.
+**Parameters**: `token` - Address of the token.
+
+**Returns**: RZR price of the token.
+
+### Floor Price Management
+
+#### Get Token Price
+
+```solidity
+function getTokenPrice() external view returns (uint256)
+```
+
+**Purpose**: Get the current floor price for RZR tokens.
+
+**Returns**: Floor price in USD with 18 decimals.
+
+#### Set Token Price
+
+```solidity
+function setTokenPrice(uint256 newFloorPrice) external onlyPolicy
+```
+
+**Purpose**: Update the floor price for RZR tokens.
+
+**Access Control**: Only policy role members can update floor price.
+
+**Parameters**: `newFloorPrice` - New floor price (must be >= current price).
+
+**Process**: Updates floor price and emits event.
+
+### Floor-Adjusted Pricing
+
+#### Get Price for Amount in Floor
+
+```solidity
+function getPriceForAmountInFloor(address token, uint256 amount) external view returns (uint256 rzrAmount, uint256 usdAmount, uint256 lastUpdatedAt)
+```
+
+**Purpose**: Get price data adjusted by the floor price.
+
+**Parameters**:
+
+- `token` - Address of the token
+- `amount` - Amount of tokens to price
+
+**Returns**: Floor-adjusted price data.
+
+**Process**: Gets base price and adjusts USD amount by floor price ratio.
 
 ## Integration Points
 
@@ -189,261 +180,92 @@ function getActiveOracles() external view returns (address[] memory)
 
 ### External Systems
 
+- **Oracle Contracts**: IOracleV2 compliant oracle implementations
+- **Token Contracts**: IERC20Metadata compliant tokens
 - **Price Feeds**: Chainlink, Pyth, and other oracle providers
 - **DEX Oracles**: Uniswap, Balancer, and other DEX price feeds
-- **Custom Oracles**: Protocol-specific oracle implementations
-- **Data Aggregators**: External data aggregation services
-
-## Oracle System Architecture
-
-### Multi-Source Aggregation
-
-- **Weighted Averages**: Oracle prices weighted by configured weights
-- **Source Diversity**: Multiple oracle sources for redundancy
-- **Quality Filtering**: Filter out low-quality or stale data
-- **Fallback Mechanisms**: Fallback to reliable sources if needed
-
-### Data Quality Controls
-
-- **Staleness Checks**: Ensure data is recent enough
-- **Deviation Limits**: Prevent extreme price movements
-- **Source Validation**: Validate oracle source reliability
-- **Consistency Checks**: Ensure data consistency across sources
-
-### Configuration Management
-
-- **Dynamic Weights**: Adjustable oracle weights
-- **Source Activation**: Enable/disable oracle sources
-- **Parameter Updates**: Configurable validation parameters
-- **Emergency Controls**: Emergency oracle management
-
-## Security Features
-
-### Access Control
-
-- **Governance Only**: Only governors can manage oracle configuration
-- **Oracle Validation**: Validate all oracle addresses and parameters
-- **Parameter Limits**: Maximum limits on configuration parameters
-- **Emergency Controls**: Emergency pause and override capabilities
-
-### Data Security
-
-- **Source Validation**: Validate all oracle sources
-- **Data Filtering**: Filter out invalid or manipulated data
-- **Staleness Protection**: Protect against stale data usage
-- **Deviation Limits**: Prevent extreme price movements
-
-### Operational Security
-
-- **Oracle Monitoring**: Monitor oracle performance and reliability
-- **Data Validation**: Continuous validation of oracle data
-- **Event Logging**: Complete transparency of all operations
-- **Emergency Procedures**: Emergency response capabilities
-
-## Usage Examples
 
 ### Oracle Management
 
-#### Register New Oracle
+#### Update Oracle for Token
 
 ```solidity
-// Register a new Chainlink oracle
+// Update oracle for USDC token
 AppOracle oracle = AppOracle(oracleAddress);
 
-oracle.registerOracle(
-    chainlinkOracleAddress,  // Oracle address
-    50,                      // 50% weight
-    true                     // Active
+oracle.updateOracle(
+    usdcAddress,           // Token address
+    chainlinkOracleAddress, // Oracle address
+    1 hours                // Max staleness threshold
 );
-```
-
-#### Update Oracle Weight
-
-```solidity
-// Update oracle weight
-oracle.updateOracleWeight(chainlinkOracleAddress, 60);
 ```
 
 ### Price Data Retrieval
 
-#### Get Asset Price
+#### Get Token Price
 
 ```solidity
-// Get current price for USDC
-(address asset, uint256 price, uint256 timestamp) = oracle.getAssetPrice(usdcAddress);
+// Get current price for USDC (1e18 amount)
+(uint256 rzrAmount, uint256 usdAmount, uint256 timestamp) = oracle.getPrice(usdcAddress);
 
-console.log("USDC Price:", price);
+console.log("USDC RZR Price:", rzrAmount);
+console.log("USDC USD Price:", usdAmount);
 console.log("Timestamp:", timestamp);
 ```
 
-#### Get Validated Price
+#### Get Price for Specific Amount
 
 ```solidity
-// Get validated price data
-(uint256 price, uint256 timestamp) = oracle.getValidatedAssetPrice(assetAddress);
+// Get price for 1000 USDC tokens
+(uint256 rzrAmount, uint256 usdAmount, uint256 timestamp) = oracle.getPriceForAmount(usdcAddress, 1000e6);
 
-if (price > 0) {
-    console.log("Valid Price:", price);
-} else {
-    console.log("No valid price available");
-}
+console.log("1000 USDC RZR Value:", rzrAmount);
+console.log("1000 USDC USD Value:", usdAmount);
 ```
 
-### Oracle Information
-
-#### Check Oracle Status
+#### Get USD Price Only
 
 ```solidity
-// Get oracle information
-(
-    uint256 weight,
-    bool active,
-    uint256 lastUpdate
-) = oracle.getOracleInfo(chainlinkOracleAddress);
-
-console.log("Oracle Weight:", weight);
-console.log("Oracle Active:", active);
-console.log("Last Update:", lastUpdate);
+// Get USD price for USDC
+uint256 usdPrice = oracle.getPriceUsd(usdcAddress);
+console.log("USDC USD Price:", usdPrice);
 ```
 
-#### Get Active Oracles
+#### Get RZR Price Only
 
 ```solidity
-// Get all active oracles
-address[] memory activeOracles = oracle.getActiveOracles();
-console.log("Active Oracle Count:", activeOracles.length);
-
-for (uint i = 0; i < activeOracles.length; i++) {
-    console.log("Oracle", i, ":", activeOracles[i]);
-}
+// Get RZR price for USDC
+uint256 rzrPrice = oracle.getPriceRzr(usdcAddress);
+console.log("USDC RZR Price:", rzrPrice);
 ```
 
-### Data Validation
+### Floor Price Management
 
-#### Check Data Staleness
+#### Get Current Floor Price
 
 ```solidity
-// Check if data is stale
-bool isStale = oracle.isDataStale(timestamp);
-if (isStale) {
-    console.log("Data is stale, consider refreshing");
-}
+// Get current RZR floor price
+uint256 floorPrice = oracle.getTokenPrice();
+console.log("RZR Floor Price:", floorPrice);
 ```
 
-#### Validate Price Deviation
+#### Update Floor Price
 
 ```solidity
-// Validate price deviation
-bool isValid = oracle.validatePriceDeviation(
-    oldPrice,
-    newPrice,
-    maxDeviation
-);
-
-if (!isValid) {
-    console.log("Price deviation too high");
-}
+// Update floor price (only policy role)
+oracle.setTokenPrice(newFloorPrice);
 ```
 
-## Events
+### Floor-Adjusted Pricing
 
-### Oracle Management Events
+#### Get Floor-Adjusted Price
 
 ```solidity
-event OracleRegistered(address indexed oracle, uint256 weight, bool active);
-event OracleWeightUpdated(address indexed oracle, uint256 oldWeight, uint256 newWeight);
-event OracleStatusUpdated(address indexed oracle, bool active);
+// Get floor-adjusted price data
+(uint256 rzrAmount, uint256 usdAmount, uint256 timestamp) = oracle.getPriceForAmountInFloor(usdcAddress, 1000e6);
+
+console.log("Floor-Adjusted USD Value:", usdAmount);
 ```
-
-### Data Events
-
-```solidity
-event PriceUpdated(address indexed asset, uint256 price, uint256 timestamp);
-event DataValidationFailed(address indexed asset, string reason);
-```
-
-### Configuration Events
-
-```solidity
-event StalenessThresholdUpdated(uint256 oldThreshold, uint256 newThreshold);
-event MaxDeviationUpdated(uint256 oldDeviation, uint256 newDeviation);
-```
-
-## Testing
-
-### Unit Tests
-
-- Oracle registration and management functionality
-- Price aggregation and validation
-- Data quality control mechanisms
-- Access control validation
-
-### Integration Tests
-
-- Cross-contract price data flows
-- Oracle source integration testing
-- Treasury and staking integration
-- Authority system integration
-
-### Security Tests
-
-- Access control validation
-- Data manipulation prevention
-- Oracle source validation
-- Emergency procedure testing
-
-## Deployment Considerations
-
-### Initial Setup
-
-1. **Deploy Contract**: Deploy AppOracle contract
-2. **Configure Authority**: Set up access control integration
-3. **Register Oracles**: Register initial oracle sources
-4. **Verify Functionality**: Test oracle data retrieval
-
-### Configuration
-
-1. **Authority Integration**: Connect to governance system
-2. **Oracle Sources**: Set up reliable oracle sources
-3. **Validation Parameters**: Configure validation thresholds
-4. **Monitoring Setup**: Implement oracle monitoring
-
-## Dependencies
-
-### Core Dependencies
-
-- **AppAccessControlled**: Protocol access control integration
-- **Initializable**: Upgradeable contract pattern
-- **Oracle Sources**: External oracle contracts and services
-
-### External Dependencies
-
-- **Price Feed Protocols**: Chainlink, Pyth, and other oracles
-- **DEX Integration**: Uniswap, Balancer price feeds
-- **Data Aggregation**: External data aggregation services
-
-## Best Practices
-
-### Oracle Management
-
-1. **Source Diversity**: Use multiple oracle sources for redundancy
-2. **Quality Monitoring**: Monitor oracle performance and reliability
-3. **Weight Optimization**: Optimize oracle weights for accuracy
-4. **Regular Updates**: Keep oracle configurations current
-
-### Security Considerations
-
-1. **Access Control**: Verify oracle management permissions
-2. **Source Validation**: Validate all oracle sources
-3. **Data Quality**: Implement robust data validation
-4. **Emergency Procedures**: Test emergency response capabilities
-
-### User Experience
-
-1. **Price Transparency**: Provide clear price data access
-2. **Data Quality**: Ensure high-quality price data
-3. **Update Frequency**: Maintain frequent price updates
-4. **Monitoring Tools**: Provide tools to monitor oracle health
 
 ## License
 

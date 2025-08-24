@@ -128,7 +128,3 @@ Ensure proper initialization with correct addresses for:
 - Permit2 contract
 - Target Balancer pool
 - Protocol authority
-
-## License
-
-AGPL-3.0-or-later

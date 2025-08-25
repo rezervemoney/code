@@ -8,10 +8,10 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 /**
  * @title TotalReservesOracle
  * @notice Oracle for the total RZR and USD reserves across multiple chains
- * @dev The total reserves oracle tracks RZR and USD reserves across multiple chains. It uses layerzero to get the reserves
- * from other chains and uses a server-side oracle to get the reserves off-chain. The main reason for having two sources
- * is to avoid the need for a single point of failure. The max deviation is set to 1% to avoid any issues with the oracle.
- * This oracle captures reserves data in the style of IOracleV2 which provides both RZR and USD asset amounts.
+ * @dev The total reserves oracle tracks RZR and USD reserves across multiple chains.
+ * It uses layerzero to get the reserves from other chains and uses a server-side oracle to get
+ * the reserves off-chain. The main reason for having two sources is to avoid the need for a
+ * single point of failure.
  */
 contract TotalReservesOracle is AppAccessControlled, ITotalReservesOracle {
     using EnumerableSet for EnumerableSet.UintSet;

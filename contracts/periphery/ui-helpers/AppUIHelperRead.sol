@@ -10,29 +10,39 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 contract AppUIHelperRead is AppUIHelperBase {
     constructor(InitParams memory params) AppUIHelperBase(params) {}
 
-    /// @notice Get all protocol information for a user
-    /// @param user The address of the user
-    function getProtocolInfo(address user, address[] memory tokens, address allowanceTarget)
+    /// @notice Get all protocol information
+    function getTotalProtocolInfo()
         external
         view
         returns (
             ProtocolInfo memory protocolInfo,
-            bytes8 referralCode,
-            TokenInfo[] memory tokenInfos,
-            StakingPositionInfo[] memory stakingPositions,
-            ConvertiblePositionInfo[] memory convertiblePositions,
             ConvertibleProtocolInfo memory convertibleProtocolInfo,
             ProjectedEpochRate memory projectedEpochRate
         )
     {
         // Get protocol-wide stats
-        convertiblePositions = getConvertiblePositions(user);
         projectedEpochRate = getProjectedEpochRate();
         protocolInfo = getProtocolInfo();
+        convertibleProtocolInfo = getConvertibleProtocolInfo();
+    }
+
+    /// @notice Get all protocol information for a user
+    /// @param user The address of the user
+    function getUserInfo(address user, address[] memory tokens, address allowanceTarget)
+        external
+        view
+        returns (
+            bytes8 referralCode,
+            TokenInfo[] memory tokenInfos,
+            StakingPositionInfo[] memory stakingPositions,
+            ConvertiblePositionInfo[] memory convertiblePositions
+        )
+    {
+        // Get protocol-wide stats
+        convertiblePositions = getConvertiblePositions(user);
         referralCode = referrals.referrerCodes(user);
         stakingPositions = getStakingPositions(user);
         tokenInfos = getTokenInfos(user, tokens, allowanceTarget);
-        convertibleProtocolInfo = getConvertibleProtocolInfo();
     }
 
     function getProtocolInfo() internal view returns (ProtocolInfo memory protocolInfo) {
@@ -53,7 +63,7 @@ contract AppUIHelperRead is AppUIHelperBase {
         protocolInfo.currentEthPrice = getEthPrice();
     }
 
-    function getSpotPrice() internal view returns (uint256) {
+    function getSpotPrice() public view returns (uint256) {
         if (address(spotOracle) != address(0)) {
             (, uint256 spotPrice,) = spotOracle.getPriceForAmount(1e18);
             return spotPrice;
@@ -61,7 +71,7 @@ contract AppUIHelperRead is AppUIHelperBase {
         return 0;
     }
 
-    function getEthPrice() internal view returns (uint256) {
+    function getEthPrice() public view returns (uint256) {
         if (address(ethOracle) != address(0)) {
             (, uint256 ethPrice,) = ethOracle.getPriceForAmount(1e18);
             return ethPrice;
@@ -70,7 +80,7 @@ contract AppUIHelperRead is AppUIHelperBase {
     }
 
     function getTokenInfos(address user, address[] memory bondTokens, address allowanceTarget)
-        internal
+        public
         view
         returns (TokenInfo[] memory tokenInfos)
     {
@@ -132,7 +142,7 @@ contract AppUIHelperRead is AppUIHelperBase {
         }
     }
 
-    function getTokenPrice(IERC20Metadata token) internal view returns (uint256) {
+    function getTokenPrice(IERC20Metadata token) public view returns (uint256) {
         uint256 decimals = token.decimals();
         uint256 oneUnit = 10 ** decimals;
         uint256 rzrPrice = getSpotPrice();
@@ -145,13 +155,13 @@ contract AppUIHelperRead is AppUIHelperBase {
         return 0;
     }
 
-    function getLstPrice() internal view returns (uint256) {
+    function getLstPrice() public view returns (uint256) {
         uint256 rzrPrice = getSpotPrice();
         uint256 lstPrice = staking4626.rate();
         return rzrPrice * lstPrice / 1e18;
     }
 
-    function getStakingPositions(address user) internal view returns (StakingPositionInfo[] memory stakingPositions) {
+    function getStakingPositions(address user) public view returns (StakingPositionInfo[] memory stakingPositions) {
         if (address(staking) == address(0)) return stakingPositions;
 
         uint256 stakingBalance = staking.balanceOf(user);
@@ -184,7 +194,7 @@ contract AppUIHelperRead is AppUIHelperBase {
     }
 
     function getConvertiblePositions(address user)
-        internal
+        public
         view
         returns (ConvertiblePositionInfo[] memory convertiblePositions)
     {
@@ -250,7 +260,7 @@ contract AppUIHelperRead is AppUIHelperBase {
         price = usdAssets;
     }
 
-    function getProjectedEpochRate() internal view returns (ProjectedEpochRate memory projectedEpochRate) {
+    function getProjectedEpochRate() public view returns (ProjectedEpochRate memory projectedEpochRate) {
         if (address(rebaseController) == address(0)) return projectedEpochRate;
         (uint256 apr, uint256 epochRate, uint256 toStakers, uint256 toOps, uint256 toBurner) =
             rebaseController.projectedEpochRate();

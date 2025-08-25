@@ -264,6 +264,87 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
+    ],
+    "name": "getConvertiblePositions",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountStaked",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountConvertible",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "fixedInterestRate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "lockDuration",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "lockStartTime",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "priceConversion",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "priceEntry",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "interestClaimable",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalInterestClaimed",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "canConvert",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct AppUIHelperBase.ConvertiblePositionInfo[]",
+        "name": "convertiblePositions",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint256",
         "name": "tokenId",
         "type": "uint256"
@@ -479,6 +560,161 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "getEthPrice",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getLstPrice",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getProjectedEpochRate",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "apr",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "epochRate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "toStakers",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "toOps",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "toBurner",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct AppUIHelperBase.ProjectedEpochRate",
+        "name": "projectedEpochRate",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getSpotPrice",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
+    ],
+    "name": "getStakingPositions",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "declaredValue",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "rewards",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "withdrawCooldownEnd",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "withdrawCooldownStart",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "isActive",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "inCooldown",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "inWithdrawCooldown",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "isFrom4626",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct AppUIHelperBase.StakingPositionInfo[]",
+        "name": "stakingPositions",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -487,7 +723,7 @@
       },
       {
         "internalType": "address[]",
-        "name": "tokens",
+        "name": "bondTokens",
         "type": "address[]"
       },
       {
@@ -496,7 +732,86 @@
         "type": "address"
       }
     ],
-    "name": "getProtocolInfo",
+    "name": "getTokenInfos",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "symbol",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "balance",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "allowance",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "treasuryBalance",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalSupply",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint8",
+            "name": "decimals",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint256",
+            "name": "oraclePriceUsd",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct AppUIHelperBase.TokenInfo[]",
+        "name": "tokenInfos",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IERC20Metadata",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "getTokenPrice",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getTotalProtocolInfo",
     "outputs": [
       {
         "components": [
@@ -550,6 +865,117 @@
         "name": "protocolInfo",
         "type": "tuple"
       },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "totalStaked",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "minConversionPremium",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxConversionPremium",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "minFixedInterestRate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxFixedInterestRate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "supplyCap",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "debtCap",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct AppUIHelperBase.ConvertibleProtocolInfo",
+        "name": "convertibleProtocolInfo",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "apr",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "epochRate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "toStakers",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "toOps",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "toBurner",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct AppUIHelperBase.ProjectedEpochRate",
+        "name": "projectedEpochRate",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getTwapPrice",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "price",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "internalType": "address[]",
+        "name": "tokens",
+        "type": "address[]"
+      },
+      {
+        "internalType": "address",
+        "name": "allowanceTarget",
+        "type": "address"
+      }
+    ],
+    "name": "getUserInfo",
+    "outputs": [
       {
         "internalType": "bytes8",
         "name": "referralCode",
@@ -735,93 +1161,6 @@
         "internalType": "struct AppUIHelperBase.ConvertiblePositionInfo[]",
         "name": "convertiblePositions",
         "type": "tuple[]"
-      },
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "totalStaked",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "minConversionPremium",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "maxConversionPremium",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "minFixedInterestRate",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "maxFixedInterestRate",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "supplyCap",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "debtCap",
-            "type": "uint256"
-          }
-        ],
-        "internalType": "struct AppUIHelperBase.ConvertibleProtocolInfo",
-        "name": "convertibleProtocolInfo",
-        "type": "tuple"
-      },
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "apr",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "epochRate",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "toStakers",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "toOps",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "toBurner",
-            "type": "uint256"
-          }
-        ],
-        "internalType": "struct AppUIHelperBase.ProjectedEpochRate",
-        "name": "projectedEpochRate",
-        "type": "tuple"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getTwapPrice",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "price",
-        "type": "uint256"
       }
     ],
     "stateMutability": "view",

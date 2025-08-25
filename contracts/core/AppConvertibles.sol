@@ -77,7 +77,7 @@ contract AppConvertibles is
         address _twapOracle,
         address _authority,
         Variables memory __vars
-    ) external initializer {
+    ) external reinitializer(2) {
         __ERC721_init("RZR Convertibles", "cRZR-POS");
         __ReentrancyGuard_init();
         __AppAccessControlled_init(_authority);
@@ -199,7 +199,7 @@ contract AppConvertibles is
         uint256 twapPrice = _getTwapPrice();
 
         require(position.amountStaked > 0, "Position does not exist");
-        require(block.timestamp - position.lockStartTime >= MIN_LOCK_DURATION, "Not enough time passed");
+        require(block.timestamp - position.lockStartTime >= 7 days, "Not enough time passed");
         require(twapPrice > position.priceConversion, "Invalid conversion price");
 
         uint256 amountStaked = position.amountStaked;
@@ -381,9 +381,9 @@ contract AppConvertibles is
         uint256 lockStartTime,
         uint256 lockDuration
     ) internal view returns (uint256 interestInShares) {
-        uint256 interestEarnedPerYear = amount * interestRatePerYear / 1e18;
+        uint256 interestEarnedPerSecond = amount * interestRatePerYear / 1e18 / 365 days;
         uint256 timeElapsed = Math.min(currentTime - lockStartTime, lockDuration);
-        uint256 interest = interestEarnedPerYear * timeElapsed / 1e18;
+        uint256 interest = interestEarnedPerSecond * timeElapsed;
         interestInShares = loanToken.convertToShares(interest);
     }
 

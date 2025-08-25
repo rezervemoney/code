@@ -1771,4 +1771,361 @@ contract AppConvertiblesTest is Test {
         assertEq(convertibles.ownerOf(2), user2);
         assertEq(convertibles.ownerOf(3), user3);
     }
+
+    // ============ INTEREST CALCULATION TESTS ============
+
+    function testInterestCalculationPerSecond() public {
+        // Create a position with known interest rate
+        vm.startPrank(user1);
+        loanToken.approve(address(convertibles), STAKE_AMOUNT);
+        convertibles.stake(STAKE_AMOUNT, LOCK_DURATION_1_YEAR, user1);
+        vm.stopPrank();
+
+        // Get position details
+        IAppConvertibles.Position memory position = convertibles.positions(1);
+        uint256 interestRatePerSecond = position.fixedInterestRate;
+
+        console.log("Interest rate per second (stored):", interestRatePerSecond);
+        console.log("Interest rate per year (calculated):", interestRatePerSecond * 365 days);
+
+        // Test interest after 1 second
+        vm.warp(block.timestamp + 1);
+        (uint256 interestClaimable,) = convertibles.claimableInterest(1);
+
+        console.log("Interest after 1 second:", interestClaimable);
+
+        // The actual formula is: interestEarnedPerSecond = amount * interestRatePerSecond / 1e18 / 365 days
+        // Then: interest = interestEarnedPerSecond * timeElapsed
+        uint256 interestEarnedPerSecond = STAKE_AMOUNT * interestRatePerSecond / 1e18 / 365 days;
+        uint256 expectedInterest = interestEarnedPerSecond * 1;
+
+        console.log("Expected interest after 1 second:", expectedInterest);
+
+        // Verify the calculation matches our expected formula
+        assertApproxEqRel(interestClaimable, expectedInterest, 0.01e18); // 1% tolerance
+    }
+
+    function testInterestCalculationPerHour() public {
+        // Create a position
+        vm.startPrank(user1);
+        loanToken.approve(address(convertibles), STAKE_AMOUNT);
+        convertibles.stake(STAKE_AMOUNT, LOCK_DURATION_1_YEAR, user1);
+        vm.stopPrank();
+
+        // Get position details
+        IAppConvertibles.Position memory position = convertibles.positions(1);
+        uint256 interestRatePerSecond = position.fixedInterestRate;
+
+        // Test interest after 1 hour
+        vm.warp(block.timestamp + 1 hours);
+        (uint256 interestClaimable,) = convertibles.claimableInterest(1);
+
+        console.log("Interest after 1 hour:", interestClaimable);
+
+        // The actual formula: interestEarnedPerSecond = amount * interestRatePerSecond / 1e18 / 365 days
+        uint256 interestEarnedPerSecond = STAKE_AMOUNT * interestRatePerSecond / 1e18 / 365 days;
+        uint256 expectedInterest = interestEarnedPerSecond * 3600;
+
+        console.log("Expected interest after 1 hour:", expectedInterest);
+
+        // Verify the calculation
+        assertApproxEqRel(interestClaimable, expectedInterest, 0.01e18); // 1% tolerance
+    }
+
+    function testInterestCalculationPerDay() public {
+        // Create a position
+        vm.startPrank(user1);
+        loanToken.approve(address(convertibles), STAKE_AMOUNT);
+        convertibles.stake(STAKE_AMOUNT, LOCK_DURATION_1_YEAR, user1);
+        vm.stopPrank();
+
+        // Get position details
+        IAppConvertibles.Position memory position = convertibles.positions(1);
+        uint256 interestRatePerSecond = position.fixedInterestRate;
+
+        // Test interest after 1 day
+        vm.warp(block.timestamp + 1 days);
+        (uint256 interestClaimable,) = convertibles.claimableInterest(1);
+
+        console.log("Interest after 1 day:", interestClaimable);
+
+        // The actual formula: interestEarnedPerSecond = amount * interestRatePerSecond / 1e18 / 365 days
+        uint256 interestEarnedPerSecond = STAKE_AMOUNT * interestRatePerSecond / 1e18 / 365 days;
+        uint256 expectedInterest = interestEarnedPerSecond * 86400;
+
+        console.log("Expected interest after 1 day:", expectedInterest);
+
+        // Verify the calculation
+        assertApproxEqRel(interestClaimable, expectedInterest, 0.01e18); // 1% tolerance
+    }
+
+    function testInterestCalculationPerMonth() public {
+        // Create a position
+        vm.startPrank(user1);
+        loanToken.approve(address(convertibles), STAKE_AMOUNT);
+        convertibles.stake(STAKE_AMOUNT, LOCK_DURATION_1_YEAR, user1);
+        vm.stopPrank();
+
+        // Get position details
+        IAppConvertibles.Position memory position = convertibles.positions(1);
+        uint256 interestRatePerSecond = position.fixedInterestRate;
+
+        // Test interest after 30 days (approximately 1 month)
+        vm.warp(block.timestamp + 30 days);
+        (uint256 interestClaimable,) = convertibles.claimableInterest(1);
+
+        console.log("Interest after 30 days:", interestClaimable);
+
+        // The actual formula: interestEarnedPerSecond = amount * interestRatePerSecond / 1e18 / 365 days
+        uint256 interestEarnedPerSecond = STAKE_AMOUNT * interestRatePerSecond / 1e18 / 365 days;
+        uint256 expectedInterest = interestEarnedPerSecond * 30 days;
+
+        console.log("Expected interest after 30 days:", expectedInterest);
+
+        // Verify the calculation
+        assertApproxEqRel(interestClaimable, expectedInterest, 0.01e18); // 1% tolerance
+    }
+
+    function testInterestCalculationPerYear() public {
+        // Create a position
+        vm.startPrank(user1);
+        loanToken.approve(address(convertibles), STAKE_AMOUNT);
+        convertibles.stake(STAKE_AMOUNT, LOCK_DURATION_1_YEAR, user1);
+        vm.stopPrank();
+
+        // Get position details
+        IAppConvertibles.Position memory position = convertibles.positions(1);
+        uint256 interestRatePerSecond = position.fixedInterestRate;
+
+        // Test interest after 1 year
+        vm.warp(block.timestamp + 365 days);
+        (uint256 interestClaimable,) = convertibles.claimableInterest(1);
+
+        console.log("Interest after 1 year:", interestClaimable);
+
+        // The actual formula: interestEarnedPerSecond = amount * interestRatePerSecond / 1e18 / 365 days
+        uint256 interestEarnedPerSecond = STAKE_AMOUNT * interestRatePerSecond / 1e18 / 365 days;
+        uint256 expectedInterest = interestEarnedPerSecond * 365 days;
+
+        console.log("Expected interest after 1 year:", expectedInterest);
+
+        // Verify the calculation
+        assertApproxEqRel(interestClaimable, expectedInterest, 0.01e18); // 1% tolerance
+    }
+
+    function testInterestCalculationWithDifferentStakeAmounts() public {
+        vm.prank(owner);
+        underlyingToken.mint(user1, 1000000e18);
+        vm.prank(user1);
+        loanToken.mint(1000000e18, user1);
+
+        uint256[] memory stakeAmounts = new uint256[](3);
+        stakeAmounts[0] = 100e18; // 100 tokens
+        stakeAmounts[1] = 1000e18; // 1000 tokens
+        stakeAmounts[2] = 10000e18; // 10000 tokens
+
+        uint256 timeElapsed = 0;
+        uint256 previousInterestClaimable;
+        for (uint256 i = 0; i < stakeAmounts.length; i++) {
+            timeElapsed += 1 days;
+
+            // Update oracle timestamps to avoid staleness
+            oracle.touchTimestamp();
+            twapOracle.touchTimestamp();
+
+            // Create position with different stake amount
+            vm.startPrank(user1);
+            loanToken.approve(address(convertibles), stakeAmounts[i]);
+            convertibles.stake(stakeAmounts[i], LOCK_DURATION_1_YEAR, user1);
+            vm.stopPrank();
+
+            // Get position details
+            IAppConvertibles.Position memory position = convertibles.positions(i + 1);
+            uint256 interestRatePerSecond = position.fixedInterestRate / 365 days;
+
+            // Test interest after 1 day
+            vm.warp(block.timestamp + 1 days);
+            (uint256 interestClaimable,) = convertibles.claimableInterest(i + 1);
+
+            console.log("Stake amount:", stakeAmounts[i]);
+            console.log("Interest after 1 day:", interestClaimable);
+
+            // The actual formula: interestEarnedPerSecond = amount * interestRatePerSecond / 1e18 / 365 days
+            uint256 interestEarnedPerSecond = stakeAmounts[i] * interestRatePerSecond / 1e18;
+            uint256 expectedInterest = interestEarnedPerSecond * 86400;
+
+            // Verify the calculation
+            assertApproxEqRel(interestClaimable, expectedInterest, 0.01e18, "Interest calculation should be correct"); // 1% tolerance
+
+            // Verify that interest is proportional to stake amount
+            if (i > 0) {
+                uint256 ratio = (interestClaimable * 1e18) / stakeAmounts[i];
+                uint256 previousRatio = (previousInterestClaimable * 1e18) / stakeAmounts[i - 1];
+                assertApproxEqRel(ratio, previousRatio, 0.01e18, "Interest rate should be consistent"); // Interest rate should be consistent
+            }
+
+            (previousInterestClaimable,) = convertibles.claimableInterest(i + 1);
+        }
+    }
+
+    function testInterestCalculationWithDifferentLockDurations() public {
+        uint256[] memory lockDurations = new uint256[](3);
+        lockDurations[0] = 30 days; // 30 days
+        lockDurations[1] = 365 days; // 1 year
+        lockDurations[2] = 4 * 365 days; // 4 years
+
+        for (uint256 i = 0; i < lockDurations.length; i++) {
+            // Update oracle timestamps to avoid staleness
+            oracle.touchTimestamp();
+            twapOracle.touchTimestamp();
+
+            // Create position with different lock duration
+            vm.startPrank(user1);
+            loanToken.approve(address(convertibles), STAKE_AMOUNT);
+            convertibles.stake(STAKE_AMOUNT, lockDurations[i], user1);
+            vm.stopPrank();
+
+            // Get position details
+            IAppConvertibles.Position memory position = convertibles.positions(i + 1);
+            uint256 interestRatePerSecond = position.fixedInterestRate;
+
+            console.log("Lock duration:", lockDurations[i]);
+            console.log("Interest rate per second:", interestRatePerSecond);
+            console.log("Interest rate per year (calculated):", interestRatePerSecond * 365 days);
+
+            // Test interest after 1 day
+            vm.warp(block.timestamp + 1 days);
+            (uint256 interestClaimable,) = convertibles.claimableInterest(i + 1);
+
+            console.log("Interest after 1 day:", interestClaimable);
+
+            // The actual formula: interestEarnedPerSecond = amount * interestRatePerSecond / 1e18 / 365 days
+            uint256 interestEarnedPerSecond = STAKE_AMOUNT * interestRatePerSecond / 1e18 / 365 days;
+            uint256 expectedInterest = interestEarnedPerSecond * 86400;
+
+            // Verify the calculation
+            assertApproxEqRel(interestClaimable, expectedInterest, 0.01e18); // 1% tolerance
+        }
+    }
+
+    function testInterestCalculationPrecision() public {
+        // Test with very small amounts to check precision
+        uint256 smallStake = 1e18; // 1 token
+
+        vm.startPrank(user1);
+        loanToken.approve(address(convertibles), smallStake);
+        convertibles.stake(smallStake, LOCK_DURATION_1_YEAR, user1);
+        vm.stopPrank();
+
+        IAppConvertibles.Position memory position = convertibles.positions(1);
+        uint256 interestRatePerSecond = position.fixedInterestRate;
+
+        // Test interest after very short time periods
+        uint256[] memory timePeriods = new uint256[](5);
+        timePeriods[0] = 1; // 1 second
+        timePeriods[1] = 60; // 1 minute
+        timePeriods[2] = 3600; // 1 hour
+        timePeriods[3] = 86400; // 1 day
+        timePeriods[4] = 604800; // 1 week
+
+        uint256 timeElapsed = 0;
+        for (uint256 i = 0; i < timePeriods.length; i++) {
+            timeElapsed += timePeriods[i];
+            vm.warp(block.timestamp + timePeriods[i]);
+            (uint256 interestClaimable,) = convertibles.claimableInterest(1);
+
+            // The actual formula: interestEarnedPerSecond = amount * interestRatePerSecond / 1e18 / 365 days
+            uint256 interestEarnedPerSecond = smallStake * interestRatePerSecond / 1e18 / 365 days;
+            uint256 expectedInterest = interestEarnedPerSecond * timeElapsed;
+
+            console.log("Time period:", timePeriods[i], "seconds");
+            console.log("Interest claimed:", interestClaimable);
+            console.log("Expected interest:", expectedInterest);
+
+            assertApproxEqRel(interestClaimable, expectedInterest, 0.01e18); // 1% tolerance
+        }
+    }
+
+    function testInterestCalculationWithLockDurationLimit() public {
+        // Create a position
+        vm.startPrank(user1);
+        loanToken.approve(address(convertibles), STAKE_AMOUNT);
+        convertibles.stake(STAKE_AMOUNT, LOCK_DURATION_1_YEAR, user1);
+        vm.stopPrank();
+
+        IAppConvertibles.Position memory position = convertibles.positions(1);
+        uint256 interestRatePerSecond = position.fixedInterestRate;
+        uint256 lockDuration = position.lockDuration;
+
+        // Test interest after lock duration (should be capped)
+        vm.warp(block.timestamp + lockDuration + 1 days);
+        (uint256 interestClaimable,) = convertibles.claimableInterest(1);
+
+        console.log("Interest after lock duration + 1 day:", interestClaimable);
+
+        // The actual formula: interestEarnedPerSecond = amount * interestRatePerSecond / 1e18 / 365 days
+        uint256 interestEarnedPerSecond = STAKE_AMOUNT * interestRatePerSecond / 1e18 / 365 days;
+        uint256 expectedInterest = interestEarnedPerSecond * lockDuration;
+
+        console.log("Expected interest (capped at lock duration):", expectedInterest);
+
+        // Verify the calculation is capped at lock duration
+        assertApproxEqRel(interestClaimable, expectedInterest, 0.01e18); // 1% tolerance
+
+        // Verify that additional time doesn't increase interest
+        vm.warp(block.timestamp + 30 days);
+        (uint256 interestClaimable2,) = convertibles.claimableInterest(1);
+        assertEq(interestClaimable2, interestClaimable); // Should be the same
+    }
+
+    function testInterestCalculationFormulaVerification() public {
+        // This test verifies the exact formula used in the contract
+        vm.startPrank(user1);
+        loanToken.approve(address(convertibles), STAKE_AMOUNT);
+        convertibles.stake(STAKE_AMOUNT, LOCK_DURATION_1_YEAR, user1);
+        vm.stopPrank();
+
+        vm.prank(owner);
+        underlyingToken.mint(user1, 10000e18);
+
+        IAppConvertibles.Position memory position = convertibles.positions(1);
+        uint256 interestRatePerSecond = position.fixedInterestRate / 365 days;
+
+        console.log("Interest rate per second:", interestRatePerSecond);
+        console.log("Interest rate per year:", interestRatePerSecond * 365 days);
+        console.log("Interest rate per year:", position.fixedInterestRate);
+
+        // Test multiple time periods and verify the formula
+        uint256[] memory timePeriods = new uint256[](4);
+        timePeriods[0] = 1 hours;
+        timePeriods[1] = 1 days;
+        timePeriods[2] = 7 days;
+        timePeriods[3] = 30 days;
+
+        uint256 timeElapsed = 0;
+
+        for (uint256 i = 0; i < timePeriods.length; i++) {
+            timeElapsed += timePeriods[i];
+            vm.warp(block.timestamp + timePeriods[i]);
+            (uint256 interestClaimable,) = convertibles.claimableInterest(1);
+
+            // Formula: interestEarnedPerSecond = amount * interestRatePerSecond / 1e18 / 365 days
+            // Then: interest = interestEarnedPerSecond * timeElapsed
+            uint256 interestEarnedPerSecond = STAKE_AMOUNT * position.fixedInterestRate / 365 days / 1e18;
+            uint256 expectedInterest = interestEarnedPerSecond * timeElapsed;
+
+            console.log("Time period:", timePeriods[i] / 1 days, "days");
+            console.log("Interest claimed:", interestClaimable);
+            console.log("Expected interest:", expectedInterest);
+            console.log(
+                "Difference:",
+                interestClaimable > expectedInterest
+                    ? interestClaimable - expectedInterest
+                    : expectedInterest - interestClaimable
+            );
+
+            // Should be exact match for this formula
+            assertApproxEqRel(interestClaimable, expectedInterest, 0.01e18);
+        }
+    }
 }

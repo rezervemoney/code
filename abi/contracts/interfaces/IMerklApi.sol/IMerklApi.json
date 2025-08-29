@@ -1,0 +1,63 @@
+[
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "campaignId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address",
+            "name": "creator",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "rewardToken",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint32",
+            "name": "campaignType",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint32",
+            "name": "startTimestamp",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint32",
+            "name": "duration",
+            "type": "uint32"
+          },
+          {
+            "internalType": "bytes",
+            "name": "campaignData",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct IMerklApi.CampaignParameters",
+        "name": "newCampaign",
+        "type": "tuple"
+      }
+    ],
+    "name": "createCampaign",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]

@@ -29,7 +29,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, ReentrancyGuardUpgrad
     /// @inheritdoc IAppTreasury
     uint256 public reserveFee;
 
-    function initialize(address _app, address _appOracle, address _authority) public reinitializer(12) {
+    function initialize(address _app, address _appOracle, address _authority) public reinitializer(13) {
         require(_app != address(0), "Zero address: app");
         require(_appOracle != address(0), "Zero address: appOracle");
         app = IApp(_app);
@@ -132,7 +132,12 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, ReentrancyGuardUpgrad
         override
         returns (uint256 rzrValue, uint256 usdValue)
     {
-        (rzrValue, usdValue,) = appOracle.getPriceForAmountInFloor(_token, _amount);
+        (rzrValue, usdValue,) = appOracle.getPriceForAmount(_token, _amount);
+    }
+
+    function tokenValueE18(address _token) public view override returns (uint256 rzrValue, uint256 usdValue) {
+        uint256 balance = IERC20(_token).balanceOf(address(this));
+        (rzrValue, usdValue,) = appOracle.getPriceForAmount(_token, balance);
     }
 
     /// @inheritdoc IAppTreasury

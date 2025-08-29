@@ -396,6 +396,30 @@
         "internalType": "address",
         "name": "_token",
         "type": "address"
+      }
+    ],
+    "name": "tokenValueE18",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "rzrValue_",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "usdValue_",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token",
+        "type": "address"
       },
       {
         "internalType": "uint256",

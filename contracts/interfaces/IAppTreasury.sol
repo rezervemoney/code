@@ -33,6 +33,14 @@ interface IAppTreasury {
         returns (uint256 rzrValue_, uint256 usdValue_);
 
     /**
+     * @notice Returns the value of a token in RZR, 18 decimals
+     * @param _token The address of the token
+     * @return rzrValue_ The value of the token in RZR
+     * @return usdValue_ The value of the token in USD
+     */
+    function tokenValueE18(address _token) external view returns (uint256 rzrValue_, uint256 usdValue_);
+
+    /**
      * @notice allow approved address to manage the reserves of the treasury
      * @param _token address of the token to manage
      * @param _amount amount of the token to manage

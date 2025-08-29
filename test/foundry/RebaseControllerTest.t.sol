@@ -190,7 +190,7 @@ contract RebaseControllerTest is BaseTest {
     function test_ProjectedEpochRateRaw() public view {
         // Test with zero supply
         (uint256 apr, uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 toBurner) =
-            rebaseController.projectedEpochRateRaw(1e18, 0, 0);
+            rebaseController.projectedEpochRateRaw(1e18, 0, 0, 0);
         assertEq(apr, 0);
         assertEq(epochMint, 0);
         assertEq(toStakers, 0);
@@ -198,7 +198,7 @@ contract RebaseControllerTest is BaseTest {
         assertEq(toBurner, 0);
 
         // Test with 1:1 backing
-        (apr, epochMint, toStakers, toOps, toBurner) = rebaseController.projectedEpochRateRaw(1e18, 1e18, 0);
+        (apr, epochMint, toStakers, toOps, toBurner) = rebaseController.projectedEpochRateRaw(1e18, 1e18, 0, 0);
         assertEq(apr, 0); // Below 100% backing
         assertEq(epochMint, 0);
         assertEq(toStakers, 0);
@@ -206,7 +206,7 @@ contract RebaseControllerTest is BaseTest {
         assertEq(toBurner, 0);
 
         // Test with 1.5:1 backing
-        (apr, epochMint, toStakers, toOps, toBurner) = rebaseController.projectedEpochRateRaw(3e18, 2e18, 1e18);
+        (apr, epochMint, toStakers, toOps, toBurner) = rebaseController.projectedEpochRateRaw(3e18, 2e18, 0, 1e18);
         assertEq(apr, 500); // Should have positive APR
         assertGt(epochMint, 0);
         assertGt(toStakers, 0);
@@ -214,7 +214,7 @@ contract RebaseControllerTest is BaseTest {
         assertGt(toBurner, 0);
 
         // Test with 2:1 backing
-        (apr, epochMint, toStakers, toOps, toBurner) = rebaseController.projectedEpochRateRaw(3e18, 1.5e18, 1e18);
+        (apr, epochMint, toStakers, toOps, toBurner) = rebaseController.projectedEpochRateRaw(3e18, 1.5e18, 0, 1e18);
         assertEq(apr, 1250); // Should have positive APR
         assertGt(epochMint, 0);
         assertGt(toStakers, 0);
@@ -222,7 +222,7 @@ contract RebaseControllerTest is BaseTest {
         assertGt(toBurner, 0);
 
         // Test with 2.5:1 backing
-        (apr, epochMint, toStakers, toOps, toBurner) = rebaseController.projectedEpochRateRaw(2.5e18, 1e18, 1e18);
+        (apr, epochMint, toStakers, toOps, toBurner) = rebaseController.projectedEpochRateRaw(2.5e18, 1e18, 0, 1e18);
         assertEq(apr, 2000); // Should be at CEIL_APR
         assertGt(epochMint, 0);
         assertGt(toStakers, 0);

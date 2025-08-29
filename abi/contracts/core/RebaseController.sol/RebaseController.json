@@ -221,6 +221,19 @@
   },
   {
     "inputs": [],
+    "name": "currentStakingRatio",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "excessReserves",
     "outputs": [
       {
@@ -410,7 +423,12 @@
       },
       {
         "internalType": "uint256",
-        "name": "supply",
+        "name": "totalSupply",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "rzrReserves",
         "type": "uint256"
       },
       {

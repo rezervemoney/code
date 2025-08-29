@@ -50,7 +50,7 @@ contract RebaseController is AppAccessControlled, IRebaseController {
         address _authority,
         address _burner,
         address _totalReservesOracle
-    ) public reinitializer(5) {
+    ) public reinitializer(6) {
         app = IApp(_rzr);
         appOracle = IAppOracle(_appOracle);
         staking = IAppStaking(_staking);
@@ -135,6 +135,12 @@ contract RebaseController is AppAccessControlled, IRebaseController {
     }
 
     /// @inheritdoc IRebaseController
+    function currentStakingRatio() external view returns (uint256) {
+        uint256 stakedSupply = staking.totalStaked();
+        return (stakedSupply == 0) ? 0 : (stakedSupply * 1e18) / app.totalSupply(); // 1e18 == β=1
+    }
+
+    /// @inheritdoc IRebaseController
     function excessReserves() public view returns (uint256) {
         (uint256 rzrReserves, uint256 usdReserves) = totalReservesOracle.getTotalReserves();
         uint256 floorPrice = appOracle.getTokenPrice();
@@ -149,28 +155,27 @@ contract RebaseController is AppAccessControlled, IRebaseController {
         returns (uint256 apr, uint256 epochRate, uint256 toStakers, uint256 toOps, uint256 toBurner)
     {
         (uint256 rzrReserves, uint256 usdReserves) = totalReservesOracle.getTotalReserves();
-        uint256 pcv = usdReserves;
-
-        // this is important. we need to subtract the RZR reserves from the total supply because the
-        // reserves oracle splits what we hold in assets (in USD terms) and what we hold in RZR (in RZR terms).
-        // otherwise the supply would get inflated.
-        uint256 supply = app.totalSupply() - rzrReserves;
-        return projectedEpochRateRaw(pcv, supply, staking.totalStaked());
+        return projectedEpochRateRaw(usdReserves, app.totalSupply(), rzrReserves, staking.totalStaked());
     }
 
-    function projectedEpochRateRaw(uint256 pcv, uint256 supply, uint256 stakedSupply)
+    function projectedEpochRateRaw(uint256 pcv, uint256 totalSupply, uint256 rzrReserves, uint256 stakedSupply)
         public
         view
         returns (uint256 apr, uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 toBurner)
     {
         require(targetOpsPct + minFloorPct + maxFloorPct > 0, "Invalid percentages");
 
+        // this is important. we need to subtract the RZR reserves from the total supply because the
+        // reserves oracle splits what we hold in assets (in USD terms) and what we hold in RZR (in RZR terms).
+        // otherwise the supply would get inflated.
+        uint256 netSupply = totalSupply - rzrReserves;
+
         // Calculate APR and epoch rate
-        (apr, epochMint) = YieldLogic.calcEpoch(floorApr, ceilApr, k1, k2, pcv, supply, 365 days / EPOCH);
+        (apr, epochMint) = YieldLogic.calcEpoch(floorApr, ceilApr, k1, k2, pcv, netSupply, 365 days / EPOCH);
 
         // Calculate token distribution
         (toStakers, toOps, toBurner) = StakingDistributionLogic.allocate(
-            epochMint, supply, stakedSupply, targetOpsPct, minFloorPct, maxFloorPct, floorSlope
+            epochMint, totalSupply, stakedSupply, targetOpsPct, minFloorPct, maxFloorPct, floorSlope
         );
     }
 }

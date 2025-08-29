@@ -64,6 +64,10 @@ interface IRebaseController {
     /// @return backingRatio The current backing ratio
     function currentBackingRatio() external view returns (uint256 backingRatio);
 
+    /// @notice Get the current staking ratio
+    /// @return stakingRatio The current staking ratio
+    function currentStakingRatio() external view returns (uint256 stakingRatio);
+
     /// @notice Get the projected epoch rate
     /// @return apr The APR
     /// @return epochRate The epoch rate
@@ -77,14 +81,15 @@ interface IRebaseController {
 
     /// @notice Get the projected epoch rate
     /// @param pcv The PCV
-    /// @param supply The supply
+    /// @param totalSupply The total supply
+    /// @param rzrReserves The RZR reserves in the treasury
     /// @param stakedSupply The staked supply
     /// @return apr The APR
     /// @return epochRate The epoch rate
     /// @return toStakers The amount to mint to stakers
     /// @return toOps The amount to mint to operations
     /// @return toBurner The amount to mint to the burner
-    function projectedEpochRateRaw(uint256 pcv, uint256 supply, uint256 stakedSupply)
+    function projectedEpochRateRaw(uint256 pcv, uint256 totalSupply, uint256 rzrReserves, uint256 stakedSupply)
         external
         view
         returns (uint256 apr, uint256 epochRate, uint256 toStakers, uint256 toOps, uint256 toBurner);

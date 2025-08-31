@@ -13,6 +13,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "../libraries/PermissionedERC20.sol";
 
+import "forge-std/console.sol";
+
 /// @title RZR Convertibles
 /// @author RZR Protocol
 /// @notice Implementation of the convertibles system that allows users to purchase convertibles with quote tokens
@@ -169,6 +171,7 @@ contract AppConvertibles is
     {
         uint256 price = _getPrice(loanToken);
         Variables memory _vars = _variables[loanToken];
+        console.log("price", price);
 
         require(amount > 0, "Invalid amount");
         require(lockDuration >= MIN_LOCK_DURATION && lockDuration <= MAX_LOCK_DURATION, "Invalid lock duration");
@@ -360,8 +363,11 @@ contract AppConvertibles is
         view
         returns (uint256 conversionPrice, uint256 conversionAmount, uint256 fixedInterestRate)
     {
+        console.log("getOfferings", address(loanToken), amountLoan, lockDuration);
         uint256 amountLoanScaled = _scaleAmount(loanToken, amountLoan);
+        console.log("amountLoanScaled", amountLoanScaled);
         uint256 price = _getPrice(loanToken);
+        console.log("price", price);
         Variables memory _vars = _variables[loanToken];
 
         // calculate the conversion premium; longer duration means lower premium
@@ -443,7 +449,7 @@ contract AppConvertibles is
     function _getPrice(IERC20 loanToken) internal view returns (uint256 price) {
         uint256 decimals = IERC20Metadata(address(loanToken)).decimals();
         (uint256 rzrAssets, uint256 usdAssets, uint256 lastUpdatedAt) =
-            oracle.getPriceForAmount(address(loanToken), 10 ** (18 - decimals));
+            oracle.getPriceForAmount(address(loanToken), 10 ** (decimals));
         require(rzrAssets == 0 && usdAssets > 0, "Invalid price");
         require(lastUpdatedAt > block.timestamp - MAX_ORACLE_STALENESS, "Stale price");
         price = usdAssets;

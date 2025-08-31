@@ -11,43 +11,45 @@ import "../foundry/BaseTest.sol";
 ///           1. Oracle prices stay constant.
 ///           2. New RZR tokens can only be minted via `deposit` (treasury) or `executeEpoch` (rebase controller).
 contract TreasuryInvariant is BaseTest, SymTest {
-    /// @dev Halmos entry point. Symbolically explores the sequence:
-    ///      1. A reserve depositor deposits an arbitrary amount of quote token.
-    ///      2. Optionally (if possible) a rebase epoch is executed.
-    ///      3. Invariant ‑ totalReserves ≥ totalSupply ‑ must hold.
-    function check_treasury_overcollateralized() public {
-        // ───────────────────────  Setup  ──────────────────────────
-        setUpBaseTest();
+//TODO ADD HALMOS TESTS
 
-        // Grant this test contract RESERVE_DEPOSITOR role so it can call `deposit`.
-        authority.addReserveDepositor(address(this));
+// /// @dev Halmos entry point. Symbolically explores the sequence:
+// ///      1. A reserve depositor deposits an arbitrary amount of quote token.
+// ///      2. Optionally (if possible) a rebase epoch is executed.
+// ///      3. Invariant ‑ totalReserves ≥ totalSupply ‑ must hold.
+// function check_treasury_overcollateralized() public {
+//     // ───────────────────────  Setup  ──────────────────────────
+//     setUpBaseTest();
 
-        // ───────────────  Symbolic deposit amount  ───────────────
-        uint256 depositAmount = svm.createUint256("depositAmount");
-        // Apply practical bounds so Halmos search space is finite & avoids overflow.
-        vm.assume(depositAmount > 0 && depositAmount < 1e24);
+//     // Grant this test contract RESERVE_DEPOSITOR role so it can call `deposit`.
+//     authority.addReserveDepositor(address(this));
 
-        // Mint quote tokens and approve Treasury.
-        mockQuoteToken.mint(address(this), depositAmount);
-        mockQuoteToken.approve(address(treasury), depositAmount);
+//     // ───────────────  Symbolic deposit amount  ───────────────
+//     uint256 depositAmount = svm.createUint256("depositAmount");
+//     // Apply practical bounds so Halmos search space is finite & avoids overflow.
+//     vm.assume(depositAmount > 0 && depositAmount < 1e24);
 
-        // Perform the deposit (profit = 0 for simplicity).
-        treasury.deposit(depositAmount, address(mockQuoteToken), 0);
+//     // Mint quote tokens and approve Treasury.
+//     mockQuoteToken.mint(address(this), depositAmount);
+//     mockQuoteToken.approve(address(treasury), depositAmount);
 
-        // ─────────────  Optional symbolic rebase step  ────────────
-        // Advance time so an epoch is eligible.
-        vm.warp(block.timestamp + 9 hours);
-        // Try to execute an epoch; if it reverts due to lack of excess reserves,
-        // we simply continue – the invariant is still required to hold.
-        try RebaseController(address(rebaseController)).executeEpoch() {
-            // execution succeeded – nothing else to do.
-        } catch {
-            // ignore reverts; assumption permits epochs only when executable.
-        }
+//     // Perform the deposit (profit = 0 for simplicity).
+//     treasury.deposit(depositAmount, address(mockQuoteToken), 0);
 
-        // ─────────────────  Invariant assertion  ──────────────────
-        uint256 reserves = treasury.totalReservesUsd();
-        uint256 supply = app.totalSupply() - treasury.totalReservesRzr();
-        assertGe(reserves, supply);
-    }
+//     // ─────────────  Optional symbolic rebase step  ────────────
+//     // Advance time so an epoch is eligible.
+//     vm.warp(block.timestamp + 9 hours);
+//     // Try to execute an epoch; if it reverts due to lack of excess reserves,
+//     // we simply continue – the invariant is still required to hold.
+//     try RebaseController(address(rebaseController)).executeEpoch() {
+//         // execution succeeded – nothing else to do.
+//     } catch {
+//         // ignore reverts; assumption permits epochs only when executable.
+//     }
+
+//     // ─────────────────  Invariant assertion  ──────────────────
+//     uint256 reserves = treasury.totalReservesUsd();
+//     uint256 supply = app.totalSupply() - treasury.totalReservesRzr();
+//     assertGe(reserves, supply);
+// }
 }

@@ -348,7 +348,7 @@ contract AppConvertiblesTest is BaseTest {
 
         // Try to convert
         vm.startPrank(user1);
-        vm.expectRevert("Invalid price");
+        vm.expectRevert("Invalid conversion price");
         convertibles.convert(tokenId);
         vm.stopPrank();
     }

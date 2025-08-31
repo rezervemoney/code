@@ -2,10 +2,11 @@
 pragma solidity 0.8.28;
 pragma abicoder v2;
 
-import "../interfaces/IApp.sol";
-import "../interfaces/IOracleV2.sol";
-import "../interfaces/IPermissionedERC20.sol";
-import "@openzeppelin/contracts/interfaces/IERC4626.sol";
+import "./IApp.sol";
+import "./IAppOracle.sol";
+import "./IOracleV2.sol";
+import "./IPermissionedERC20.sol";
+import "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 
 /// @title IAppConvertibles Interface
@@ -22,8 +23,10 @@ interface IAppConvertibles is IERC721Enumerable {
     /// @param priceConversion Price at which conversion can occur
     /// @param priceEntry Price when the position was created
     struct Position {
+        IERC20 asset;
         uint256 amountStaked;
         uint256 amountConvertible;
+        uint256 stakingPower;
         uint256 fixedInterestRate;
         uint256 fixedInterestClaimed;
         uint256 lockDuration;
@@ -38,11 +41,11 @@ interface IAppConvertibles is IERC721Enumerable {
     /// @param minFixedInterestRate Minimum fixed interest rate per second
     /// @param maxFixedInterestRate Maximum fixed interest rate per second
     struct Variables {
+        IPermissionedERC20 trackingToken;
         uint256 minConversionPremium;
         uint256 maxConversionPremium;
         uint256 minFixedInterestRate;
         uint256 maxFixedInterestRate;
-        uint256 supplyCap;
         uint256 debtCap;
     }
 
@@ -95,18 +98,18 @@ interface IAppConvertibles is IERC721Enumerable {
     );
 
     /// @notice Emitted when governance updates the contract variables
+    /// @param loanToken The loan token that was enabled
     /// @param minConversionPremium New minimum conversion premium
     /// @param maxConversionPremium New maximum conversion premium
     /// @param minFixedInterestRate New minimum fixed interest rate per second
     /// @param maxFixedInterestRate New maximum fixed interest rate per second
-    /// @param supplyCap New maximum supply of convertible positions
     /// @param debtCap New maximum debt of convertible positions
     event VariablesUpdated(
+        IERC20 indexed loanToken,
         uint256 minConversionPremium,
         uint256 maxConversionPremium,
         uint256 minFixedInterestRate,
         uint256 maxFixedInterestRate,
-        uint256 supplyCap,
         uint256 debtCap
     );
 
@@ -150,6 +153,10 @@ interface IAppConvertibles is IERC721Enumerable {
     /// @param interestClaimed Amount of interest claimed
     event InterestClaimed(address indexed user, uint256 indexed tokenId, uint256 interestClaimed);
 
+    /// @notice Emitted when a token is enabled
+    /// @param token The token that was enabled
+    event TokenEnabled(address indexed token);
+
     /// @notice Get the claimable interest for a convertible position
     /// @param tokenId The NFT token ID that the interest was claimed from
     /// @return interestClaimable Amount of interest claimable
@@ -158,11 +165,6 @@ interface IAppConvertibles is IERC721Enumerable {
         external
         view
         returns (uint256 interestClaimable, uint256 totalInterestClaimed);
-
-    /// @notice Updates the oracle and TWAP oracle contracts
-    /// @param _oracle The new oracle contract address
-    /// @param _twapOracle The new TWAP oracle contract address
-    function updateOracle(address _oracle, address _twapOracle) external;
 
     /// @notice Claim interest from a convertible position
     /// @param tokenId The NFT token ID to claim interest from
@@ -182,9 +184,9 @@ interface IAppConvertibles is IERC721Enumerable {
     /// @return The maximum oracle staleness period in seconds
     function MAX_ORACLE_STALENESS() external view returns (uint256);
 
-    /// @notice The loan token (ERC4626 vault) used for staking
-    /// @return The loan token contract address
-    function loanToken() external view returns (IERC4626);
+    /// @notice Minimum bond duration for convertible positions (7 days)
+    /// @return The minimum bond duration in seconds
+    function MIN_BOND_DURATION() external view returns (uint256);
 
     /// @notice The RZR token contract
     /// @return The RZR token contract address
@@ -192,7 +194,7 @@ interface IAppConvertibles is IERC721Enumerable {
 
     /// @notice The tracking token for loan positions
     /// @return The loan tracking token contract address
-    function loanTrackingToken() external view returns (IPermissionedERC20);
+    function stakingPowerToken() external view returns (IPermissionedERC20);
 
     /// @notice The tracking token for RZR convertible positions
     /// @return The RZR tracking token contract address
@@ -200,7 +202,7 @@ interface IAppConvertibles is IERC721Enumerable {
 
     /// @notice The oracle contract for price feeds
     /// @return The oracle contract address
-    function oracle() external view returns (IOracleV2);
+    function oracle() external view returns (IAppOracle);
 
     /// @notice The TWAP oracle contract for conversion price validation
     /// @return The TWAP oracle contract address
@@ -212,19 +214,16 @@ interface IAppConvertibles is IERC721Enumerable {
 
     /// @notice Total amount of loan tokens staked across all positions
     /// @return The total staked amount
-    function totalStaked() external view returns (uint256);
+    function totalStaked(address loanToken) external view returns (uint256);
 
     /// @notice Total amount of RZR tokens convertible across all positions
     /// @return The total convertible amount
     function totalConvertible() external view returns (uint256);
 
-    /// @notice Decimal scaling factor for loan token (10^(18 - loanToken.decimals()))
-    /// @return The decimal scaling factor
-    function loanTokenDecimals() external view returns (uint256);
-
     /// @notice Contract variables for conversion premiums and interest rates
+    /// @param _loanToken The loan token that was enabled
     /// @return vars The contract variables
-    function variables() external view returns (Variables memory vars);
+    function variables(IERC20 _loanToken) external view returns (Variables memory vars);
 
     /// @notice Get position details for a specific token ID
     /// @param tokenId The NFT token ID
@@ -232,38 +231,41 @@ interface IAppConvertibles is IERC721Enumerable {
     function positions(uint256 tokenId) external view returns (Position memory position);
 
     /// @notice Initialize the convertibles contract
-    /// @param _loanToken The loan token (ERC4626 vault) address
     /// @param _rzr The RZR token contract address
-    /// @param _debtTrackingToken The loan tracking token address
-    /// @param _conversionTrackingToken The RZR tracking token address
     /// @param _oracle The oracle contract address for price feeds
     /// @param _twapOracle The TWAP oracle contract address
     /// @param _authority The authority contract address
-    /// @param _vars The contract variables
-    function initialize(
-        address _loanToken,
-        address _rzr,
-        address _debtTrackingToken,
-        address _conversionTrackingToken,
-        address _oracle,
-        address _twapOracle,
-        address _authority,
-        Variables memory _vars
-    ) external;
+    function initialize(address _rzr, address _oracle, address _twapOracle, address _authority) external;
 
-    /// @notice Set contract variables (governance only)
+    /// @notice Enable a new loan token for convertible positions
+    /// @param loanToken The loan token to enable
     /// @param _minConversionPremium Minimum conversion premium (in basis points)
     /// @param _maxConversionPremium Maximum conversion premium (in basis points)
     /// @param _minFixedInterestRate Minimum fixed interest rate per second
     /// @param _maxFixedInterestRate Maximum fixed interest rate per second
-    /// @param _supplyCap Maximum supply of convertible positions
     /// @param _debtCap Maximum debt of convertible positions
-    function setVariables(
+    function enableToken(
+        IERC20Metadata loanToken,
         uint256 _minConversionPremium,
         uint256 _maxConversionPremium,
         uint256 _minFixedInterestRate,
         uint256 _maxFixedInterestRate,
-        uint256 _supplyCap,
+        uint256 _debtCap
+    ) external;
+
+    /// @notice Set contract variables (governance only)
+    /// @param _loanToken The loan token that was enabled
+    /// @param _minConversionPremium Minimum conversion premium (in basis points)
+    /// @param _maxConversionPremium Maximum conversion premium (in basis points)
+    /// @param _minFixedInterestRate Minimum fixed interest rate per second
+    /// @param _maxFixedInterestRate Maximum fixed interest rate per second
+    /// @param _debtCap Maximum debt of convertible positions
+    function setVariables(
+        IERC20 _loanToken,
+        uint256 _minConversionPremium,
+        uint256 _maxConversionPremium,
+        uint256 _minFixedInterestRate,
+        uint256 _maxFixedInterestRate,
         uint256 _debtCap
     ) external;
 
@@ -276,14 +278,16 @@ interface IAppConvertibles is IERC721Enumerable {
     /// @return conversionAmount Amount of RZR tokens convertible
     /// @return fixedInterestRate Fixed interest rate per second
     /// @return fixedInterestRateAmount Fixed interest rate amount
-    function stake(uint256 amount, uint256 lockDuration, address receiver)
+    /// @return stakingPower Amount of staking power tokens received
+    function stake(IERC20 loanToken, uint256 amount, uint256 lockDuration, address receiver)
         external
         returns (
             uint256 tokenId,
             uint256 conversionPrice,
             uint256 conversionAmount,
             uint256 fixedInterestRate,
-            uint256 fixedInterestRateAmount
+            uint256 fixedInterestRateAmount,
+            uint256 stakingPower
         );
 
     /// @notice Convert a convertible position to RZR tokens
@@ -300,12 +304,13 @@ interface IAppConvertibles is IERC721Enumerable {
     function split(uint256 tokenId, uint256 percentageE18) external;
 
     /// @notice Calculate conversion terms for a given amount and lock duration
+    /// @param loanToken The loan token that was enabled
     /// @param amountLoan Amount of loan tokens to stake
     /// @param lockDuration Duration to lock the position
     /// @return conversionPrice Price at which conversion can occur
     /// @return conversionAmount Amount of RZR tokens convertible
     /// @return fixedInterestRate Fixed interest rate per second
-    function getOfferings(uint256 amountLoan, uint256 lockDuration)
+    function getOfferings(IERC20 loanToken, uint256 amountLoan, uint256 lockDuration)
         external
         view
         returns (uint256 conversionPrice, uint256 conversionAmount, uint256 fixedInterestRate);

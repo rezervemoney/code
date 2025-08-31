@@ -2,15 +2,16 @@
 pragma solidity 0.8.28;
 
 import "../interfaces/IApp.sol";
-import "../interfaces/IOracleV2.sol";
+import "../interfaces/IAppOracle.sol";
 import "../interfaces/IPermissionedERC20.sol";
 import "../interfaces/IAppConvertibles.sol";
 import "./AppAccessControlled.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts/interfaces/IERC4626.sol";
+import "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
+import "../libraries/PermissionedERC20.sol";
 
 /// @title RZR Convertibles
 /// @author RZR Protocol
@@ -34,19 +35,19 @@ contract AppConvertibles is
     uint256 public immutable MAX_ORACLE_STALENESS = 1 days;
 
     /// @inheritdoc IAppConvertibles
-    IERC4626 public loanToken;
+    uint256 public immutable MIN_BOND_DURATION = 7 days;
 
     /// @inheritdoc IAppConvertibles
     IApp public rzr;
 
     /// @inheritdoc IAppConvertibles
-    IPermissionedERC20 public loanTrackingToken;
+    IPermissionedERC20 public stakingPowerToken;
 
     /// @inheritdoc IAppConvertibles
     IPermissionedERC20 public rzrTrackingToken;
 
     /// @inheritdoc IAppConvertibles
-    IOracleV2 public oracle;
+    IAppOracle public oracle;
 
     /// @inheritdoc IAppConvertibles
     IOracleV2 public twapOracle;
@@ -55,45 +56,29 @@ contract AppConvertibles is
     uint256 public lastId;
 
     /// @inheritdoc IAppConvertibles
-    uint256 public totalStaked;
-
-    /// @inheritdoc IAppConvertibles
     uint256 public totalConvertible;
 
-    /// @inheritdoc IAppConvertibles
-    uint256 public loanTokenDecimals;
-
+    /// @dev Mapping of tokenId to position
     mapping(uint256 tokenId => Position) private _positions;
 
-    Variables private _vars;
+    /// @dev Mapping of loan token to variables
+    mapping(IERC20 loanToken => Variables variables) private _variables;
 
     /// @inheritdoc IAppConvertibles
-    function initialize(
-        address _loanToken,
-        address _rzr,
-        address _debtTrackingToken,
-        address _conversionTrackingToken,
-        address _oracle,
-        address _twapOracle,
-        address _authority,
-        Variables memory __vars
-    ) external reinitializer(2) {
+    function initialize(address _rzr, address _oracle, address _twapOracle, address _authority) external initializer {
         __ERC721_init("RZR Convertibles", "cRZR-POS");
         __ReentrancyGuard_init();
         __AppAccessControlled_init(_authority);
-        loanToken = IERC4626(_loanToken);
         rzr = IApp(_rzr);
-        loanTrackingToken = IPermissionedERC20(_debtTrackingToken);
-        rzrTrackingToken = IPermissionedERC20(_conversionTrackingToken);
-        oracle = IOracleV2(_oracle);
+        oracle = IAppOracle(_oracle);
         twapOracle = IOracleV2(_twapOracle);
 
-        loanTokenDecimals = 10 ** (18 - loanToken.decimals());
-
-        _vars = __vars;
-
-        // check if the price is valid
-        require(_getPrice(1e18) > 0, "Invalid price");
+        if (address(stakingPowerToken) == address(0)) {
+            stakingPowerToken = new PermissionedERC20("Staking Power", "RZRsp", 18);
+        }
+        if (address(rzrTrackingToken) == address(0)) {
+            rzrTrackingToken = new PermissionedERC20("RZR Convertible", "cRZR", 18);
+        }
     }
 
     modifier onlyOwnerOrAuthorized(uint256 tokenId) {
@@ -104,9 +89,31 @@ contract AppConvertibles is
     }
 
     /// @inheritdoc IAppConvertibles
-    function updateOracle(address _oracle, address _twapOracle) external onlyGovernor {
-        oracle = IOracleV2(_oracle);
-        twapOracle = IOracleV2(_twapOracle);
+    function enableToken(
+        IERC20Metadata loanToken,
+        uint256 _minConversionPremium,
+        uint256 _maxConversionPremium,
+        uint256 _minFixedInterestRate,
+        uint256 _maxFixedInterestRate,
+        uint256 _debtCap
+    ) external onlyGovernor {
+        require(_variables[loanToken].minConversionPremium == 0, "Token already enabled");
+        require(loanToken.decimals() <= 18, "Invalid decimals");
+
+        string memory name = string.concat("Staked ", IERC20Metadata(address(loanToken)).name());
+        string memory symbol = string.concat("stk", IERC20Metadata(address(loanToken)).symbol());
+        uint8 decimals = IERC20Metadata(address(loanToken)).decimals();
+
+        Variables memory _vars = Variables({
+            trackingToken: new PermissionedERC20(name, symbol, decimals),
+            minConversionPremium: _minConversionPremium,
+            maxConversionPremium: _maxConversionPremium,
+            minFixedInterestRate: _minFixedInterestRate,
+            maxFixedInterestRate: _maxFixedInterestRate,
+            debtCap: _debtCap
+        });
+        _variables[loanToken] = _vars;
+        emit TokenEnabled(address(loanToken));
     }
 
     /// @inheritdoc IAppConvertibles
@@ -115,37 +122,40 @@ contract AppConvertibles is
     }
 
     /// @inheritdoc IAppConvertibles
-    function variables() public view returns (Variables memory vars) {
-        vars = _vars;
+    function variables(IERC20 _loanToken) public view returns (Variables memory vars) {
+        vars = _variables[_loanToken];
     }
 
     /// @inheritdoc IAppConvertibles
     function setVariables(
+        IERC20 _loanToken,
         uint256 _minConversionPremium,
         uint256 _maxConversionPremium,
         uint256 _minFixedInterestRate,
         uint256 _maxFixedInterestRate,
-        uint256 _supplyCap,
         uint256 _debtCap
     ) external onlyGovernor {
-        _vars.minConversionPremium = _minConversionPremium;
-        _vars.maxConversionPremium = _maxConversionPremium;
-        _vars.minFixedInterestRate = _minFixedInterestRate;
-        _vars.maxFixedInterestRate = _maxFixedInterestRate;
-        _vars.supplyCap = _supplyCap;
-        _vars.debtCap = _debtCap;
+        Variables memory vars = Variables({
+            trackingToken: _variables[_loanToken].trackingToken,
+            minConversionPremium: _minConversionPremium,
+            maxConversionPremium: _maxConversionPremium,
+            minFixedInterestRate: _minFixedInterestRate,
+            maxFixedInterestRate: _maxFixedInterestRate,
+            debtCap: _debtCap
+        });
+        _variables[_loanToken] = vars;
         emit VariablesUpdated(
-            _minConversionPremium,
-            _maxConversionPremium,
-            _minFixedInterestRate,
-            _maxFixedInterestRate,
-            _supplyCap,
-            _debtCap
+            _loanToken,
+            vars.minConversionPremium,
+            vars.maxConversionPremium,
+            vars.minFixedInterestRate,
+            vars.maxFixedInterestRate,
+            vars.debtCap
         );
     }
 
     /// @inheritdoc IAppConvertibles
-    function stake(uint256 amount, uint256 lockDuration, address receiver)
+    function stake(IERC20 loanToken, uint256 amount, uint256 lockDuration, address receiver)
         external
         nonReentrant
         returns (
@@ -153,20 +163,25 @@ contract AppConvertibles is
             uint256 conversionPrice,
             uint256 conversionAmount,
             uint256 fixedInterestRate,
-            uint256 fixedInterestRateAmount
+            uint256 fixedInterestRateAmount,
+            uint256 stakingPower
         )
     {
-        uint256 price = _getPrice(amount);
+        uint256 price = _getPrice(loanToken);
+        Variables memory _vars = _variables[loanToken];
 
         require(amount > 0, "Invalid amount");
         require(lockDuration >= MIN_LOCK_DURATION && lockDuration <= MAX_LOCK_DURATION, "Invalid lock duration");
 
-        (conversionPrice, conversionAmount, fixedInterestRate) = getOfferings(amount, lockDuration);
+        (conversionPrice, conversionAmount, fixedInterestRate) = getOfferings(loanToken, amount, lockDuration);
 
         fixedInterestRateAmount = 0;
+        stakingPower = _getStakingPower(loanToken, amount, lockDuration);
 
         loanToken.transferFrom(msg.sender, address(this), amount);
         _positions[++lastId] = Position({
+            asset: loanToken,
+            stakingPower: stakingPower,
             amountStaked: amount,
             amountConvertible: conversionAmount,
             fixedInterestRate: fixedInterestRate,
@@ -179,18 +194,17 @@ contract AppConvertibles is
 
         _mint(receiver, lastId);
 
-        totalStaked += amount;
         totalConvertible += conversionAmount;
-
-        require(totalStaked <= _vars.debtCap || _vars.debtCap == 0, "Debt cap reached");
-        require(totalConvertible <= _vars.supplyCap || _vars.supplyCap == 0, "Supply cap reached");
-
-        loanTrackingToken.mint(receiver, amount);
+        _vars.trackingToken.mint(receiver, amount);
+        stakingPowerToken.mint(receiver, stakingPower);
         rzrTrackingToken.mint(receiver, conversionAmount);
+
+        uint256 _totalStaked = _vars.trackingToken.totalSupply();
+        require(_totalStaked <= _vars.debtCap || _vars.debtCap == 0, "Debt cap reached");
 
         emit Staked(receiver, lastId, amount, conversionAmount, lockDuration, price, conversionPrice, fixedInterestRate);
 
-        return (lastId, conversionPrice, conversionAmount, fixedInterestRate, fixedInterestRateAmount);
+        return (lastId, conversionPrice, conversionAmount, fixedInterestRate, fixedInterestRateAmount, stakingPower);
     }
 
     /// @inheritdoc IAppConvertibles
@@ -199,28 +213,31 @@ contract AppConvertibles is
         uint256 twapPrice = _getTwapPrice();
 
         require(position.amountStaked > 0, "Position does not exist");
-        require(block.timestamp - position.lockStartTime >= 7 days, "Not enough time passed");
+        require(block.timestamp - position.lockStartTime >= MIN_BOND_DURATION, "Not enough time passed");
         require(twapPrice > position.priceConversion, "Invalid conversion price");
 
-        uint256 amountStaked = position.amountStaked;
+        uint256 stakingPower = position.stakingPower;
         uint256 amountConvertible = position.amountConvertible;
+        uint256 amountStaked = position.amountStaked;
+        IERC20 asset = position.asset;
+        address owner = ownerOf(tokenId);
 
         _burn(tokenId);
         delete _positions[tokenId];
 
-        totalStaked -= amountStaked;
         totalConvertible -= amountConvertible;
 
         // transfer the loan tokens to the treasury so that we can clear out our debt
-        loanToken.transfer(address(authority.treasury()), amountStaked);
+        asset.transfer(address(authority.treasury()), amountStaked);
 
         // burn the loan tracking tokens
-        loanTrackingToken.burn(msg.sender, amountStaked);
+        stakingPowerToken.burn(owner, stakingPower);
+        _variables[asset].trackingToken.burn(owner, amountStaked);
 
         // convert the debt to rzr
-        rzr.mint(msg.sender, amountConvertible);
-        rzrTrackingToken.burn(msg.sender, amountConvertible);
-        emit Converted(msg.sender, tokenId, amountStaked, amountConvertible, twapPrice);
+        rzr.mint(owner, amountConvertible);
+        rzrTrackingToken.burn(owner, amountConvertible);
+        emit Converted(owner, tokenId, amountStaked, amountConvertible, twapPrice);
     }
 
     /// @inheritdoc IAppConvertibles
@@ -232,6 +249,9 @@ contract AppConvertibles is
 
         uint256 amountStaked = position.amountStaked;
         uint256 amountConvertible = position.amountConvertible;
+        uint256 stakingPower = position.stakingPower;
+        IERC20 asset = position.asset;
+        address owner = ownerOf(tokenId);
 
         // we assume that the contract always has enough shares to cover the interest
         uint256 interestAccumulated = _interestAccumulated(
@@ -241,15 +261,15 @@ contract AppConvertibles is
         _burn(tokenId);
         delete _positions[tokenId];
 
-        totalStaked -= amountStaked;
         totalConvertible -= amountConvertible;
 
         // clear out the debt and send it back to the user along with the fixed interest
-        loanToken.transfer(msg.sender, amountStaked + interestAccumulated);
-        loanTrackingToken.burn(msg.sender, amountStaked);
+        asset.transfer(owner, amountStaked + interestAccumulated);
+        stakingPowerToken.burn(owner, stakingPower);
+        _variables[asset].trackingToken.burn(owner, amountStaked);
 
-        rzrTrackingToken.burn(msg.sender, amountConvertible);
-        emit Redeemed(msg.sender, tokenId, amountStaked, amountConvertible, interestAccumulated);
+        rzrTrackingToken.burn(owner, amountConvertible);
+        emit Redeemed(owner, tokenId, amountStaked, amountConvertible, interestAccumulated);
     }
 
     /// @inheritdoc IAppConvertibles
@@ -263,6 +283,7 @@ contract AppConvertibles is
         uint256 splitAmountStaked = position.amountStaked * percentageE18 / 1e18;
         uint256 splitAmountConvertible = position.amountConvertible * percentageE18 / 1e18;
         uint256 fixedInterestClaimed = position.fixedInterestClaimed * percentageE18 / 1e18;
+        uint256 stakingPower = position.stakingPower * percentageE18 / 1e18;
 
         // Ensure minimum amounts for both positions
         require(splitAmountStaked > 0, "Split amount too small");
@@ -272,10 +293,13 @@ contract AppConvertibles is
         position.amountStaked -= splitAmountStaked;
         position.amountConvertible -= splitAmountConvertible;
         position.fixedInterestClaimed -= fixedInterestClaimed;
+        position.stakingPower -= stakingPower;
 
         // Create new position
         uint256 newTokenId = ++lastId;
         _positions[newTokenId] = Position({
+            asset: position.asset,
+            stakingPower: stakingPower,
             amountStaked: splitAmountStaked,
             amountConvertible: splitAmountConvertible,
             fixedInterestRate: position.fixedInterestRate,
@@ -312,8 +336,13 @@ contract AppConvertibles is
         require(interestClaimed > 0, "No interest to claim");
         position.fixedInterestClaimed = totalInterestClaimed;
 
-        loanToken.transfer(ownerOf(tokenId), interestClaimed);
+        position.asset.transfer(ownerOf(tokenId), interestClaimed);
         emit InterestClaimed(msg.sender, tokenId, interestClaimed);
+    }
+
+    /// @inheritdoc IAppConvertibles
+    function totalStaked(address loanToken) external view returns (uint256) {
+        return _variables[IERC20(loanToken)].trackingToken.totalSupply();
     }
 
     /// @inheritdoc IAppConvertibles
@@ -326,13 +355,14 @@ contract AppConvertibles is
     }
 
     /// @inheritdoc IAppConvertibles
-    function getOfferings(uint256 amountLoan, uint256 lockDuration)
+    function getOfferings(IERC20 loanToken, uint256 amountLoan, uint256 lockDuration)
         public
         view
         returns (uint256 conversionPrice, uint256 conversionAmount, uint256 fixedInterestRate)
     {
-        uint256 amountLoanScaled = amountLoan * loanTokenDecimals;
-        uint256 price = _getPrice(1e18);
+        uint256 amountLoanScaled = _scaleAmount(loanToken, amountLoan);
+        uint256 price = _getPrice(loanToken);
+        Variables memory _vars = _variables[loanToken];
 
         // calculate the conversion premium; longer duration means lower premium
         uint256 premium =
@@ -373,18 +403,17 @@ contract AppConvertibles is
     /// @param amount The amount of loan tokens staked
     /// @param interestRatePerYear The interest rate per year
     /// @param lockStartTime The timestamp when the lock period started
-    /// @return interestInShares The interest accumulated in loan tokens
+    /// @return interest The interest accumulated in loan tokens
     function _interestAccumulated(
         uint256 amount,
         uint256 interestRatePerYear,
         uint256 currentTime,
         uint256 lockStartTime,
         uint256 lockDuration
-    ) internal view returns (uint256 interestInShares) {
+    ) internal pure returns (uint256 interest) {
         uint256 interestEarnedPerSecond = amount * interestRatePerYear / 1e18 / 365 days;
         uint256 timeElapsed = Math.min(currentTime - lockStartTime, lockDuration);
-        uint256 interest = interestEarnedPerSecond * timeElapsed;
-        interestInShares = loanToken.convertToShares(interest);
+        interest = interestEarnedPerSecond * timeElapsed;
     }
 
     /// @notice Returns the base URI for the NFT metadata
@@ -400,16 +429,21 @@ contract AppConvertibles is
         // Skip for mint (from == 0) and burn (to == 0). Only handle transfers between non-zero addresses.
         if (from != address(0) && to != address(0)) {
             // Burn tracking tokens from the sender and mint to the receiver.
-            uint256 amtStaked = _positions[tokenId].amountStaked;
+            uint256 stakingPower = _positions[tokenId].stakingPower;
             uint256 amtConvertible = _positions[tokenId].amountConvertible;
-            if (amtStaked > 0) loanTrackingToken.transferPermissioned(from, to, amtStaked);
+            uint256 amountStaked = _positions[tokenId].amountStaked;
+            IERC20 asset = _positions[tokenId].asset;
+            if (stakingPower > 0) stakingPowerToken.transferPermissioned(from, to, stakingPower);
             if (amtConvertible > 0) rzrTrackingToken.transferPermissioned(from, to, amtConvertible);
-            emit PositionTransferred(from, to, tokenId, amtStaked, amtConvertible);
+            if (amountStaked > 0) _variables[asset].trackingToken.transferPermissioned(from, to, amountStaked);
+            emit PositionTransferred(from, to, tokenId, stakingPower, amtConvertible);
         }
     }
 
-    function _getPrice(uint256 amount) internal view returns (uint256 price) {
-        (uint256 rzrAssets, uint256 usdAssets, uint256 lastUpdatedAt) = oracle.getPriceForAmount(amount);
+    function _getPrice(IERC20 loanToken) internal view returns (uint256 price) {
+        uint256 decimals = IERC20Metadata(address(loanToken)).decimals();
+        (uint256 rzrAssets, uint256 usdAssets, uint256 lastUpdatedAt) =
+            oracle.getPriceForAmount(address(loanToken), 10 ** (18 - decimals));
         require(rzrAssets == 0 && usdAssets > 0, "Invalid price");
         require(lastUpdatedAt > block.timestamp - MAX_ORACLE_STALENESS, "Stale price");
         price = usdAssets;
@@ -429,5 +463,18 @@ contract AppConvertibles is
     /// @return value The scaled value
     function _scale(uint256 max, uint256 min, uint256 lockDuration) internal pure returns (uint256 value) {
         value = min + (max - min) * lockDuration / MAX_LOCK_DURATION;
+    }
+
+    function _scaleAmount(IERC20 loanToken, uint256 amount) internal view returns (uint256 amountScaled) {
+        amountScaled = amount * 10 ** (18 - IERC20Metadata(address(loanToken)).decimals());
+    }
+
+    function _getStakingPower(IERC20 loanToken, uint256 amount, uint256 duration)
+        internal
+        view
+        returns (uint256 stakingPower)
+    {
+        uint256 amountScaled = _scaleAmount(loanToken, amount);
+        stakingPower = amountScaled * duration / MAX_LOCK_DURATION;
     }
 }

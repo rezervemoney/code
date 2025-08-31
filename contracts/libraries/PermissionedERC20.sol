@@ -29,21 +29,13 @@ contract PermissionedERC20 is ERC20, IPermissionedERC20 {
         _mint(msg.sender, 1e18);
         _burn(msg.sender, 1e18);
         __decimals = _decimals;
+        permissionedContract = msg.sender;
     }
 
     /// @notice Get the decimals of the token
     /// @return The decimals of the token
     function decimals() public view override returns (uint8) {
         return __decimals;
-    }
-
-    /// @notice Set the permissioned contract
-    /// @dev This function is only callable by the governor
-    /// @param _permissionedContract The address of the permissioned contract
-    function setPermissionedContract(address _permissionedContract) external {
-        require(permissionedContract == address(0), "PermissionedERC20: already set");
-        permissionedContract = _permissionedContract;
-        emit PermissionedContractUpdated(_permissionedContract);
     }
 
     /// @notice Mint function is only callable by the staking contract

@@ -323,16 +323,16 @@ contract AppUIHelperRead is AppUIHelperBase {
         returns (ConvertibleProtocolInfo memory convertibleProtocolInfo)
     {
         if (address(convertibles) == address(0)) return convertibleProtocolInfo;
-        IAppConvertibles.Variables memory vars = convertibles.variables();
-        uint256 totalStaked = convertibles.totalStaked();
-        convertibleProtocolInfo = ConvertibleProtocolInfo({
-            totalStaked: totalStaked,
-            minConversionPremium: vars.minConversionPremium,
-            maxConversionPremium: vars.maxConversionPremium,
-            minFixedInterestRate: vars.minFixedInterestRate,
-            maxFixedInterestRate: vars.maxFixedInterestRate,
-            supplyCap: vars.supplyCap,
-            debtCap: vars.debtCap
-        });
+        // IAppConvertibles.Variables memory vars = convertibles.variables();
+        // uint256 totalStaked = convertibles.totalStaked();
+        // convertibleProtocolInfo = ConvertibleProtocolInfo({
+        //     totalStaked: totalStaked,
+        //     minConversionPremium: vars.minConversionPremium,
+        //     maxConversionPremium: vars.maxConversionPremium,
+        //     minFixedInterestRate: vars.minFixedInterestRate,
+        //     maxFixedInterestRate: vars.maxFixedInterestRate,
+        //     supplyCap: vars.supplyCap,
+        //     debtCap: vars.debtCap
+        // });
     }
 }

@@ -156,10 +156,9 @@ abstract contract AppUIHelperBase {
             appToken.approve(address(staking), type(uint256).max);
         }
 
-        if (address(convertibles) != address(0)) {
-            loanToken = IERC4626(convertibles.loanToken());
-            loanTokenUnderlying = IERC20(loanToken.asset());
-            loanToken.approve(address(convertibles), type(uint256).max);
-        }
+        // if (address(convertibles) != address(0)) {
+        //     loanTokenUnderlying = IERC20(convertibles.stakingPowerToken());
+        //     loanTokenUnderlying.approve(address(convertibles), type(uint256).max);
+        // }
     }
 }

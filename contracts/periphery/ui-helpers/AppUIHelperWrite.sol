@@ -90,8 +90,8 @@ contract AppUIHelperWrite is AppUIHelperBase {
             loanToken.deposit(loanTokenUnderlying.balanceOf(address(this)), address(this));
         }
 
-        (tokenId, conversionPrice, conversionAmount, fixedInterestRate, fixedInterestRateAmount) =
-            convertibles.stake(loanToken.balanceOf(address(this)), convertibleParams.lockDuration, msg.sender);
+        // (tokenId, conversionPrice, conversionAmount, fixedInterestRate, fixedInterestRateAmount) =
+        //     convertibles.stake(loanTokenUnderlying, loanTokenUnderlying.balanceOf(address(this)), convertibleParams.lockDuration, msg.sender);
 
         _purgeAll(odosParams);
     }

@@ -466,6 +466,19 @@
       {
         "indexed": true,
         "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "TokenEnabled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
         "name": "from",
         "type": "address"
       },
@@ -488,6 +501,12 @@
   {
     "anonymous": false,
     "inputs": [
+      {
+        "indexed": true,
+        "internalType": "contract IERC20",
+        "name": "loanToken",
+        "type": "address"
+      },
       {
         "indexed": false,
         "internalType": "uint256",
@@ -544,6 +563,19 @@
   {
     "inputs": [],
     "name": "MAX_ORACLE_STALENESS",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MIN_BOND_DURATION",
     "outputs": [
       {
         "internalType": "uint256",
@@ -681,6 +713,56 @@
   {
     "inputs": [
       {
+        "internalType": "contract IERC20Metadata",
+        "name": "loanToken",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "minConversionPremium",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxConversionPremium",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "minFixedInterestRate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxFixedInterestRate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "supplyCap",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "debtCap",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct IAppConvertibles.Variables",
+        "name": "vars",
+        "type": "tuple"
+      }
+    ],
+    "name": "enableToken",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "target",
         "type": "address"
@@ -718,6 +800,11 @@
   {
     "inputs": [
       {
+        "internalType": "contract IERC20",
+        "name": "loanToken",
+        "type": "address"
+      },
+      {
         "internalType": "uint256",
         "name": "amountLoan",
         "type": "uint256"
@@ -753,17 +840,12 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_loanToken",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
         "name": "_rzr",
         "type": "address"
       },
       {
         "internalType": "address",
-        "name": "_debtTrackingToken",
+        "name": "_stakingPowerToken",
         "type": "address"
       },
       {
@@ -785,43 +867,6 @@
         "internalType": "address",
         "name": "_authority",
         "type": "address"
-      },
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "minConversionPremium",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "maxConversionPremium",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "minFixedInterestRate",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "maxFixedInterestRate",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "supplyCap",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "debtCap",
-            "type": "uint256"
-          }
-        ],
-        "internalType": "struct IAppConvertibles.Variables",
-        "name": "__vars",
-        "type": "tuple"
       }
     ],
     "name": "initialize",
@@ -868,45 +913,6 @@
   },
   {
     "inputs": [],
-    "name": "loanToken",
-    "outputs": [
-      {
-        "internalType": "contract IERC4626",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "loanTokenDecimals",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "loanTrackingToken",
-    "outputs": [
-      {
-        "internalType": "contract IPermissionedERC20",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "name",
     "outputs": [
       {
@@ -923,7 +929,7 @@
     "name": "oracle",
     "outputs": [
       {
-        "internalType": "contract IOracleV2",
+        "internalType": "contract IAppOracle",
         "name": "",
         "type": "address"
       }
@@ -963,6 +969,11 @@
       {
         "components": [
           {
+            "internalType": "contract IERC20",
+            "name": "asset",
+            "type": "address"
+          },
+          {
             "internalType": "uint256",
             "name": "amountStaked",
             "type": "uint256"
@@ -970,6 +981,11 @@
           {
             "internalType": "uint256",
             "name": "amountConvertible",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "stakingPower",
             "type": "uint256"
           },
           {
@@ -1153,6 +1169,11 @@
   {
     "inputs": [
       {
+        "internalType": "contract IERC20",
+        "name": "_loanToken",
+        "type": "address"
+      },
+      {
         "internalType": "uint256",
         "name": "_minConversionPremium",
         "type": "uint256"
@@ -1209,6 +1230,11 @@
   {
     "inputs": [
       {
+        "internalType": "contract IERC20",
+        "name": "loanToken",
+        "type": "address"
+      },
+      {
         "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
@@ -1250,9 +1276,27 @@
         "internalType": "uint256",
         "name": "fixedInterestRateAmount",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "stakingPower",
+        "type": "uint256"
       }
     ],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "stakingPowerToken",
+    "outputs": [
+      {
+        "internalType": "contract IPermissionedERC20",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -1427,23 +1471,11 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_oracle",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_twapOracle",
+        "internalType": "contract IERC20",
+        "name": "_loanToken",
         "type": "address"
       }
     ],
-    "name": "updateOracle",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "variables",
     "outputs": [
       {

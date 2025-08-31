@@ -44,12 +44,13 @@ This contract serves as:
 #### Stake for Convertibles
 
 ```solidity
-function stake(uint256 amount, uint256 lockDuration, address receiver) external returns (
+function stake(IERC20 loanToken, uint256 amount, uint256 lockDuration, address receiver) external returns (
     uint256 tokenId,
     uint256 conversionPrice,
     uint256 conversionAmount,
     uint256 fixedInterestRate,
-    uint256 fixedInterestRateAmount
+    uint256 fixedInterestRateAmount,
+    uint256 stakingPower
 )
 ```
 
@@ -57,18 +58,19 @@ function stake(uint256 amount, uint256 lockDuration, address receiver) external 
 
 **Parameters**:
 
+- `loanToken` - The loan token to stake
 - `amount` - Amount of loan tokens to stake
 - `lockDuration` - Duration to lock staked tokens (30 days to 4 years)
 - `receiver` - Address to receive the position NFT
 
-**Returns**: Position details including conversion terms and interest rates.
+**Returns**: Position details including conversion terms, interest rates, and staking power.
 
 **Process**: Creates NFT position, calculates conversion terms, mints tracking tokens.
 
 #### Convert to Equity
 
 ```solidity
-function convert(uint256 tokenId) external nonReentrant
+function convert(uint256 tokenId) external nonReentrant onlyOwnerOrAuthorized(tokenId)
 ```
 
 **Purpose**: Convert convertible debt to RZR equity tokens.
@@ -82,7 +84,7 @@ function convert(uint256 tokenId) external nonReentrant
 #### Redeem Position
 
 ```solidity
-function redeem(uint256 tokenId) external nonReentrant
+function redeem(uint256 tokenId) external nonReentrant onlyOwnerOrAuthorized(tokenId)
 ```
 
 **Purpose**: Redeem staked tokens with accumulated interest.
@@ -98,7 +100,7 @@ function redeem(uint256 tokenId) external nonReentrant
 #### Split Position
 
 ```solidity
-function split(uint256 tokenId, uint256 percentageE18) external nonReentrant
+function split(uint256 tokenId, uint256 percentageE18) external nonReentrant onlyOwnerOrAuthorized(tokenId)
 ```
 
 **Purpose**: Split a position into two separate positions.
@@ -159,7 +161,7 @@ function claimableInterest(uint256 tokenId) public view returns (
 #### Get Offerings
 
 ```solidity
-function getOfferings(uint256 amountLoan, uint256 lockDuration) public view returns (
+function getOfferings(IERC20 loanToken, uint256 amountLoan, uint256 lockDuration) public view returns (
     uint256 conversionPrice,
     uint256 conversionAmount,
     uint256 fixedInterestRate
@@ -170,6 +172,7 @@ function getOfferings(uint256 amountLoan, uint256 lockDuration) public view retu
 
 **Parameters**:
 
+- `loanToken` - The loan token to stake
 - `amountLoan` - Amount of loan tokens to stake
 - `lockDuration` - Lock duration for the position
 
@@ -178,48 +181,73 @@ function getOfferings(uint256 amountLoan, uint256 lockDuration) public view retu
 #### Get Variables
 
 ```solidity
-function variables() public view returns (Variables memory vars)
+function variables(IERC20 _loanToken) public view returns (Variables memory vars)
 ```
 
-**Purpose**: Get current protocol configuration variables.
+**Purpose**: Get current protocol configuration variables for a specific loan token.
 
-**Returns**: Current protocol variables and parameters.
+**Parameters**: `_loanToken` - The loan token to get variables for.
+
+**Returns**: Current protocol variables and parameters for the specified token.
+
+#### Get Total Staked
+
+```solidity
+function totalStaked(address loanToken) external view returns (uint256)
+```
+
+**Purpose**: Get total amount staked for a specific loan token.
+
+**Parameters**: `loanToken` - The loan token address.
+
+**Returns**: Total amount staked for the token.
 
 ### Configuration Management
 
-#### Update Oracles
+#### Enable Token
 
 ```solidity
-function updateOracle(address _oracle, address _twapOracle) external onlyGovernor
+function enableToken(
+    IERC20Metadata loanToken,
+    uint256 _minConversionPremium,
+    uint256 _maxConversionPremium,
+    uint256 _minFixedInterestRate,
+    uint256 _maxFixedInterestRate,
+    uint256 _debtCap
+) external onlyGovernor
 ```
 
-**Purpose**: Update oracle addresses for price feeds.
+**Purpose**: Enable a new loan token for staking and convertibles.
 
-**Access Control**: Only governors can update oracles.
+**Access Control**: Only governors can enable new tokens.
 
 **Parameters**:
 
-- `_oracle` - New oracle address for price feeds
-- `_twapOracle` - New TWAP oracle address
+- `loanToken` - The loan token to enable
+- `_minConversionPremium` - Minimum conversion premium
+- `_maxConversionPremium` - Maximum conversion premium
+- `_minFixedInterestRate` - Minimum fixed interest rate
+- `_maxFixedInterestRate` - Maximum fixed interest rate
+- `_debtCap` - Maximum debt cap for the token
 
 #### Set Variables
 
 ```solidity
 function setVariables(
+    IERC20 _loanToken,
     uint256 _minConversionPremium,
     uint256 _maxConversionPremium,
     uint256 _minFixedInterestRate,
     uint256 _maxFixedInterestRate,
-    uint256 _supplyCap,
     uint256 _debtCap
 ) external onlyGovernor
 ```
 
-**Purpose**: Update protocol configuration parameters.
+**Purpose**: Update protocol configuration parameters for a specific loan token.
 
 **Access Control**: Only governors can update variables.
 
-**Parameters**: Various protocol configuration values.
+**Parameters**: Various protocol configuration values for the specified token.
 
 #### Execute
 
@@ -245,8 +273,10 @@ function execute(address target, bytes memory data) external onlyGovernor
 ```solidity
 // Stake 1000 USDC for 1 year
 AppConvertibles convertibles = AppConvertibles(convertiblesAddress);
+IERC20 usdc = IERC20(usdcAddress);
 
-(uint256 tokenId, uint256 conversionPrice, uint256 conversionAmount, uint256 fixedInterestRate, uint256 fixedInterestRateAmount) = convertibles.stake(
+(uint256 tokenId, uint256 conversionPrice, uint256 conversionAmount, uint256 fixedInterestRate, uint256 fixedInterestRateAmount, uint256 stakingPower) = convertibles.stake(
+    usdc,           // USDC token
     1000e6,        // 1000 USDC
     365 days,      // 1 year lock
     msg.sender     // Receive position
@@ -256,6 +286,7 @@ console.log("Position ID:", tokenId);
 console.log("Conversion Price:", conversionPrice);
 console.log("Convertible Amount:", conversionAmount);
 console.log("Fixed Interest Rate:", fixedInterestRate);
+console.log("Staking Power:", stakingPower);
 ```
 
 ### Position Management
@@ -269,6 +300,8 @@ console.log("Amount Staked:", position.amountStaked);
 console.log("Convertible Amount:", position.amountConvertible);
 console.log("Lock Duration:", position.lockDuration);
 console.log("Lock Start Time:", position.lockStartTime);
+console.log("Conversion Price:", position.priceConversion);
+console.log("Entry Price:", position.priceEntry);
 ```
 
 #### Split Position
@@ -320,6 +353,7 @@ console.log("Interest Claimed:", interestClaimed);
 ```solidity
 // Calculate conversion terms for 1000 USDC, 6 months
 (uint256 conversionPrice, uint256 conversionAmount, uint256 fixedInterestRate) = convertibles.getOfferings(
+    usdc,           // USDC token
     1000e6,        // 1000 USDC
     180 days       // 6 months
 );
@@ -332,12 +366,21 @@ console.log("Fixed Interest Rate:", fixedInterestRate);
 #### Check Protocol Variables
 
 ```solidity
-// Get current protocol configuration
-Variables memory vars = convertibles.variables();
+// Get current protocol configuration for USDC
+Variables memory vars = convertibles.variables(usdc);
 console.log("Min Conversion Premium:", vars.minConversionPremium);
 console.log("Max Conversion Premium:", vars.maxConversionPremium);
-console.log("Supply Cap:", vars.supplyCap);
+console.log("Min Fixed Interest Rate:", vars.minFixedInterestRate);
+console.log("Max Fixed Interest Rate:", vars.maxFixedInterestRate);
 console.log("Debt Cap:", vars.debtCap);
+```
+
+#### Check Total Staked
+
+```solidity
+// Get total USDC staked
+uint256 totalUsdcStaked = convertibles.totalStaked(address(usdc));
+console.log("Total USDC Staked:", totalUsdcStaked);
 ```
 
 ## Events
@@ -354,15 +397,67 @@ event Redeemed(address indexed user, uint256 indexed tokenId, uint256 amountStak
 
 ```solidity
 event PositionSplit(address indexed user, uint256 indexed originalTokenId, uint256 indexed newTokenId, uint256 originalAmountStaked, uint256 splitAmountStaked, uint256 originalConvertibleAmount, uint256 splitConvertibleAmount, uint256 percentageE18);
-event PositionTransferred(address indexed from, address indexed to, uint256 indexed tokenId, uint256 amountStaked, uint256 amountConvertible);
+event PositionTransferred(address indexed from, address indexed to, uint256 indexed tokenId, uint256 stakingPower, uint256 amountConvertible);
 event InterestClaimed(address indexed user, uint256 indexed tokenId, uint256 interestClaimed);
 ```
 
 ### Configuration Events
 
 ```solidity
-event VariablesUpdated(uint256 minConversionPremium, uint256 maxConversionPremium, uint256 minFixedInterestRate, uint256 maxFixedInterestRate, uint256 supplyCap, uint256 debtCap);
+event TokenEnabled(address indexed loanToken);
+event VariablesUpdated(IERC20 indexed loanToken, uint256 minConversionPremium, uint256 maxConversionPremium, uint256 minFixedInterestRate, uint256 maxFixedInterestRate, uint256 debtCap);
 ```
+
+## Constants
+
+### Duration Limits
+
+- `MAX_LOCK_DURATION`: 4 years (4 \* 365 days)
+- `MIN_LOCK_DURATION`: 30 days
+- `MIN_BOND_DURATION`: 7 days (minimum time before conversion)
+
+### Oracle Settings
+
+- `MAX_ORACLE_STALENESS`: 1 day (maximum oracle data age)
+
+## Internal Functions
+
+### Interest Calculation
+
+```solidity
+function _interestAccumulated(
+    uint256 amount,
+    uint256 interestRatePerYear,
+    uint256 currentTime,
+    uint256 lockStartTime,
+    uint256 lockDuration
+) internal pure returns (uint256 interest)
+```
+
+**Purpose**: Calculate accumulated interest based on time elapsed and interest rate.
+
+**Logic**: Uses linear interest calculation with per-second precision.
+
+### Price Retrieval
+
+```solidity
+function _getPrice(IERC20 loanToken) internal view returns (uint256 price)
+function _getTwapPrice() internal view returns (uint256 price)
+```
+
+**Purpose**: Get current price from oracle or TWAP oracle.
+
+**Validation**: Ensures prices are valid and not stale.
+
+### Scaling Functions
+
+```solidity
+function _scale(uint256 max, uint256 min, uint256 lockDuration) internal pure returns (uint256 value)
+function _scaleAmount(IERC20 loanToken, uint256 amount) internal view returns (uint256 amountScaled)
+function _getStakingPower(IERC20 loanToken, uint256 amount, uint256 duration) internal view returns (uint256 stakingPower)
+```
+
+**Purpose**: Scale values based on lock duration and token decimals.
 
 ## License
 

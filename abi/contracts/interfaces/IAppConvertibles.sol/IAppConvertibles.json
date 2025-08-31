@@ -369,12 +369,6 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "supplyCap",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
         "name": "debtCap",
         "type": "uint256"
       }
@@ -535,6 +529,44 @@
   {
     "inputs": [
       {
+        "internalType": "contract IERC20Metadata",
+        "name": "loanToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_minConversionPremium",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_maxConversionPremium",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_minFixedInterestRate",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_maxFixedInterestRate",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_debtCap",
+        "type": "uint256"
+      }
+    ],
+    "name": "enableToken",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "target",
         "type": "address"
@@ -613,16 +645,6 @@
       {
         "internalType": "address",
         "name": "_rzr",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_stakingPowerToken",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_conversionTrackingToken",
         "type": "address"
       },
       {
@@ -923,11 +945,6 @@
       },
       {
         "internalType": "uint256",
-        "name": "_supplyCap",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
         "name": "_debtCap",
         "type": "uint256"
       }
@@ -1103,7 +1120,13 @@
     "type": "function"
   },
   {
-    "inputs": [],
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "loanToken",
+        "type": "address"
+      }
+    ],
     "name": "totalStaked",
     "outputs": [
       {
@@ -1177,6 +1200,11 @@
       {
         "components": [
           {
+            "internalType": "contract IPermissionedERC20",
+            "name": "trackingToken",
+            "type": "address"
+          },
+          {
             "internalType": "uint256",
             "name": "minConversionPremium",
             "type": "uint256"
@@ -1194,11 +1222,6 @@
           {
             "internalType": "uint256",
             "name": "maxFixedInterestRate",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "supplyCap",
             "type": "uint256"
           },
           {

@@ -1,0 +1,9 @@
+@openzeppelin/=node_modules/@openzeppelin/
+forge-std/=lib/forge-std/src/
+@layerzerolabs/=node_modules/@layerzerolabs/
+@uniswap/v4-core/=node_modules/@uniswap/v4-core/
+@uniswap/v4-periphery/=node_modules/@uniswap/v4-periphery/
+evk/=lib/euler-vault-kit/src
+evc/=lib/ethereum-vault-connector/src
+ethereum-vault-connector/=lib/ethereum-vault-connector/src
+openzeppelin-contracts/=node_modules/@openzeppelin/

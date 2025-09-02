@@ -25,11 +25,13 @@ contract PermissionedERC20 is ERC20, IPermissionedERC20 {
     /// @dev This function is only callable once
     /// @param _name The name of the token
     /// @param _symbol The symbol of the token
-    constructor(string memory _name, string memory _symbol, uint8 _decimals) ERC20(_name, _symbol) {
+    constructor(string memory _name, string memory _symbol, uint8 _decimals, address _permissionedContract)
+        ERC20(_name, _symbol)
+    {
         _mint(msg.sender, 1e18);
         _burn(msg.sender, 1e18);
         __decimals = _decimals;
-        permissionedContract = msg.sender;
+        permissionedContract = _permissionedContract;
     }
 
     /// @notice Get the decimals of the token

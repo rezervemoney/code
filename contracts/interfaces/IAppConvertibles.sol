@@ -6,6 +6,7 @@ import "./IApp.sol";
 import "./IAppOracle.sol";
 import "./IOracleV2.sol";
 import "./IPermissionedERC20.sol";
+import "./IPermissionedERC20Factory.sol";
 import "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 
@@ -212,6 +213,10 @@ interface IAppConvertibles is IERC721Enumerable {
     /// @return The most recent token ID
     function lastId() external view returns (uint256);
 
+    /// @notice The factory contract for creating permissioned ERC20 tokens
+    /// @return The factory contract address
+    function factory() external view returns (IPermissionedERC20Factory);
+
     /// @notice Total amount of loan tokens staked across all positions
     /// @return The total staked amount
     function totalStaked(address loanToken) external view returns (uint256);
@@ -235,7 +240,8 @@ interface IAppConvertibles is IERC721Enumerable {
     /// @param _oracle The oracle contract address for price feeds
     /// @param _twapOracle The TWAP oracle contract address
     /// @param _authority The authority contract address
-    function initialize(address _rzr, address _oracle, address _twapOracle, address _authority) external;
+    function initialize(address _rzr, address _oracle, address _twapOracle, address _authority, address _factory)
+        external;
 
     /// @notice Enable a new loan token for convertible positions
     /// @param loanToken The loan token to enable

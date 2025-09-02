@@ -2,18 +2,16 @@
 pragma solidity 0.8.28;
 
 import "../interfaces/IApp.sol";
+import "../interfaces/IAppConvertibles.sol";
 import "../interfaces/IAppOracle.sol";
 import "../interfaces/IPermissionedERC20.sol";
-import "../interfaces/IAppConvertibles.sol";
+import "../interfaces/IPermissionedERC20Factory.sol";
 import "./AppAccessControlled.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
-import "../libraries/PermissionedERC20.sol";
-
-import "forge-std/console.sol";
 
 /// @title RZR Convertibles
 /// @author RZR Protocol
@@ -67,19 +65,26 @@ contract AppConvertibles is
     mapping(IERC20 loanToken => Variables variables) private _variables;
 
     /// @inheritdoc IAppConvertibles
-    function initialize(address _rzr, address _oracle, address _twapOracle, address _authority) external initializer {
+    IPermissionedERC20Factory public factory;
+
+    /// @inheritdoc IAppConvertibles
+    function initialize(address _rzr, address _oracle, address _twapOracle, address _authority, address _factory)
+        external
+        initializer
+    {
         __ERC721_init("RZR Convertibles", "cRZR-POS");
         __ReentrancyGuard_init();
         __AppAccessControlled_init(_authority);
         rzr = IApp(_rzr);
         oracle = IAppOracle(_oracle);
         twapOracle = IOracleV2(_twapOracle);
+        factory = IPermissionedERC20Factory(_factory);
 
         if (address(stakingPowerToken) == address(0)) {
-            stakingPowerToken = new PermissionedERC20("Staking Power", "RZRsp", 18);
+            stakingPowerToken = factory.createPermissionedERC20("Staking Power", "RZRsp", 18);
         }
         if (address(rzrTrackingToken) == address(0)) {
-            rzrTrackingToken = new PermissionedERC20("RZR Convertible", "cRZR", 18);
+            rzrTrackingToken = factory.createPermissionedERC20("RZR Convertible", "cRZR", 18);
         }
     }
 
@@ -107,7 +112,7 @@ contract AppConvertibles is
         uint8 decimals = IERC20Metadata(address(loanToken)).decimals();
 
         Variables memory _vars = Variables({
-            trackingToken: new PermissionedERC20(name, symbol, decimals),
+            trackingToken: factory.createPermissionedERC20(name, symbol, decimals),
             minConversionPremium: _minConversionPremium,
             maxConversionPremium: _maxConversionPremium,
             minFixedInterestRate: _minFixedInterestRate,
@@ -171,7 +176,6 @@ contract AppConvertibles is
     {
         uint256 price = _getPrice(loanToken);
         Variables memory _vars = _variables[loanToken];
-        console.log("price", price);
 
         require(amount > 0, "Invalid amount");
         require(lockDuration >= MIN_LOCK_DURATION && lockDuration <= MAX_LOCK_DURATION, "Invalid lock duration");
@@ -363,11 +367,8 @@ contract AppConvertibles is
         view
         returns (uint256 conversionPrice, uint256 conversionAmount, uint256 fixedInterestRate)
     {
-        console.log("getOfferings", address(loanToken), amountLoan, lockDuration);
         uint256 amountLoanScaled = _scaleAmount(loanToken, amountLoan);
-        console.log("amountLoanScaled", amountLoanScaled);
         uint256 price = _getPrice(loanToken);
-        console.log("price", price);
         Variables memory _vars = _variables[loanToken];
 
         // calculate the conversion premium; longer duration means lower premium

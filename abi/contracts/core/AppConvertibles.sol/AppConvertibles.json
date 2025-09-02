@@ -761,6 +761,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "factory",
+    "outputs": [
+      {
+        "internalType": "contract IPermissionedERC20Factory",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -838,6 +851,11 @@
       {
         "internalType": "address",
         "name": "_authority",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_factory",
         "type": "address"
       }
     ],

@@ -3,6 +3,8 @@ pragma solidity 0.8.28;
 
 import "./BaseTest.sol";
 import "../../contracts/core/AppConvertibles.sol";
+import "../../contracts/interfaces/IPermissionedERC20Factory.sol";
+import "../../contracts/libraries/PermissionedERC20Factory.sol";
 import "../../contracts/mocks/MockOracleV2.sol";
 import "../../contracts/mocks/MockERC20.sol";
 import "../../contracts/libraries/PermissionedERC20.sol";
@@ -34,9 +36,18 @@ contract AppConvertiblesTest is BaseTest {
         // Register the mock loan token in the AppOracle
         appOracle.updateOracle(address(mockLoanToken), address(mockOracle), 3600);
 
-        // Deploy AppConvertibles
+        // Deploy permissioned ERC20 factory
+        PermissionedERC20Factory permissionedERC20Factory = new PermissionedERC20Factory();
+
+        // Deploy convertibles
         convertibles = new AppConvertibles();
-        convertibles.initialize(address(app), address(appOracle), address(mockTwapOracle), address(authority));
+        convertibles.initialize(
+            address(app),
+            address(appOracle),
+            address(mockTwapOracle),
+            address(authority),
+            address(permissionedERC20Factory)
+        );
 
         // Enable the loan token
         convertibles.enableToken(

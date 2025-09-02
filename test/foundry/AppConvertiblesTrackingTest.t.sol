@@ -12,6 +12,9 @@ import "../../contracts/interfaces/IOracleV2.sol";
 import "../../contracts/mocks/MockERC20.sol";
 import "../../contracts/mocks/MockOracle.sol";
 import "../../contracts/mocks/MockOracleV2.sol";
+import "../../contracts/interfaces/IPermissionedERC20Factory.sol";
+import "../../contracts/libraries/PermissionedERC20Factory.sol";
+
 import "../../contracts/mocks/MockEndpoint.sol";
 
 contract AppConvertiblesTrackingTest is Test {
@@ -103,13 +106,18 @@ contract AppConvertiblesTrackingTest is Test {
         // Deploy app oracle
         appOracle = new AppOracle();
 
+        // Deploy permissioned ERC20 factory
+        PermissionedERC20Factory permissionedERC20Factory = new PermissionedERC20Factory();
+
         // Deploy convertibles
         convertibles = new AppConvertibles();
 
         // Initialize contracts
         treasury.initialize(address(rzr), address(appOracle), address(authority));
         appOracle.initialize(address(authority), address(rzr));
-        convertibles.initialize(address(rzr), address(appOracle), address(twapOracle), address(authority));
+        convertibles.initialize(
+            address(rzr), address(appOracle), address(twapOracle), address(authority), address(permissionedERC20Factory)
+        );
 
         // Set treasury address in authority
         vm.startPrank(governor);

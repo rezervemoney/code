@@ -76,7 +76,7 @@ contract BridgeL2 is AppAccessControlled, OAppRead, OAppOptionsType3, IBridgeL2 
                 dstEid: MAINNET_EID,
                 to: bytes32(uint256(uint160(BRIDGE_MAINNET))),
                 amountLD: balance,
-                minAmountLD: balance,
+                minAmountLD: balance * 999 / 1000,
                 extraOptions: "",
                 composeMsg: "",
                 oftCmd: ""

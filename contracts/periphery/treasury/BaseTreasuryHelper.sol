@@ -3,13 +3,13 @@ pragma solidity 0.8.28;
 
 import {AppAccessControlled} from "../../core/AppAccessControlled.sol";
 import {IAppTreasury} from "../../interfaces/IAppTreasury.sol";
-import {IApp, IERC20} from "../../interfaces/IApp.sol";
+import {IApp} from "../../interfaces/IApp.sol";
 
 abstract contract BaseTreasuryHelper is AppAccessControlled {
     bool public killed;
 
     modifier whenNotKilled() {
-        require(!killed, "BaseTreasuryHelper: killed");
+        _whenNotKilled();
         _;
     }
 
@@ -53,5 +53,9 @@ abstract contract BaseTreasuryHelper is AppAccessControlled {
     /// @dev This will prevent the contract from being used
     function kill() public onlyGuardianOrGovernor {
         killed = true;
+    }
+
+    function _whenNotKilled() internal view {
+        require(!killed, "BaseTreasuryHelper: killed");
     }
 }

@@ -146,13 +146,14 @@ contract AppTreasuryTest is BaseTest {
     //     vm.stopPrank();
     // }
 
-    function testFail_DepositInvalidToken() public {
+    function testRevert_DepositInvalidToken() public {
         MockERC20 invalidToken = new MockERC20("Invalid Token", "INV");
 
         // Try to deposit without enabling token first
         uint256 depositAmount = 1000e18;
         invalidToken.mint(owner, depositAmount);
         invalidToken.approve(address(treasury), depositAmount);
+        vm.expectRevert();
         treasury.deposit(depositAmount, address(invalidToken), 0);
 
         vm.stopPrank();

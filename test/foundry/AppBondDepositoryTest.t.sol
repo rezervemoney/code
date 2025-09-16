@@ -199,10 +199,11 @@ contract AppBondDepositoryTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testFail_CreateBondInvalidPrice() public {
+    function testRevert_CreateBondInvalidPrice() public {
         vm.startPrank(owner);
 
         // Try to create bond with invalid price range
+        vm.expectRevert();
         bondDepository.create(
             mockQuoteToken,
             BOND_AMOUNT,
@@ -218,10 +219,11 @@ contract AppBondDepositoryTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testFail_CreateBondInvalidDuration() public {
+    function testRevert_CreateBondInvalidDuration() public {
         vm.startPrank(owner);
 
         // Try to create bond with zero duration
+        vm.expectRevert();
         bondDepository.create(
             mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, 0, 0, VESTING_PERIOD, STAKING_LOCK_PERIOD, false
         );
@@ -229,7 +231,7 @@ contract AppBondDepositoryTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testFail_DepositAfterEnd() public {
+    function testRevert_DepositAfterEnd() public {
         vm.startPrank(owner);
 
         // Create bond
@@ -254,12 +256,13 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(user1);
         mockQuoteToken.mint(user1, BOND_AMOUNT);
         mockQuoteToken.approve(address(bondDepository), BOND_AMOUNT);
+        vm.expectRevert();
         bondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
 
         vm.stopPrank();
     }
 
-    function testFail_DepositExceedsCapacity() public {
+    function testRevert_DepositExceedsCapacity() public {
         vm.startPrank(owner);
 
         // Create bond with small capacity
@@ -281,12 +284,13 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(user1);
         mockQuoteToken.mint(user1, BOND_AMOUNT);
         mockQuoteToken.approve(address(bondDepository), BOND_AMOUNT);
+        vm.expectRevert();
         bondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
 
         vm.stopPrank();
     }
 
-    function testFail_ClaimBeforeVesting() public {
+    function testRevert_ClaimBeforeVesting() public {
         vm.startPrank(owner);
 
         // Create bond
@@ -313,6 +317,7 @@ contract AppBondDepositoryTest is BaseTest {
         bondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
 
         // Try to claim before vesting
+        vm.expectRevert();
         bondDepository.claim(1); // tokenId will be 1 since it's the first deposit
 
         vm.stopPrank();
@@ -350,7 +355,7 @@ contract AppBondDepositoryTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testFail_StakeAlreadyStaked() public {
+    function testRevert_StakeAlreadyStaked() public {
         vm.startPrank(owner);
 
         // Create bond
@@ -383,6 +388,7 @@ contract AppBondDepositoryTest is BaseTest {
         bondDepository.stake(tokenId, payout);
 
         // Try to stake again
+        vm.expectRevert();
         bondDepository.stake(tokenId, payout);
 
         vm.stopPrank();

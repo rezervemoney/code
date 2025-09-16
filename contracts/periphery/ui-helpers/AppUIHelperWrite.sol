@@ -4,6 +4,7 @@ pragma abicoder v2;
 
 import "./AppUIHelperBase.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/interfaces/IERC4626.sol";
 
 /// @title RZR UI Helper
 /// @author RZR Protocol
@@ -49,7 +50,7 @@ contract AppUIHelperWrite is AppUIHelperBase {
     /// @param user The user to claim rewards for
     /// @param merkleProofs The merkle proofs for the rewards
     /// @return amount The amount of rewards claimed
-    function claimAllInterestAndMerklRewards(address user, bytes memory merkleProofs)
+    function claimAllInterestAndMerklRewards(address user, bool unwrap4626, bytes memory merkleProofs)
         external
         returns (uint256 amount)
     {
@@ -57,7 +58,7 @@ contract AppUIHelperWrite is AppUIHelperBase {
         for (uint256 i = 0; i < balance; i++) {
             uint256 tokenId = convertibles.tokenOfOwnerByIndex(user, i);
             if (tokenId == 0) continue;
-            (uint256 interestClaimable,) = convertibles.claimableInterest(tokenId);
+            (uint256 interestClaimable,) = convertibles.claimInterest(tokenId, unwrap4626);
             amount += interestClaimable;
         }
 
@@ -80,7 +81,8 @@ contract AppUIHelperWrite is AppUIHelperBase {
             uint256 conversionPrice,
             uint256 conversionAmount,
             uint256 fixedInterestRate,
-            uint256 fixedInterestRateAmount
+            uint256 fixedInterestRateAmount,
+            uint256 stakingPower
         )
     {
         _performZap(odosParams);
@@ -90,8 +92,37 @@ contract AppUIHelperWrite is AppUIHelperBase {
             loanToken.deposit(loanTokenUnderlying.balanceOf(address(this)), address(this));
         }
 
-        // (tokenId, conversionPrice, conversionAmount, fixedInterestRate, fixedInterestRateAmount) =
-        //     convertibles.stake(loanTokenUnderlying, loanTokenUnderlying.balanceOf(address(this)), convertibleParams.lockDuration, msg.sender);
+        (tokenId, conversionPrice, conversionAmount, fixedInterestRate, fixedInterestRateAmount, stakingPower) =
+        convertibles.stake(
+            loanTokenUnderlying,
+            loanTokenUnderlying.balanceOf(address(this)),
+            convertibleParams.lockDuration,
+            msg.sender
+        );
+
+        _purgeAll(odosParams);
+    }
+
+    /// @notice Zaps and deposits into a bond
+    /// @param odosParams The parameters for the zap
+    /// @param zapAsset The asset to zap into the bond
+    /// @param bond The bond to deposit into
+    /// @return payout The amount of payout tokens received
+    function zapIntoBond(OdosParams memory odosParams, IERC20 zapAsset, IERC4626 bond, uint256 minPayout)
+        external
+        payable
+        returns (uint256 payout)
+    {
+        _performZap(odosParams);
+
+        zapAsset.approve(address(usdtreasury), type(uint256).max);
+        usdtreasury.mint(zapAsset, address(this), zapAsset.balanceOf(address(this)));
+
+        IERC20 underlying = IERC20(bond.asset());
+        underlying.approve(address(bond), type(uint256).max);
+        payout = bond.deposit(underlying.balanceOf(address(this)), msg.sender);
+
+        require(payout >= minPayout, "Insufficient payout");
 
         _purgeAll(odosParams);
     }
@@ -100,8 +131,9 @@ contract AppUIHelperWrite is AppUIHelperBase {
     /// @param odosParams The parameters for the zap
     /// @param referralCode The referral code to use
     /// @param destination The destination address
+    /// @param minMinted The minimum amount of tokens minted
     /// @return minted The amount of tokens minted
-    function zapIntoLST(OdosParams memory odosParams, bytes8 referralCode, address destination)
+    function zapIntoLST(OdosParams memory odosParams, bytes8 referralCode, address destination, uint256 minMinted)
         external
         payable
         returns (uint256 minted)
@@ -109,6 +141,7 @@ contract AppUIHelperWrite is AppUIHelperBase {
         _performZap(odosParams);
         appToken.approve(address(referrals), type(uint256).max);
         minted = referrals.stakeIntoLSTWithReferral(appToken.balanceOf(address(this)), referralCode, destination);
+        require(minted >= minMinted, "Insufficient minted");
         _purgeAll(odosParams);
     }
 
@@ -119,7 +152,7 @@ contract AppUIHelperWrite is AppUIHelperBase {
     /// @return taxPaid The amount of tax paid
     /// @return amountStaked The amount of app tokens staked
     /// @return amountDeclared The amount of app tokens declared
-    function zapAndStake(OdosParams memory odosParams, StakeParams memory stakeParams)
+    function zapAndStake(OdosParams memory odosParams, StakeParams memory stakeParams, uint256 minStaked)
         external
         payable
         returns (uint256 tokenId, uint256 taxPaid, uint256 amountStaked, uint256 amountDeclared)
@@ -132,17 +165,19 @@ contract AppUIHelperWrite is AppUIHelperBase {
         (tokenId, taxPaid) =
             referrals.stakeWithReferral(amountStaked, amountDeclared, stakeParams.referralCode, msg.sender);
 
+        require(amountStaked >= minStaked, "Insufficient staked");
         _purgeAll(odosParams);
     }
 
     /// @notice Zaps and stakes the given token amount as a percentage of the app token balance
     /// @param odosParams The parameters for the zap
     /// @param stakeParams The parameters for the stake
+    /// @param minStaked The minimum amount of app tokens staked
     /// @return tokenId The ID of the created stake position NFT
     /// @return taxPaid The amount of tax paid
     /// @return amountStaked The amount of app tokens staked
     /// @return amountDeclared The amount of app tokens declared
-    function zapAndStakeAsPercentage(OdosParams memory odosParams, StakeParams memory stakeParams)
+    function zapAndStakeAsPercentage(OdosParams memory odosParams, StakeParams memory stakeParams, uint256 minStaked)
         external
         payable
         returns (uint256 tokenId, uint256 taxPaid, uint256 amountStaked, uint256 amountDeclared)
@@ -154,6 +189,8 @@ contract AppUIHelperWrite is AppUIHelperBase {
         appToken.approve(address(referrals), amountStaked);
         (tokenId, taxPaid) =
             referrals.stakeWithReferral(amountStaked, amountDeclared, stakeParams.referralCode, msg.sender);
+
+        require(amountStaked >= minStaked, "Insufficient staked");
 
         _purgeAll(odosParams);
     }

@@ -48,7 +48,7 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
     /// @inheritdoc IAppStaking
     function initialize(address _appToken, address _trackingToken, address _authority, address _burner)
         public
-        reinitializer(3)
+        reinitializer(4)
     {
         if (lastId == 0) lastId = 1;
 
@@ -315,14 +315,16 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
         nonReentrant
         returns (uint256 depositFee)
     {
-        require(ownerOf(tokenId) != address(0), "Position does not exist");
+        address owner = ownerOf(tokenId);
+
+        require(owner != address(0), "Position does not exist");
+        require(owner == msg.sender, "Not owner");
         require(_positions[tokenId].withdrawCooldownEnd == 0, "Position is in cooldown");
         require(addtionalDeclaredValue > 0 || additionalAmount > 0, "Declared value or amount must be greater than 0");
 
         _updateReward(tokenId);
 
         Position storage position = _positions[tokenId];
-        address owner = ownerOf(tokenId);
 
         // Transfer RZR tokens from user
         if (additionalAmount > 0) {
@@ -561,9 +563,8 @@ contract AppStaking is IAppStaking, AppAccessControlled, ERC721EnumerableUpgrade
     }
 
     /// @notice Distributes the deposit fee to the operations treasury and protocol treasury
-    /// @param amount The amount of RZR to distribute
     /// @return depositFee The total amount of deposit fee paid
-    function _chargeDepositFee(uint256 amount) internal returns (uint256 depositFee) {
+    function _chargeDepositFee(uint256) internal view returns (uint256 depositFee) {
         // todo
         // depositFee = (amount * getDepositFee()) / 1e18;
         // if (depositFee > 0) appToken.safeTransfer(burner, depositFee);

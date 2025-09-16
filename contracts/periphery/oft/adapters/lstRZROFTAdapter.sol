@@ -4,8 +4,11 @@ pragma solidity 0.8.28;
 import "../../../core/AppAccessControlled.sol";
 import "@layerzerolabs/oft-evm/contracts/OFTAdapter.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract lstRZROFTAdapter is OFTAdapter, AppAccessControlled {
+    using SafeERC20 for IERC20;
+
     constructor(address _oft, address _lzEndpoint, address _authority)
         OFTAdapter(_oft, _lzEndpoint, msg.sender)
         Ownable(msg.sender)
@@ -21,7 +24,7 @@ contract lstRZROFTAdapter is OFTAdapter, AppAccessControlled {
     }
 
     function recall(address _token) external onlyGovernor {
-        IERC20(_token).transfer(msg.sender, IERC20(_token).balanceOf(address(this)));
+        IERC20(_token).safeTransfer(msg.sender, IERC20(_token).balanceOf(address(this)));
     }
 
     function execute(address _to, bytes calldata _data) external onlyGovernor {

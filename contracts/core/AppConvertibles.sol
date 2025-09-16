@@ -24,6 +24,7 @@ contract AppConvertibles is
     ReentrancyGuardUpgradeable
 {
     using SafeERC20 for IERC20;
+    using SafeERC20 for IERC4626;
 
     /// @inheritdoc IAppConvertibles
     uint256 public immutable MAX_LOCK_DURATION = 4 * 365 days;
@@ -50,6 +51,9 @@ contract AppConvertibles is
     IAppOracle public oracle;
 
     /// @inheritdoc IAppConvertibles
+    IOracleV2 public spotOracle;
+
+    /// @inheritdoc IAppConvertibles
     IOracleV2 public twapOracle;
 
     /// @inheritdoc IAppConvertibles
@@ -68,15 +72,20 @@ contract AppConvertibles is
     IPermissionedERC20Factory public factory;
 
     /// @inheritdoc IAppConvertibles
-    function initialize(address _rzr, address _oracle, address _twapOracle, address _authority, address _factory)
-        external
-        initializer
-    {
+    function initialize(
+        address _rzr,
+        address _oracle,
+        address _spotOracle,
+        address _twapOracle,
+        address _authority,
+        address _factory
+    ) external initializer {
         __ERC721_init("RZR Convertibles", "cRZR-POS");
         __ReentrancyGuard_init();
         __AppAccessControlled_init(_authority);
         rzr = IApp(_rzr);
         oracle = IAppOracle(_oracle);
+        spotOracle = IOracleV2(_spotOracle);
         twapOracle = IOracleV2(_twapOracle);
         factory = IPermissionedERC20Factory(_factory);
 
@@ -89,9 +98,7 @@ contract AppConvertibles is
     }
 
     modifier onlyOwnerOrAuthorized(uint256 tokenId) {
-        require(
-            ownerOf(tokenId) == msg.sender || isApprovedForAll(ownerOf(tokenId), msg.sender), "Not owner or approved"
-        );
+        _onlyOwnerOrAuthorized(tokenId);
         _;
     }
 
@@ -174,7 +181,7 @@ contract AppConvertibles is
             uint256 stakingPower
         )
     {
-        uint256 price = _getPrice(loanToken);
+        uint256 priceRzrToUsd = _getSpotPrice();
         Variables memory _vars = _variables[loanToken];
 
         require(amount > 0, "Invalid amount");
@@ -185,9 +192,9 @@ contract AppConvertibles is
         fixedInterestRateAmount = 0;
         stakingPower = _getStakingPower(loanToken, amount, lockDuration);
 
-        loanToken.transferFrom(msg.sender, address(this), amount);
+        loanToken.safeTransferFrom(msg.sender, address(this), amount);
         _positions[++lastId] = Position({
-            asset: loanToken,
+            asset: IERC4626(address(loanToken)),
             stakingPower: stakingPower,
             amountStaked: amount,
             amountConvertible: conversionAmount,
@@ -196,7 +203,7 @@ contract AppConvertibles is
             lockDuration: lockDuration,
             lockStartTime: block.timestamp,
             priceConversion: conversionPrice,
-            priceEntry: price
+            priceEntry: priceRzrToUsd
         });
 
         _mint(receiver, lastId);
@@ -209,7 +216,9 @@ contract AppConvertibles is
         uint256 _totalStaked = _vars.trackingToken.totalSupply();
         require(_totalStaked <= _vars.debtCap || _vars.debtCap == 0, "Debt cap reached");
 
-        emit Staked(receiver, lastId, amount, conversionAmount, lockDuration, price, conversionPrice, fixedInterestRate);
+        emit Staked(
+            receiver, lastId, amount, conversionAmount, lockDuration, priceRzrToUsd, conversionPrice, fixedInterestRate
+        );
 
         return (lastId, conversionPrice, conversionAmount, fixedInterestRate, fixedInterestRateAmount, stakingPower);
     }
@@ -235,7 +244,7 @@ contract AppConvertibles is
         totalConvertible -= amountConvertible;
 
         // transfer the loan tokens to the treasury so that we can clear out our debt
-        asset.transfer(address(authority.treasury()), amountStaked);
+        asset.safeTransfer(address(authority.treasury()), amountStaked);
 
         // burn the loan tracking tokens
         stakingPowerToken.burn(owner, stakingPower);
@@ -248,7 +257,7 @@ contract AppConvertibles is
     }
 
     /// @inheritdoc IAppConvertibles
-    function redeem(uint256 tokenId) external nonReentrant onlyOwnerOrAuthorized(tokenId) {
+    function redeem(uint256 tokenId, bool unwrap4626) external nonReentrant onlyOwnerOrAuthorized(tokenId) {
         Position storage position = _positions[tokenId];
 
         require(block.timestamp - position.lockStartTime >= position.lockDuration, "Not enough time passed");
@@ -257,7 +266,7 @@ contract AppConvertibles is
         uint256 amountStaked = position.amountStaked;
         uint256 amountConvertible = position.amountConvertible;
         uint256 stakingPower = position.stakingPower;
-        IERC20 asset = position.asset;
+        IERC4626 asset = position.asset;
         address owner = ownerOf(tokenId);
 
         // we assume that the contract always has enough shares to cover the interest
@@ -271,7 +280,9 @@ contract AppConvertibles is
         totalConvertible -= amountConvertible;
 
         // clear out the debt and send it back to the user along with the fixed interest
-        asset.transfer(owner, amountStaked + interestAccumulated);
+        if (unwrap4626) asset.withdraw(amountStaked + interestAccumulated, owner, address(this));
+        else asset.safeTransfer(owner, amountStaked + interestAccumulated);
+
         stakingPowerToken.burn(owner, stakingPower);
         _variables[asset].trackingToken.burn(owner, amountStaked);
 
@@ -333,7 +344,7 @@ contract AppConvertibles is
     }
 
     /// @inheritdoc IAppConvertibles
-    function claimInterest(uint256 tokenId)
+    function claimInterest(uint256 tokenId, bool unwrap4626)
         external
         nonReentrant
         returns (uint256 interestClaimed, uint256 totalInterestClaimed)
@@ -343,7 +354,9 @@ contract AppConvertibles is
         require(interestClaimed > 0, "No interest to claim");
         position.fixedInterestClaimed = totalInterestClaimed;
 
-        position.asset.transfer(ownerOf(tokenId), interestClaimed);
+        if (unwrap4626) position.asset.withdraw(interestClaimed, ownerOf(tokenId), address(this));
+        else position.asset.transfer(ownerOf(tokenId), interestClaimed);
+
         emit InterestClaimed(msg.sender, tokenId, interestClaimed);
     }
 
@@ -367,15 +380,23 @@ contract AppConvertibles is
         view
         returns (uint256 conversionPrice, uint256 conversionAmount, uint256 fixedInterestRate)
     {
+        uint256 priceLoanToUsd = _getPrice(loanToken);
+        uint256 priceUsdToRzr = _getSpotPrice();
+
+        // get the USD value of the loan token amount
         uint256 amountLoanScaled = _scaleAmount(loanToken, amountLoan);
-        uint256 price = _getPrice(loanToken);
+        uint256 amountLoanScaledToUsd = amountLoanScaled * priceLoanToUsd / 1e18;
         Variables memory _vars = _variables[loanToken];
 
         // calculate the conversion premium; longer duration means lower premium
         uint256 premium =
             _scale(_vars.maxConversionPremium, _vars.minConversionPremium, MAX_LOCK_DURATION - lockDuration);
-        conversionPrice = price * (1e18 + premium) / 1e18;
-        conversionAmount = amountLoanScaled * 1e18 / conversionPrice;
+
+        // calculate the conversion price in RZR/USD terms
+        conversionPrice = priceUsdToRzr * (1e18 + premium) / 1e18;
+
+        // based on the dollar value of the loan token amount, calculate the conversion amount in RZR terms
+        conversionAmount = amountLoanScaledToUsd * 1e18 / conversionPrice;
 
         // calculate the fixed interest rate; longer duration means higher fixed interest rate
         fixedInterestRate = _scale(_vars.maxFixedInterestRate, _vars.minFixedInterestRate, lockDuration);
@@ -447,10 +468,17 @@ contract AppConvertibles is
         }
     }
 
-    function _getPrice(IERC20 loanToken) internal view returns (uint256 price) {
-        uint256 decimals = IERC20Metadata(address(loanToken)).decimals();
+    function _getPrice(IERC20 asset) internal view returns (uint256 price) {
+        uint256 decimals = IERC20Metadata(address(asset)).decimals();
         (uint256 rzrAssets, uint256 usdAssets, uint256 lastUpdatedAt) =
-            oracle.getPriceForAmount(address(loanToken), 10 ** (decimals));
+            oracle.getPriceForAmount(address(asset), 10 ** (decimals));
+        require(rzrAssets == 0 && usdAssets > 0, "Invalid price");
+        require(lastUpdatedAt > block.timestamp - MAX_ORACLE_STALENESS, "Stale price");
+        price = usdAssets;
+    }
+
+    function _getSpotPrice() internal view returns (uint256 price) {
+        (uint256 rzrAssets, uint256 usdAssets, uint256 lastUpdatedAt) = spotOracle.getPriceForAmount(1e18);
         require(rzrAssets == 0 && usdAssets > 0, "Invalid price");
         require(lastUpdatedAt > block.timestamp - MAX_ORACLE_STALENESS, "Stale price");
         price = usdAssets;
@@ -483,5 +511,11 @@ contract AppConvertibles is
     {
         uint256 amountScaled = _scaleAmount(loanToken, amount);
         stakingPower = amountScaled * duration / MAX_LOCK_DURATION;
+    }
+
+    function _onlyOwnerOrAuthorized(uint256 tokenId) internal view {
+        require(
+            ownerOf(tokenId) == msg.sender || isApprovedForAll(ownerOf(tokenId), msg.sender), "Not owner or approved"
+        );
     }
 }

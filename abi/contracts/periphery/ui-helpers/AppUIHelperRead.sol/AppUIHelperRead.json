@@ -67,6 +67,11 @@
             "internalType": "address",
             "name": "totalReservesOracle",
             "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "usdtreasury",
+            "type": "address"
           }
         ],
         "internalType": "struct AppUIHelperBase.InitParams",
@@ -1302,6 +1307,19 @@
     "outputs": [
       {
         "internalType": "contract IAppTreasury",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "usdtreasury",
+    "outputs": [
+      {
+        "internalType": "contract IUSDTreasury",
         "name": "",
         "type": "address"
       }

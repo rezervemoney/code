@@ -23,6 +23,7 @@ contract OracleV2CL is IAggregatorV3 {
     function getPrice() public view returns (int256 usd) {
         (, uint256 usdAmount,) = appOracle.getPriceForAmount(asset, amount);
         (, uint256 rzrAmountInUsd,) = rzrSpotOracle.getPriceForAmount(amount);
+        // forge-lint: disable-next-line(unsafe-typecast)
         return int256(rzrAmountInUsd + usdAmount) / 1e10;
     }
 

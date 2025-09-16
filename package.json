@@ -53,6 +53,7 @@
     "compile": "SKIP_LOAD=true hardhat compile && forge build",
     "test": "npm run test:foundry",
     "coverage": "forge coverage --report lcov",
+    "docs": "forge doc",
     "test:foundry": "forge test --no-match-test fork_test",
     "test:halmos": "halmos",
     "coverage:html": "node scripts/renderCoverage.js",
@@ -82,6 +83,7 @@
   "dependencies": {
     "@gelatonetwork/automate-sdk": "^3.1.0",
     "@gelatonetwork/web3-functions-sdk": "^2.4.4",
+    "@pendle/core-v2": "^6.1.1",
     "inquirer": "^12.6.3",
     "markdown-table": "^3.0.4",
     "prettier": "^3.5.3"

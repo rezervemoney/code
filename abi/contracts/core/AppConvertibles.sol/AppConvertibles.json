@@ -139,6 +139,17 @@
     "type": "error"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "SafeERC20FailedOperation",
+    "type": "error"
+  },
+  {
     "anonymous": false,
     "inputs": [
       {
@@ -649,6 +660,11 @@
         "internalType": "uint256",
         "name": "tokenId",
         "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "unwrap4626",
+        "type": "bool"
       }
     ],
     "name": "claimInterest",
@@ -845,6 +861,11 @@
       },
       {
         "internalType": "address",
+        "name": "_spotOracle",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
         "name": "_twapOracle",
         "type": "address"
       },
@@ -959,7 +980,7 @@
       {
         "components": [
           {
-            "internalType": "contract IERC20",
+            "internalType": "contract IERC4626",
             "name": "asset",
             "type": "address"
           },
@@ -1023,6 +1044,11 @@
         "internalType": "uint256",
         "name": "tokenId",
         "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "unwrap4626",
+        "type": "bool"
       }
     ],
     "name": "redeem",
@@ -1210,6 +1236,19 @@
     "name": "split",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "spotOracle",
+    "outputs": [
+      {
+        "internalType": "contract IOracleV2",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {

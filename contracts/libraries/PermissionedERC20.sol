@@ -14,7 +14,7 @@ contract PermissionedERC20 is ERC20, IPermissionedERC20 {
     /// @notice Modifier to check if the caller is the staking contract
     /// @dev This modifier is only callable by the staking contract
     modifier onlyPermissionedContract() {
-        require(msg.sender == permissionedContract, "PermissionedContract:  call is not permissioned contract");
+        _onlyPermissionedContract();
         _;
     }
 
@@ -84,5 +84,9 @@ contract PermissionedERC20 is ERC20, IPermissionedERC20 {
     function transferFrom(address from, address to, uint256 value) public override(ERC20, IERC20) returns (bool) {
         require(false, "transferFrom not allowed");
         return super.transferFrom(from, to, value);
+    }
+
+    function _onlyPermissionedContract() internal view {
+        require(msg.sender == permissionedContract, "PermissionedContract:  call is not permissioned contract");
     }
 }

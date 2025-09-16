@@ -40,6 +40,7 @@ contract BeaconOracleV2CL is IAggregatorV3, AppAccessControlled {
     function getPrice() public view returns (int256 usd, uint256 lastUpdatedAt) {
         uint256 rzrAmountInUsd;
         (, rzrAmountInUsd, lastUpdatedAt) = beacon.getPriceForAmount(1e18);
+        // forge-lint: disable-next-line(unsafe-typecast)
         usd = int256(rzrAmountInUsd) / 1e10;
     }
 

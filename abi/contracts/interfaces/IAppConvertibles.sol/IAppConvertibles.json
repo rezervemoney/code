@@ -382,7 +382,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "value",
         "type": "uint256"
       }
     ],
@@ -395,7 +395,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "value",
         "type": "uint256"
       }
     ],
@@ -408,7 +408,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "value",
         "type": "uint256"
       }
     ],
@@ -421,7 +421,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "value",
         "type": "uint256"
       }
     ],
@@ -471,6 +471,11 @@
         "internalType": "uint256",
         "name": "tokenId",
         "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "unwrap4626",
+        "type": "bool"
       }
     ],
     "name": "claimInterest",
@@ -588,7 +593,7 @@
     "outputs": [
       {
         "internalType": "contract IPermissionedERC20Factory",
-        "name": "",
+        "name": "factory",
         "type": "address"
       }
     ],
@@ -667,6 +672,11 @@
       },
       {
         "internalType": "address",
+        "name": "_spotOracle",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
         "name": "_twapOracle",
         "type": "address"
       },
@@ -716,7 +726,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "lastId",
         "type": "uint256"
       }
     ],
@@ -729,7 +739,7 @@
     "outputs": [
       {
         "internalType": "contract IAppOracle",
-        "name": "",
+        "name": "oracle",
         "type": "address"
       }
     ],
@@ -768,7 +778,7 @@
       {
         "components": [
           {
-            "internalType": "contract IERC20",
+            "internalType": "contract IERC4626",
             "name": "asset",
             "type": "address"
           },
@@ -832,6 +842,11 @@
         "internalType": "uint256",
         "name": "tokenId",
         "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "unwrap4626",
+        "type": "bool"
       }
     ],
     "name": "redeem",
@@ -845,7 +860,7 @@
     "outputs": [
       {
         "internalType": "contract IApp",
-        "name": "",
+        "name": "rzr",
         "type": "address"
       }
     ],
@@ -858,7 +873,7 @@
     "outputs": [
       {
         "internalType": "contract IPermissionedERC20",
-        "name": "",
+        "name": "rzrTrackingToken",
         "type": "address"
       }
     ],
@@ -991,6 +1006,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "spotOracle",
+    "outputs": [
+      {
+        "internalType": "contract IOracleV2",
+        "name": "spotOracle",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "contract IERC20",
@@ -1055,7 +1083,7 @@
     "outputs": [
       {
         "internalType": "contract IPermissionedERC20",
-        "name": "",
+        "name": "stakingPowerToken",
         "type": "address"
       }
     ],
@@ -1130,7 +1158,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "totalConvertible",
         "type": "uint256"
       }
     ],
@@ -1149,7 +1177,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "totalStaked",
         "type": "uint256"
       }
     ],
@@ -1198,7 +1226,7 @@
     "outputs": [
       {
         "internalType": "contract IOracleV2",
-        "name": "",
+        "name": "twapOracle",
         "type": "address"
       }
     ],

@@ -55,6 +55,7 @@ contract AppUIHelperWriteTest is BaseTest {
                 odos: ODOS,
                 staking4626: address(staking4626),
                 referrals: address(referrals),
+                usdtreasury: address(0),
                 totalReservesOracle: address(totalReservesOracle)
             })
         );
@@ -148,7 +149,7 @@ contract AppUIHelperWriteTest is BaseTest {
         deal(address(app), BOB, 100e18);
         app.approve(address(uiHelper), 100e18);
 
-        (uint256 tokenId,,, uint256 amountDeclared) = uiHelper.zapAndStake(odosParams, stakeParams);
+        (uint256 tokenId,,, uint256 amountDeclared) = uiHelper.zapAndStake(odosParams, stakeParams, 0);
         vm.stopPrank();
 
         // Verify staking position was created
@@ -182,7 +183,7 @@ contract AppUIHelperWriteTest is BaseTest {
         deal(address(app), BOB, 100e18);
         app.approve(address(uiHelper), 100e18);
 
-        (uint256 tokenId,,, uint256 amountDeclared) = uiHelper.zapAndStakeAsPercentage(odosParams, stakeParams);
+        (uint256 tokenId,,, uint256 amountDeclared) = uiHelper.zapAndStakeAsPercentage(odosParams, stakeParams, 0);
         vm.stopPrank();
 
         // Verify staking position was created
@@ -218,7 +219,7 @@ contract AppUIHelperWriteTest is BaseTest {
         // Simulate zap output: give the UI helper the app tokens it needs
         deal(address(app), address(uiHelper), 100e18);
 
-        (uint256 tokenId,,,) = uiHelper.zapAndStake{value: 1e18}(odosParams, stakeParams);
+        (uint256 tokenId,,,) = uiHelper.zapAndStake{value: 1e18}(odosParams, stakeParams, 0);
         vm.stopPrank();
 
         // Verify staking position was created
@@ -260,7 +261,7 @@ contract AppUIHelperWriteTest is BaseTest {
         deal(address(app), BOB, 100e18);
         app.approve(address(uiHelper), 100e18);
 
-        uint256 minted = uiHelper.zapIntoLST(odosParams, referralCode, destination);
+        uint256 minted = uiHelper.zapIntoLST(odosParams, referralCode, destination, 0);
         vm.stopPrank();
 
         // Verify LST deposit was successful
@@ -292,7 +293,7 @@ contract AppUIHelperWriteTest is BaseTest {
         // Simulate zap output: give the UI helper the app tokens it needs
         deal(address(app), address(uiHelper), 100e18);
 
-        uint256 minted = uiHelper.zapIntoLST{value: 1e18}(odosParams, referralCode, destination);
+        uint256 minted = uiHelper.zapIntoLST{value: 1e18}(odosParams, referralCode, destination, 0);
         vm.stopPrank();
 
         // Verify LST deposit was successful
@@ -318,7 +319,7 @@ contract AppUIHelperWriteTest is BaseTest {
         app.approve(address(uiHelper), 100e18);
 
         // Should not revert, but should not register referral
-        uint256 minted = uiHelper.zapIntoLST(odosParams, invalidReferralCode, destination);
+        uint256 minted = uiHelper.zapIntoLST(odosParams, invalidReferralCode, destination, 0);
         vm.stopPrank();
 
         // Verify LST deposit was still successful

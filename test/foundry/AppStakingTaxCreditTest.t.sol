@@ -219,16 +219,17 @@ contract AppStakingTaxCreditTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testFail_SetCreditForNonExistentPosition() public {
+    function testRevert_SetCreditForNonExistentPosition() public {
         vm.startPrank(owner);
 
         // Try to set credit for non-existent position
+        vm.expectRevert();
         staking.setUpfrontTaxCredit(999, CREDIT_AMOUNT);
 
         vm.stopPrank();
     }
 
-    function testFail_SetCreditTwice() public {
+    function testRevert_SetCreditTwice() public {
         vm.startPrank(owner);
 
         // Create position
@@ -240,12 +241,13 @@ contract AppStakingTaxCreditTest is BaseTest {
         staking.setUpfrontTaxCredit(tokenId, CREDIT_AMOUNT);
 
         // Try to set credit again
+        vm.expectRevert();
         staking.setUpfrontTaxCredit(tokenId, CREDIT_AMOUNT * 2);
 
         vm.stopPrank();
     }
 
-    function testFail_SetCreditAsNonGovernor() public {
+    function testRevert_SetCreditAsNonGovernor() public {
         vm.startPrank(owner);
 
         // Create position
@@ -257,12 +259,13 @@ contract AppStakingTaxCreditTest is BaseTest {
         vm.startPrank(user1);
 
         // Try to set credit as non-governor
+        vm.expectRevert();
         staking.setUpfrontTaxCredit(tokenId, CREDIT_AMOUNT);
 
         vm.stopPrank();
     }
 
-    function testFail_SetCreditWithZeroAmount() public {
+    function testRevert_SetCreditWithZeroAmount() public {
         vm.startPrank(owner);
 
         // Create position
@@ -271,6 +274,7 @@ contract AppStakingTaxCreditTest is BaseTest {
         (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         // Try to set zero credit
+        vm.expectRevert();
         staking.setUpfrontTaxCredit(tokenId, 0);
 
         vm.stopPrank();

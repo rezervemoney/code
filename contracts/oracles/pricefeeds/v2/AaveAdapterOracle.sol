@@ -27,6 +27,7 @@ contract AaveAdapterOracle is IOracleV2 {
     {
         int256 answer = AGGREGATOR.latestAnswer();
 
+        // forge-lint: disable-next-line(unsafe-typecast)
         uint256 oracleAnswerE18 = uint256(answer) * 10 ** (18 - oracleDecimals);
         uint256 amountE18 = amount * 10 ** (18 - assetDecimals);
 

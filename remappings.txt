@@ -7,3 +7,4 @@ evk/=lib/euler-vault-kit/src
 evc/=lib/ethereum-vault-connector/src
 ethereum-vault-connector/=lib/ethereum-vault-connector/src
 openzeppelin-contracts/=node_modules/@openzeppelin/
+@pendle/core-v2/=node_modules/@pendle/core-v2/

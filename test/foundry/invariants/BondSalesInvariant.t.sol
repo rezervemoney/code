@@ -106,6 +106,11 @@ contract BondSalesInvariant is BaseTest {
 
     /// @notice Treasury must always hold at least the amount of collateral it has received from bonds.
     function invariant_TreasuryHasCollateral() external view {
+        // Check if bond exists before accessing it
+        if (bondDepository.bondLength() == 0) {
+            return; // No bonds created yet, skip invariant
+        }
+
         IAppBondDepository.Bond memory bond = bondDepository.getBond(bondId);
         uint256 collateralReceived = bond.purchased; // quote tokens transferred into treasury
 
@@ -135,6 +140,11 @@ contract BondSalesInvariant is BaseTest {
 
     /// @notice Total RZR sold via bonds must not exceed the treasury's excess reserves buffer.
     function invariant_BondSalesWithinExcessReserves() external view {
+        // Check if bond exists before accessing it
+        if (bondDepository.bondLength() == 0) {
+            return; // No bonds created yet, skip invariant
+        }
+
         IAppBondDepository.Bond memory bond = bondDepository.getBond(bondId);
         uint256 totalSold = bond.sold; // RZR minted for this bond
 

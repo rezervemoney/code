@@ -44,6 +44,7 @@ contract DiaAdapterOracle is IOracleV2, IAggregatorV3 {
     /// @inheritdoc IAggregatorV3
     function latestAnswer() external view returns (int256) {
         (uint128 value,) = DIAL_ORACLE.getValue(key);
+        // forge-lint: disable-next-line(unsafe-typecast)
         return int256(int128(value));
     }
 
@@ -60,6 +61,7 @@ contract DiaAdapterOracle is IOracleV2, IAggregatorV3 {
         returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
     {
         (uint128 value, uint128 timestamp) = DIAL_ORACLE.getValue(key);
+        // forge-lint: disable-next-line(unsafe-typecast)
         return (0, int256(int128(value)), 0, timestamp, 0);
     }
 

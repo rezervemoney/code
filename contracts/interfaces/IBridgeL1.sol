@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.28;
 
-import {ITotalSupplyOracle} from "./ITotalSupplyOracle.sol";
 import {ITotalReservesOracle} from "./ITotalReservesOracle.sol";
 import {IAppTreasury} from "./IAppTreasury.sol";
 import {IStaking4626} from "./IStaking4626.sol";

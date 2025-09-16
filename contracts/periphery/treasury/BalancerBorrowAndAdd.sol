@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.28;
 
-import {EulerBorrowerHelper} from "./EulerBorrowerHelper.sol";
-import {IBalancerPool, IERC20, IBalancerV3Router} from "../../interfaces/IBalancerVault.sol";
-import {IPermit2} from "../../interfaces/IPermit2.sol";
+import "./EulerBorrowerHelper.sol";
+import "../../interfaces/IBalancerVault.sol";
+import "../../interfaces/IPermit2.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract BalancerBorrowAndAdd is EulerBorrowerHelper {
+    using SafeERC20 for IERC20;
+
     IBalancerV3Router public immutable router;
     address public immutable odos;
     IPermit2 public immutable permit2;
@@ -110,6 +113,6 @@ contract BalancerBorrowAndAdd is EulerBorrowerHelper {
 
     function _purge(address token) internal {
         uint256 balance = IERC20(token).balanceOf(address(this));
-        if (balance > 0) IERC20(token).transfer(address(_treasury()), balance);
+        if (balance > 0) IERC20(token).safeTransfer(address(_treasury()), balance);
     }
 }

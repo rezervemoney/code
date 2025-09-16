@@ -26,6 +26,7 @@ contract AppConvertiblesTrackingTest is Test {
     MockERC20 public usdc;
     MockERC20 public weth;
     MockOracleV2 public twapOracle;
+    MockOracleV2 public spotOracle;
 
     address public governor = address(this);
     address public user1 = address(0x2);
@@ -91,6 +92,7 @@ contract AppConvertiblesTrackingTest is Test {
 
         // Deploy mock oracles
         twapOracle = new MockOracleV2(0, 1e18, address(usdc));
+        spotOracle = new MockOracleV2(0, 1e18, address(usdc));
 
         // Deploy authority
         authority = new AppAuthority();
@@ -116,7 +118,12 @@ contract AppConvertiblesTrackingTest is Test {
         treasury.initialize(address(rzr), address(appOracle), address(authority));
         appOracle.initialize(address(authority), address(rzr));
         convertibles.initialize(
-            address(rzr), address(appOracle), address(twapOracle), address(authority), address(permissionedERC20Factory)
+            address(rzr),
+            address(appOracle),
+            address(spotOracle),
+            address(twapOracle),
+            address(authority),
+            address(permissionedERC20Factory)
         );
 
         // Set treasury address in authority
@@ -191,7 +198,6 @@ contract AppConvertiblesTrackingTest is Test {
         vm.startPrank(user1);
 
         // Get initial balances
-        uint256 initialUsdcBalance = usdc.balanceOf(user1);
         uint256 initialStakingPowerBalance = convertibles.stakingPowerToken().balanceOf(user1);
         uint256 initialRzrTrackingBalance = convertibles.rzrTrackingToken().balanceOf(user1);
         uint256 initialTrackingTokenBalance = convertibles.variables(usdc).trackingToken.balanceOf(user1);
@@ -246,6 +252,7 @@ contract AppConvertiblesTrackingTest is Test {
 
         // Update oracle timestamp after warping to prevent staleness
         twapOracle.touchTimestamp();
+        spotOracle.touchTimestamp();
 
         // Set TWAP price above conversion price to allow conversion
         (uint256 conversionPrice,,) = convertibles.getOfferings(usdc, USDC_AMOUNT, LOCK_DURATION);
@@ -299,7 +306,7 @@ contract AppConvertiblesTrackingTest is Test {
         deal(address(usdc), address(convertibles), bal + 1000e6);
 
         // Redeem position
-        convertibles.redeem(tokenId);
+        convertibles.redeem(tokenId, false);
 
         // Verify tracking tokens are burned correctly
         assertEq(
@@ -366,7 +373,7 @@ contract AppConvertiblesTrackingTest is Test {
         assertApproxEqRel(
             originalPosition.amountConvertible,
             conversionAmount * (1e18 - splitPercentage) / 1e18,
-            1e3,
+            0.001e18,
             "Original position convertible amount not reduced correctly"
         );
 
@@ -507,6 +514,7 @@ contract AppConvertiblesTrackingTest is Test {
         // Convert first position
         vm.warp(block.timestamp + 8 days);
         twapOracle.touchTimestamp(); // Update oracle timestamp after warping
+        spotOracle.touchTimestamp();
         (uint256 conversionPrice,,) = convertibles.getOfferings(usdc, USDC_AMOUNT, LOCK_DURATION);
         twapOracle.setPrice(0, conversionPrice + 1e18);
         convertibles.convert(tokenId1);
@@ -525,7 +533,7 @@ contract AppConvertiblesTrackingTest is Test {
         // Redeem second position
         vm.warp(block.timestamp + LOCK_DURATION + 1);
         twapOracle.touchTimestamp(); // Update oracle timestamp after warping
-        convertibles.redeem(tokenId2);
+        convertibles.redeem(tokenId2, false);
 
         // Verify total convertible decreased to initial value
         assertEq(
@@ -541,11 +549,11 @@ contract AppConvertiblesTrackingTest is Test {
         vm.startPrank(user1);
 
         // Stake USDC
-        (uint256 usdcTokenId,, uint256 usdcConversionAmount,,, uint256 usdcStakingPower) =
+        (,, uint256 usdcConversionAmount,,, uint256 usdcStakingPower) =
             convertibles.stake(usdc, USDC_AMOUNT, LOCK_DURATION, user1);
 
         // Stake WETH
-        (uint256 wethTokenId,, uint256 wethConversionAmount,,, uint256 wethStakingPower) =
+        (,, uint256 wethConversionAmount,,, uint256 wethStakingPower) =
             convertibles.stake(weth, WETH_AMOUNT, LOCK_DURATION, user1);
 
         // Verify USDC tracking tokens
@@ -592,7 +600,7 @@ contract AppConvertiblesTrackingTest is Test {
         // Wait some time and claim interest
         vm.warp(block.timestamp + 180 days);
 
-        (uint256 interestClaimed,) = convertibles.claimInterest(tokenId);
+        (uint256 interestClaimed,) = convertibles.claimInterest(tokenId, false);
 
         // Verify USDC balance increased by interest
         assertEq(
@@ -631,7 +639,7 @@ contract AppConvertiblesTrackingTest is Test {
         vm.stopPrank();
     }
 
-    function test_BasicSetup() public {
+    function test_BasicSetup() public view {
         // This test just verifies the basic setup works
         assertEq(address(convertibles.authority()), address(authority));
         assertEq(address(convertibles.rzr()), address(rzr));

@@ -20,6 +20,8 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 /// @dev Reward calculations are done off-chain in future yields
 contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppReferrals {
     using SafeERC20 for IERC20;
+    using SafeERC20 for IApp;
+    using SafeERC20 for IERC4626;
     using EnumerableSet for EnumerableSet.AddressSet;
     using MerkleProof for bytes32[];
 
@@ -133,7 +135,7 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         nonReentrant
         returns (uint256 tokenId, uint256 taxPaid)
     {
-        app.transferFrom(msg.sender, address(this), amount);
+        app.safeTransferFrom(msg.sender, address(this), amount);
 
         // pay out any referral rewards if a referral code was set
         bytes8 _registeredReferralCode = _registerReferral(_referralCode, _to);
@@ -144,13 +146,29 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         emit ReferralStaked(_to, amount, declaredValue, _registeredReferralCode);
     }
 
+    function lendWithReferral(uint256 amount, bytes8 _referralCode, address _to)
+        external
+        nonReentrant
+        returns (uint256 tokenId, uint256 taxPaid)
+    {
+        // app.transferFrom(msg.sender, address(this), amount);
+
+        // // pay out any referral rewards if a referral code was set
+        // bytes8 _registeredReferralCode = _registerReferral(_referralCode, _to);
+
+        // // stake on behalf of the referrer
+        // (tokenId, taxPaid) = staking.createPosition(_to, amount, declaredValue, 0);
+
+        // emit ReferralStaked(_to, amount, declaredValue, _registeredReferralCode);
+    }
+
     /// @inheritdoc IAppReferrals
     function stakeIntoLSTWithReferral(uint256 amount, bytes8 _referralCode, address _to)
         external
         nonReentrant
         returns (uint256 minted)
     {
-        app.transferFrom(msg.sender, address(this), amount);
+        app.safeTransferFrom(msg.sender, address(this), amount);
         bytes8 _registeredReferralCode = _registerReferral(_referralCode, _to);
         minted = staking4626.deposit(amount, _to);
         emit ReferralStakedIntoLST(_to, amount, _registeredReferralCode);
@@ -172,7 +190,7 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         bytes8 _registeredReferralCode = _registerReferral(_referralCode, _to);
 
         // buy bond on behalf of the referrer
-        token.transferFrom(msg.sender, address(this), _amount);
+        token.safeTransferFrom(msg.sender, address(this), _amount);
         token.approve(address(bondDepository), _amount);
         (payout_, tokenId_) = bondDepository.deposit(_id, _amount, _maxPrice, _minPayout, _to);
 
@@ -233,7 +251,7 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         totalClaimed += claimable;
 
         // Transfer rewards
-        app.transfer(input.user, claimable);
+        app.safeTransfer(input.user, claimable);
 
         emit RewardsClaimed(input.user, input.amount, merkleRoot);
     }

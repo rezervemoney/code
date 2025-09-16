@@ -46,10 +46,20 @@ Rezerve Money is a DeFi protocol that combines dynamic rebasing, staking, bondin
 
 ## Quick Start
 
-1. **Install Dependencies**: `yarn install` or `npm install`
-2. **Compile Contracts**: `npx hardhat compile` or `forge build`
-3. **Run Tests**: `forge test` (Foundry) or `npx hardhat test` (Hardhat)
-4. **Deploy**: Use deployment scripts in `scripts/deploy/`
+```
+# Install Dependencies
+yarn install
+forge install https://github.com/foundry-rs/forge-std
+forge install https://github.com/a16z/halmos-cheatcodes
+forge install https://github.com/euler-xyz/euler-vault-kit
+forge install https://github.com/euler-xyz/ethereum-vault-connector
+
+# Compile contracts
+forge build
+
+# Run tests
+yarn tests
+```
 
 ## License
 

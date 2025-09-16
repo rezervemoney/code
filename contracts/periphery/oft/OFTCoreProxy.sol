@@ -337,6 +337,7 @@ abstract contract OFTCoreProxy is IOFT, OAppProxy, OAppPreCrimeSimulatorProxy, O
      * @return amountSD The amount in shared decimals.
      */
     function _toSD(uint256 _amountLD) internal view virtual returns (uint64 amountSD) {
+        // forge-lint: disable-next-line(unsafe-typecast)
         return uint64(_amountLD / decimalConversionRate);
     }
 

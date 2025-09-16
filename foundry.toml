@@ -146,3 +146,6 @@ show_metrics = false
 out = "utils/JsonBindings.sol"
 include = []
 exclude = []
+
+[lint]
+exclude_lints = ["unaliased-plain-import", "asm-keccak256", "mixed-case-function", "screaming-snake-case-immutable", "mixed-case-variable", "func-name-mixedcase"]

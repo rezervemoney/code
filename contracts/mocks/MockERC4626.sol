@@ -4,11 +4,13 @@ pragma solidity 0.8.28;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title Mock ERC4626 Vault
 /// @notice A mock ERC4626 vault that simulates a lending token that appreciates over time
 contract MockERC4626 is ERC20, IERC4626 {
     using Math for uint256;
+    using SafeERC20 for ERC20;
 
     ERC20 private immutable _asset;
     uint256 public totalAssets;
@@ -49,7 +51,7 @@ contract MockERC4626 is ERC20, IERC4626 {
         _mint(receiver, shares);
         totalAssets += assets;
 
-        _asset.transferFrom(msg.sender, address(this), assets);
+        _asset.safeTransferFrom(msg.sender, address(this), assets);
 
         emit Deposit(msg.sender, receiver, assets, shares);
     }
@@ -63,7 +65,7 @@ contract MockERC4626 is ERC20, IERC4626 {
         _mint(receiver, shares);
         totalAssets += assets;
 
-        _asset.transferFrom(msg.sender, address(this), assets);
+        _asset.safeTransferFrom(msg.sender, address(this), assets);
 
         emit Deposit(msg.sender, receiver, assets, shares);
     }
@@ -80,7 +82,7 @@ contract MockERC4626 is ERC20, IERC4626 {
         _burn(owner, shares);
         totalAssets -= assets;
 
-        _asset.transfer(receiver, assets);
+        _asset.safeTransfer(receiver, assets);
 
         emit Withdraw(msg.sender, receiver, owner, assets, shares);
     }
@@ -97,7 +99,7 @@ contract MockERC4626 is ERC20, IERC4626 {
         _burn(owner, shares);
         totalAssets -= assets;
 
-        _asset.transfer(receiver, assets);
+        _asset.safeTransfer(receiver, assets);
 
         emit Withdraw(msg.sender, receiver, owner, assets, shares);
     }

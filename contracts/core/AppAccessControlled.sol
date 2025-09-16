@@ -28,77 +28,77 @@ abstract contract AppAccessControlled is Initializable {
     /// @notice Modifier to check if the caller is a governor
     /// @dev This modifier is only callable by the governor
     modifier onlyGovernor() {
-        require(authority.isGovernor(msg.sender), "UNAUTHORIZED");
+        _onlyGovernor();
         _;
     }
 
     /// @notice Modifier to check if the caller is a guardian or governor
     /// @dev This modifier is only callable by the guardian or governor
     modifier onlyGuardianOrGovernor() {
-        require(authority.isGuardian(msg.sender) || authority.isGovernor(msg.sender), "UNAUTHORIZED");
+        _onlyGuardianOrGovernor();
         _;
     }
 
     /// @notice Modifier to check if the caller is a reserve manager
     /// @dev This modifier is only callable by the reserve manager
     modifier onlyReserveManager() {
-        require(authority.isReserveManager(msg.sender), "UNAUTHORIZED");
+        _onlyReserveManager();
         _;
     }
 
     /// @notice Modifier to check if the caller is a reserve depositor
     /// @dev This modifier is only callable by the reserve depositor
     modifier onlyReserveDepositor() {
-        require(authority.isReserveDepositor(msg.sender), "UNAUTHORIZED");
+        _onlyReserveDepositor();
         _;
     }
 
     /// @notice Modifier to check if the caller is a guardian
     /// @dev This modifier is only callable by the guardian
     modifier onlyGuardian() {
-        require(authority.isGuardian(msg.sender), "UNAUTHORIZED");
+        _onlyGuardian();
         _;
     }
 
     /// @notice Modifier to check if the caller is a policy
     /// @dev This modifier is only callable by the policy
     modifier onlyPolicy() {
-        require(authority.isPolicy(msg.sender), "UNAUTHORIZED");
+        _onlyPolicy();
         _;
     }
 
     /// @notice Modifier to check if the caller is the treasury
     /// @dev This modifier is only callable by the treasury
     modifier onlyTreasury() {
-        require(authority.isTreasury(msg.sender), "UNAUTHORIZED");
+        _onlyTreasury();
         _;
     }
 
     /// @notice Modifier to check if the caller is an executor
     /// @dev This modifier is only callable by the executor
     modifier onlyExecutor() {
-        require(authority.isExecutor(msg.sender), "UNAUTHORIZED");
+        _onlyExecutor();
         _;
     }
 
     /// @notice Modifier to check if the caller is a bond manager
     /// @dev This modifier is only callable by the bond manager
     modifier onlyBondManager() {
-        require(authority.isBondManager(msg.sender), "UNAUTHORIZED");
+        _onlyBondManager();
         _;
     }
 
     /// @notice Modifier to check if the caller is a bridge
     /// @dev This modifier is only callable by the bridge
     modifier onlyBridge() {
-        require(authority.bridge() == msg.sender, "UNAUTHORIZED");
+        _onlyBridge();
         _;
     }
 
     /// @notice Modifier to check if the caller is a bridge
     /// @dev This modifier is only callable by the bridge
     modifier onlyBridgeOrGovernor() {
-        require(authority.isGovernor(msg.sender) || authority.bridge() == msg.sender, "UNAUTHORIZED");
+        _onlyBridgeOrGovernor();
         _;
     }
 
@@ -134,5 +134,49 @@ abstract contract AppAccessControlled is Initializable {
 
     function _ensureUnpaused() internal view {
         require(!authority.underEmergencyPause(), "PAUSED");
+    }
+
+    function _onlyBridgeOrGovernor() internal view {
+        require(authority.isGovernor(msg.sender) || authority.bridge() == msg.sender, "UNAUTHORIZED");
+    }
+
+    function _onlyGovernor() internal view {
+        require(authority.isGovernor(msg.sender), "UNAUTHORIZED");
+    }
+
+    function _onlyGuardianOrGovernor() internal view {
+        require(authority.isGuardian(msg.sender) || authority.isGovernor(msg.sender), "UNAUTHORIZED");
+    }
+
+    function _onlyGuardian() internal view {
+        require(authority.isGuardian(msg.sender), "UNAUTHORIZED");
+    }
+
+    function _onlyPolicy() internal view {
+        require(authority.isPolicy(msg.sender), "UNAUTHORIZED");
+    }
+
+    function _onlyReserveManager() internal view {
+        require(authority.isReserveManager(msg.sender), "UNAUTHORIZED");
+    }
+
+    function _onlyReserveDepositor() internal view {
+        require(authority.isReserveDepositor(msg.sender), "UNAUTHORIZED");
+    }
+
+    function _onlyExecutor() internal view {
+        require(authority.isExecutor(msg.sender), "UNAUTHORIZED");
+    }
+
+    function _onlyBondManager() internal view {
+        require(authority.isBondManager(msg.sender), "UNAUTHORIZED");
+    }
+
+    function _onlyTreasury() internal view {
+        require(authority.isTreasury(msg.sender), "UNAUTHORIZED");
+    }
+
+    function _onlyBridge() internal view {
+        require(authority.bridge() == msg.sender, "UNAUTHORIZED");
     }
 }

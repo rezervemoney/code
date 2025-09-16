@@ -12,7 +12,7 @@ contract sRZR is ERC20Permit, AppAccessControlled {
     /// @notice Modifier to check if the caller is the staking contract
     /// @dev This modifier is only callable by the staking contract
     modifier onlyStakingContract() {
-        require(msg.sender == stakingContract, "StakingContract:  call is not staking contract");
+        _onlyStakingContract();
         _;
     }
 
@@ -69,5 +69,9 @@ contract sRZR is ERC20Permit, AppAccessControlled {
     function transferFrom(address from, address to, uint256 value) public override returns (bool) {
         require(false, "transferFrom not allowed");
         return super.transferFrom(from, to, value);
+    }
+
+    function _onlyStakingContract() internal view {
+        require(msg.sender == stakingContract, "StakingContract:  call is not staking contract");
     }
 }

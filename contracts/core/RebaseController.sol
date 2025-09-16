@@ -9,6 +9,7 @@ import "../libraries/StakingDistributionLogic.sol";
 import "../libraries/YieldLogic.sol";
 import "./AppAccessControlled.sol";
 import "../interfaces/ITotalReservesOracle.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
  * @title BondController
@@ -19,6 +20,8 @@ import "../interfaces/ITotalReservesOracle.sol";
  *      ─ Exposes view helpers for front-end gauges
  */
 contract RebaseController is AppAccessControlled, IRebaseController {
+    using SafeERC20 for IApp;
+
     uint256 public immutable EPOCH = 23 hours;
 
     IApp public app; // RZR token (decimals = 18)
@@ -115,10 +118,10 @@ contract RebaseController is AppAccessControlled, IRebaseController {
             staking.notifyRewardAmount(toStakers);
 
             // Send to ops treasury
-            app.transfer(address(authority.operationsTreasury()), toOps);
+            app.safeTransfer(address(authority.operationsTreasury()), toOps);
 
             // Send to burner
-            app.transfer(burner, toBurner);
+            app.safeTransfer(burner, toBurner);
         }
 
         lastEpochTime = block.timestamp;

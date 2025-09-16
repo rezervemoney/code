@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.28;
 
-import {BaseTreasuryHelper, IERC20} from "./BaseTreasuryHelper.sol";
+import "./BaseTreasuryHelper.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IEVC} from "evc/interfaces/IEthereumVaultConnector.sol";
 import {IEVault} from "evk/EVault/IEVault.sol";
 

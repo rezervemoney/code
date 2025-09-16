@@ -11,6 +11,7 @@ import "../../interfaces/IStaking4626.sol";
 import "../../interfaces/IAppReferrals.sol";
 import "../../interfaces/ITotalReservesOracle.sol";
 import "../../interfaces/IAppConvertibles.sol";
+import "../../interfaces/IUSDTreasury.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title RZR UI Helper
@@ -117,6 +118,7 @@ abstract contract AppUIHelperBase {
     IAppConvertibles public convertibles;
     IERC4626 public loanToken;
     IERC20 public loanTokenUnderlying;
+    IUSDTreasury public usdtreasury;
 
     // Events
     event RewardsClaimed(uint256 indexed positionId, uint256 amount);
@@ -135,6 +137,7 @@ abstract contract AppUIHelperBase {
         address staking4626;
         address referrals;
         address totalReservesOracle;
+        address usdtreasury;
     }
 
     constructor(InitParams memory params) {
@@ -151,6 +154,7 @@ abstract contract AppUIHelperBase {
         staking4626 = IStaking4626(params.staking4626);
         referrals = IAppReferrals(params.referrals);
         totalReservesOracle = ITotalReservesOracle(params.totalReservesOracle);
+        usdtreasury = IUSDTreasury(params.usdtreasury);
 
         if (address(staking) != address(0)) {
             appToken.approve(address(staking), type(uint256).max);

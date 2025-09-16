@@ -68,19 +68,23 @@ contract AppStakingMergeTest is BaseTest {
         staking.ownerOf(tokenId2);
     }
 
-    function testFail_MergePositions_NotOwner() public {
+    function testRevert_MergePositions_NotOwner() public {
         // Create first position for owner
         (uint256 tokenId1,,) = _createPosition(STAKE_AMOUNT_1, STAKE_AMOUNT_1);
 
         // Create second position for user1
-        vm.startPrank(user1);
+        vm.startPrank(owner);
         app.mint(user1, STAKE_AMOUNT_2);
+        vm.stopPrank();
+
+        vm.startPrank(user1);
         app.approve(address(staking), STAKE_AMOUNT_2);
         (uint256 tokenId2,) = staking.createPosition(user1, STAKE_AMOUNT_2, STAKE_AMOUNT_2, 0);
         vm.stopPrank();
 
         // Attempt merge from owner (doesn't own tokenId2) should fail
         vm.startPrank(owner);
+        vm.expectRevert("Not owner of both tokens");
         staking.mergePositions(tokenId1, tokenId2);
     }
 }

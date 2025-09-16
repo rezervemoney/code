@@ -56,7 +56,7 @@ contract BaseTest is Test {
     address public offchainUpdater = makeAddr("offchainUpdater");
     address public operationsTreasury = makeAddr("operationsTreasury");
 
-    function setUpBaseTest() public {
+    function setUpBaseTest() internal {
         vm.warp(block.timestamp + 10 days);
 
         vm.startPrank(owner);

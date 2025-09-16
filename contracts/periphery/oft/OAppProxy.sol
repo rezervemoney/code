@@ -2,13 +2,6 @@
 
 pragma solidity 0.8.28;
 
-// @dev Import the 'MessagingFee' and 'MessagingReceipt' so it's exposed to OApp implementers
-// solhint-disable-next-line no-unused-import
-import {MessagingFee, MessagingReceipt} from "@layerzerolabs/oapp-evm/contracts/oapp/OAppSender.sol";
-// @dev Import the 'Origin' so it's exposed to OApp implementers
-// solhint-disable-next-line no-unused-import
-import {Origin} from "@layerzerolabs/oapp-evm/contracts/oapp/OApp.sol";
-import {OAppCoreProxy} from "./OAppCoreProxy.sol";
 import {OAppSenderProxy} from "./OAppSenderProxy.sol";
 import {OAppReceiverProxy} from "./OAppReceiverProxy.sol";
 

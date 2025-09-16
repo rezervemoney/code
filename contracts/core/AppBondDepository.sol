@@ -24,6 +24,7 @@ contract AppBondDepository is
     IAppBondDepository
 {
     using SafeERC20 for IERC20;
+    using SafeERC20 for IApp;
 
     uint256 public immutable BASIS_POINTS = 10000; // 100%
 
@@ -193,7 +194,7 @@ contract AppBondDepository is
         position.claimedAmount += claimable;
         position.lastClaimTime = block.timestamp;
 
-        app.transfer(owner, claimable);
+        app.safeTransfer(owner, claimable);
 
         emit Claimed(_tokenId, claimable);
     }

@@ -4,10 +4,12 @@ pragma solidity 0.8.28;
 import "./AppAccessControlled.sol";
 import "../interfaces/IAppOracle.sol";
 import "../interfaces/IApp.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title AppBurner
 /// @notice This contract is used to burn the balance of the App contract
 contract AppBurner is AppAccessControlled {
+    using SafeERC20 for IERC20;
     /* ========== STATE VARIABLES ========== */
 
     uint256 private immutable ONE = 1e18; // 100 %
@@ -76,7 +78,7 @@ contract AppBurner is AppAccessControlled {
     /// @param token The address of the token to recover
     /// @param amount The amount of tokens to recover
     function recoverERC20(address token, uint256 amount) external onlyGovernor {
-        IERC20(token).transfer(authority.operationsTreasury(), amount);
+        IERC20(token).safeTransfer(authority.operationsTreasury(), amount);
     }
 
     /// @notice Executes a function on the contract

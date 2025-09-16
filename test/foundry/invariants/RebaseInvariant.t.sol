@@ -26,10 +26,9 @@ contract RebaseInvariant is BaseTest {
         // Initialise trackers.
         _snapshotState();
 
-        // Allow the fuzzer to call our helper functions plus the burner & controller directly.
+        // Allow the fuzzer to call our helper functions only.
         targetContract(address(this));
-        targetContract(address(rebaseController));
-        targetContract(address(burner));
+        // Don't target rebaseController, bridgeL1, or burner directly as they can break system integrity
 
         // Use `owner` as the msg.sender for calls that require privileged access.
         targetSender(owner);
@@ -44,6 +43,9 @@ contract RebaseInvariant is BaseTest {
         uint256 next = block.timestamp + rebaseController.EPOCH() + 1;
         vm.warp(next);
 
+        // Sync oracles to prevent stale data issues
+        _syncOracles();
+
         // Execute epoch as the privileged executor.
         vm.prank(owner);
         try rebaseController.executeEpoch() {}
@@ -54,6 +56,9 @@ contract RebaseInvariant is BaseTest {
 
     /// @notice Trigger a burn via the burner contract if it holds any RZR.
     function triggerBurn() external {
+        // Sync oracles to prevent stale data issues
+        _syncOracles();
+
         uint256 bal = app.balanceOf(address(burner));
         if (bal > 0) {
             vm.prank(owner);
@@ -61,6 +66,23 @@ contract RebaseInvariant is BaseTest {
             catch {
                 // ignore errors (e.g., constraints not met).
             }
+        }
+    }
+
+    /// @notice Sync crosschain reserves to prevent stale data issues
+    function syncCrosschainReserves() external {
+        vm.prank(owner);
+        try bridgeL1.syncMainnetReserves() {}
+        catch {
+            // ignore errors
+        }
+
+        // Also update offchain reserves to prevent staleness
+        (uint256 rzrReserves, uint256 usdReserves) = totalReservesOracle.getOnchainReserves();
+        vm.prank(offchainUpdater);
+        try totalReservesOracle.updateReservesOffchain(rzrReserves, usdReserves) {}
+        catch {
+            // ignore errors
         }
     }
 

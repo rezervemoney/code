@@ -5,8 +5,10 @@
 .env
 .openzeppelin/unknown-*.json
 .package-lock.json
+.tmp
 .vscode/*
 .yalc
+*-deployer.json
 /.dapp
 /flatten
 /out
@@ -21,9 +23,8 @@ coverage-html/
 coverage*
 deployments/**/solcinputs
 deployments/hardhat/
+docs
 lcov.info
 node_modules/
-*-deployer.json
 yalc.lock
 yarn-error.log
-.tmp

@@ -67,6 +67,11 @@
             "internalType": "address",
             "name": "totalReservesOracle",
             "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "usdtreasury",
+            "type": "address"
           }
         ],
         "internalType": "struct AppUIHelperBase.InitParams",
@@ -76,38 +81,6 @@
     ],
     "stateMutability": "nonpayable",
     "type": "constructor"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "target",
-        "type": "address"
-      }
-    ],
-    "name": "AddressEmptyCode",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "FailedCall",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "balance",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "needed",
-        "type": "uint256"
-      }
-    ],
-    "name": "InsufficientBalance",
-    "type": "error"
   },
   {
     "inputs": [
@@ -171,6 +144,11 @@
         "internalType": "address",
         "name": "user",
         "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "unwrap4626",
+        "type": "bool"
       },
       {
         "internalType": "bytes",
@@ -458,6 +436,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "usdtreasury",
+    "outputs": [
+      {
+        "internalType": "contract IUSDTreasury",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "components": [
@@ -540,6 +531,11 @@
         "internalType": "uint256",
         "name": "fixedInterestRateAmount",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "stakingPower",
+        "type": "uint256"
       }
     ],
     "stateMutability": "payable",
@@ -600,6 +596,11 @@
         "internalType": "struct AppUIHelperWrite.StakeParams",
         "name": "stakeParams",
         "type": "tuple"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minStaked",
+        "type": "uint256"
       }
     ],
     "name": "zapAndStake",
@@ -683,6 +684,11 @@
         "internalType": "struct AppUIHelperWrite.StakeParams",
         "name": "stakeParams",
         "type": "tuple"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minStaked",
+        "type": "uint256"
       }
     ],
     "name": "zapAndStakeAsPercentage",
@@ -746,6 +752,67 @@
         "type": "tuple"
       },
       {
+        "internalType": "contract IERC20",
+        "name": "zapAsset",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IERC4626",
+        "name": "bond",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minPayout",
+        "type": "uint256"
+      }
+    ],
+    "name": "zapIntoBond",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "payout",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "tokenIn",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tokenAmountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "odosTokenIn",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "odosTokenAmountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes",
+            "name": "odosData",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct AppUIHelperWrite.OdosParams",
+        "name": "odosParams",
+        "type": "tuple"
+      },
+      {
         "internalType": "bytes8",
         "name": "referralCode",
         "type": "bytes8"
@@ -754,6 +821,11 @@
         "internalType": "address",
         "name": "destination",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minMinted",
+        "type": "uint256"
       }
     ],
     "name": "zapIntoLST",

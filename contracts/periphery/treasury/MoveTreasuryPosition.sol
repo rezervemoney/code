@@ -5,7 +5,6 @@ pragma abicoder v2;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IEVC} from "evc/interfaces/IEthereumVaultConnector.sol";
 import {IEVault} from "evk/EVault/IEVault.sol";
-import {IApp} from "../../../contracts/interfaces/IApp.sol";
 import {IPermit2} from "../../../contracts/interfaces/IPermit2.sol";
 
 import "forge-std/console.sol";

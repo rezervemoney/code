@@ -7,6 +7,7 @@ import "./IAppOracle.sol";
 import "./IOracleV2.sol";
 import "./IPermissionedERC20.sol";
 import "./IPermissionedERC20Factory.sol";
+import "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 
@@ -24,7 +25,7 @@ interface IAppConvertibles is IERC721Enumerable {
     /// @param priceConversion Price at which conversion can occur
     /// @param priceEntry Price when the position was created
     struct Position {
-        IERC20 asset;
+        IERC4626 asset;
         uint256 amountStaked;
         uint256 amountConvertible;
         uint256 stakingPower;
@@ -135,7 +136,7 @@ interface IAppConvertibles is IERC721Enumerable {
     /// @param originalAmountStaked Total amount staked in the original position
     /// @param newAmountStaked Amount staked in the new position
     /// @param originalAmountConvertible Total amount convertible in the original position
-    /// @param newAmountConvertible Amount convertible in the new position
+    /// @param newAmountConvertible newAmountConvertible Amount convertible in the new position
     /// @param percentageE18 The percentage used for the split (in basis points)
     event PositionSplit(
         address indexed user,
@@ -151,7 +152,7 @@ interface IAppConvertibles is IERC721Enumerable {
     /// @notice Emitted when a user claims interest from a convertible position
     /// @param user The address of the user who claimed interest
     /// @param tokenId The NFT token ID that the interest was claimed from
-    /// @param interestClaimed Amount of interest claimed
+    /// @param interestClaimed interestClaimed Amount of interest claimed
     event InterestClaimed(address indexed user, uint256 indexed tokenId, uint256 interestClaimed);
 
     /// @notice Emitted when a token is enabled
@@ -160,7 +161,7 @@ interface IAppConvertibles is IERC721Enumerable {
 
     /// @notice Get the claimable interest for a convertible position
     /// @param tokenId The NFT token ID that the interest was claimed from
-    /// @return interestClaimable Amount of interest claimable
+    /// @return interestClaimable interestClaimable Amount of interest claimable
     /// @return totalInterestClaimed Total amount of interest claimed
     function claimableInterest(uint256 tokenId)
         external
@@ -169,61 +170,68 @@ interface IAppConvertibles is IERC721Enumerable {
 
     /// @notice Claim interest from a convertible position
     /// @param tokenId The NFT token ID to claim interest from
-    /// @return interestClaimed Amount of interest claimed
+    /// @param unwrap4626 Whether to unwrap the interest from the 4626 vault
+    /// @return interestClaimed interestClaimed Amount of interest claimed
     /// @return totalInterestClaimed Total amount of interest claimed
-    function claimInterest(uint256 tokenId) external returns (uint256 interestClaimed, uint256 totalInterestClaimed);
+    function claimInterest(uint256 tokenId, bool unwrap4626)
+        external
+        returns (uint256 interestClaimed, uint256 totalInterestClaimed);
 
     /// @notice Maximum lock duration for convertible positions (4 years)
-    /// @return The maximum lock duration in seconds
-    function MAX_LOCK_DURATION() external view returns (uint256);
+    /// @return value The maximum lock duration in seconds
+    function MAX_LOCK_DURATION() external view returns (uint256 value);
 
     /// @notice Minimum lock duration for convertible positions (30 days)
-    /// @return The minimum lock duration in seconds
-    function MIN_LOCK_DURATION() external view returns (uint256);
+    /// @return value The minimum lock duration in seconds
+    function MIN_LOCK_DURATION() external view returns (uint256 value);
 
     /// @notice Maximum age of oracle price data before considered stale (1 day)
-    /// @return The maximum oracle staleness period in seconds
-    function MAX_ORACLE_STALENESS() external view returns (uint256);
+    /// @return value The maximum oracle staleness period in seconds
+    function MAX_ORACLE_STALENESS() external view returns (uint256 value);
 
     /// @notice Minimum bond duration for convertible positions (7 days)
-    /// @return The minimum bond duration in seconds
-    function MIN_BOND_DURATION() external view returns (uint256);
+    /// @return value The minimum bond duration in seconds
+    function MIN_BOND_DURATION() external view returns (uint256 value);
 
     /// @notice The RZR token contract
-    /// @return The RZR token contract address
-    function rzr() external view returns (IApp);
+    /// @return rzr rzr The RZR token contract address
+    function rzr() external view returns (IApp rzr);
 
     /// @notice The tracking token for loan positions
-    /// @return The loan tracking token contract address
-    function stakingPowerToken() external view returns (IPermissionedERC20);
+    /// @return stakingPowerToken stakingPowerToken The loan tracking token contract address
+    function stakingPowerToken() external view returns (IPermissionedERC20 stakingPowerToken);
 
     /// @notice The tracking token for RZR convertible positions
-    /// @return The RZR tracking token contract address
-    function rzrTrackingToken() external view returns (IPermissionedERC20);
+    /// @return rzrTrackingToken rzrTrackingToken The RZR tracking token contract address
+    function rzrTrackingToken() external view returns (IPermissionedERC20 rzrTrackingToken);
 
     /// @notice The oracle contract for price feeds
-    /// @return The oracle contract address
-    function oracle() external view returns (IAppOracle);
+    /// @return oracle   The oracle contract address
+    function oracle() external view returns (IAppOracle oracle);
 
     /// @notice The TWAP oracle contract for conversion price validation
-    /// @return The TWAP oracle contract address
-    function twapOracle() external view returns (IOracleV2);
+    /// @return twapOracle The TWAP oracle contract address
+    function twapOracle() external view returns (IOracleV2 twapOracle);
+
+    /// @notice The spot oracle contract for conversion price validation
+    /// @return spotOracle The spot oracle contract address
+    function spotOracle() external view returns (IOracleV2 spotOracle);
 
     /// @notice The last issued token ID
-    /// @return The most recent token ID
-    function lastId() external view returns (uint256);
+    /// @return lastId The most recent token ID
+    function lastId() external view returns (uint256 lastId);
 
     /// @notice The factory contract for creating permissioned ERC20 tokens
-    /// @return The factory contract address
-    function factory() external view returns (IPermissionedERC20Factory);
+    /// @return factory factory The factory contract address
+    function factory() external view returns (IPermissionedERC20Factory factory);
 
     /// @notice Total amount of loan tokens staked across all positions
-    /// @return The total staked amount
-    function totalStaked(address loanToken) external view returns (uint256);
+    /// @return totalStaked The total staked amount
+    function totalStaked(address loanToken) external view returns (uint256 totalStaked);
 
     /// @notice Total amount of RZR tokens convertible across all positions
-    /// @return The total convertible amount
-    function totalConvertible() external view returns (uint256);
+    /// @return totalConvertible The total convertible amount
+    function totalConvertible() external view returns (uint256 totalConvertible);
 
     /// @notice Contract variables for conversion premiums and interest rates
     /// @param _loanToken The loan token that was enabled
@@ -238,10 +246,17 @@ interface IAppConvertibles is IERC721Enumerable {
     /// @notice Initialize the convertibles contract
     /// @param _rzr The RZR token contract address
     /// @param _oracle The oracle contract address for price feeds
+    /// @param _spotOracle The spot oracle contract address
     /// @param _twapOracle The TWAP oracle contract address
     /// @param _authority The authority contract address
-    function initialize(address _rzr, address _oracle, address _twapOracle, address _authority, address _factory)
-        external;
+    function initialize(
+        address _rzr,
+        address _oracle,
+        address _spotOracle,
+        address _twapOracle,
+        address _authority,
+        address _factory
+    ) external;
 
     /// @notice Enable a new loan token for convertible positions
     /// @param loanToken The loan token to enable
@@ -302,7 +317,8 @@ interface IAppConvertibles is IERC721Enumerable {
 
     /// @notice Redeem a convertible position for loan tokens + accumulated interest
     /// @param tokenId The NFT token ID to redeem
-    function redeem(uint256 tokenId) external;
+    /// @param unwrap4626 Whether to unwrap the loan tokens from the 4626 vault
+    function redeem(uint256 tokenId, bool unwrap4626) external;
 
     /// @notice Split a convertible position into two positions
     /// @param tokenId The NFT token ID to split

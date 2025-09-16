@@ -4,15 +4,18 @@ pragma solidity 0.8.28;
 import "forge-std/Test.sol";
 import {BalancerBorrowAndAdd} from "../../../contracts/periphery/treasury/BalancerBorrowAndAdd.sol";
 import {IEVC, IEVault} from "../../../contracts/periphery/treasury/EulerBorrowerHelper.sol";
-import {IBalancerPool, IBalancerVault, IBalancerV3Router} from "../../../contracts/interfaces/IBalancerVault.sol";
+import {IBalancerPool, IBalancerV3Router} from "../../../contracts/interfaces/IBalancerVault.sol";
 import {IAppAuthority} from "../../../contracts/interfaces/IAppAuthority.sol";
 import {IAppTreasury, IERC20} from "../../../contracts/interfaces/IAppTreasury.sol";
 import {IPermit2} from "../../../contracts/interfaces/IPermit2.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract BalancerMockOdos is Test {
+    using SafeERC20 for IERC20;
+
     function swap(uint256 amountIn, uint256 amountOut, address tokenIn, address tokenOut) external {
         // todo
-        IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
+        IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), amountIn);
         deal(tokenOut, msg.sender, amountOut);
     }
 }

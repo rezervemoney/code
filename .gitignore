@@ -28,3 +28,4 @@ lcov.info
 node_modules/
 yalc.lock
 yarn-error.log
+abi/

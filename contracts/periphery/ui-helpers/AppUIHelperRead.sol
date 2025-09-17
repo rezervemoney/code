@@ -40,7 +40,7 @@ contract AppUIHelperRead is AppUIHelperBase {
     {
         // Get protocol-wide stats
         convertiblePositions = getConvertiblePositions(user);
-        referralCode = referrals.referrerCodes(user);
+        referralCode = referrals.userToReferralCode(user);
         stakingPositions = getStakingPositions(user);
         tokenInfos = getTokenInfos(user, tokens, allowanceTarget);
     }
@@ -57,7 +57,7 @@ contract AppUIHelperRead is AppUIHelperBase {
             protocolInfo.totalRewards = staking.rewardPerToken();
         }
 
-        protocolInfo.totalSupply = appToken.totalSupply();
+        protocolInfo.totalSupply = rzr.totalSupply();
         protocolInfo.currentAPR = calculateAPR();
         protocolInfo.currentSpotPrice = getSpotPrice();
         protocolInfo.currentEthPrice = getEthPrice();
@@ -88,13 +88,13 @@ contract AppUIHelperRead is AppUIHelperBase {
 
         // Add RZR token info
         tokenInfos[0] = TokenInfo({
-            token: address(appToken),
+            token: address(rzr),
             name: "RZR",
             symbol: "RZR",
-            balance: appToken.balanceOf(user),
-            allowance: appToken.allowance(user, allowanceTarget),
-            treasuryBalance: appToken.balanceOf(address(treasury)),
-            totalSupply: appToken.totalSupply(),
+            balance: rzr.balanceOf(user),
+            allowance: rzr.allowance(user, allowanceTarget),
+            treasuryBalance: rzr.balanceOf(address(treasury)),
+            totalSupply: rzr.totalSupply(),
             decimals: 18,
             oraclePriceUsd: getSpotPrice()
         });

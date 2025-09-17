@@ -4,11 +4,13 @@ pragma solidity 0.8.28;
 import "./BaseTest.sol";
 import "../../contracts/periphery/ui-helpers/AppUIHelperWrite.sol";
 import "../../contracts/core/AppReferrals.sol";
+import "../../contracts/mocks/MockERC4626.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract AppUIHelperWriteTest is BaseTest {
     AppUIHelperWrite public uiHelper;
     AppReferrals public referrals;
+    MockERC4626 public mockBond4626;
 
     address public ALICE = makeAddr("alice");
     address public BOB = makeAddr("bob");
@@ -22,23 +24,23 @@ contract AppUIHelperWriteTest is BaseTest {
         // Setup base contracts
         setUpBaseTest();
 
+        // Deploy mock 4626 vault for bonds
+        mockBond4626 = new MockERC4626("Mock Bond Vault", "MBV", mockQuoteToken);
+
         // Setup referrals contract
         referrals = new AppReferrals();
         referrals.initialize(
-            address(bondDepository),
-            address(staking),
-            address(app),
-            address(treasury),
-            address(staking4626),
-            address(authority)
+            address(app),        // _rzr
+            address(mockQuoteToken), // _usdr (using mock token as USDR)
+            address(mockBond4626), // _bond4626
+            address(treasury),   // _usdtreasury
+            address(treasury),   // _appTreasury
+            address(staking),    // _staking
+            address(staking4626), // _staking4626
+            address(authority)   // _authority
         );
 
-        vm.startPrank(owner);
-        referrals.whitelist(ALICE);
-        referrals.whitelist(BOB);
-        referrals.whitelist(CHARLIE);
-        referrals.whitelist(ODOS);
-        vm.stopPrank();
+        // No whitelist needed for AppReferrals
 
         // Setup UI Helper
         uiHelper = new AppUIHelperWrite(
@@ -46,7 +48,8 @@ contract AppUIHelperWriteTest is BaseTest {
                 staking: address(staking),
                 convertibles: address(0),
                 treasury: address(treasury),
-                appToken: address(app),
+                rzr: address(app),
+                usdr: address(mockQuoteToken),
                 stakingToken: address(staking),
                 rebaseController: address(rebaseController),
                 appOracle: address(appOracle),
@@ -78,7 +81,7 @@ contract AppUIHelperWriteTest is BaseTest {
         assertEq(address(uiHelper.staking()), address(staking));
         // assertEq(address(uiHelper.convertibles()), address(convertibles));
         assertEq(address(uiHelper.treasury()), address(treasury));
-        assertEq(address(uiHelper.appToken()), address(app));
+        assertEq(address(uiHelper.rzr()), address(app));
         assertEq(address(uiHelper.appOracle()), address(appOracle));
         assertEq(uiHelper.odos(), ODOS);
         assertEq(address(uiHelper.referrals()), address(referrals));

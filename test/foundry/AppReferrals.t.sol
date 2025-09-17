@@ -8,10 +8,12 @@ import "../../contracts/core/AppStaking.sol";
 import "../../contracts/core/RZR.sol";
 import "../../contracts/core/AppTreasury.sol";
 import "../../contracts/core/AppAuthority.sol";
+import "../../contracts/mocks/MockERC4626.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 contract AppReferralsTest is BaseTest {
     AppReferrals public referrals;
+    MockERC4626 public mockBond4626;
 
     address public MERKLE_SERVER = makeAddr("merkle_server");
     address public ALICE = makeAddr("alice");
@@ -20,34 +22,35 @@ contract AppReferralsTest is BaseTest {
 
     // Events
     event ReferralCodeRegistered(address indexed referrer, bytes8 code);
-    event ReferralRegistered(address indexed referred, address indexed referrer, bytes8 code);
+    event ReferralRegistered(address indexed referred, bytes8 indexed referrerCode);
     event ReferralStaked(address indexed to, uint256 amount, uint256 declaredValue, bytes8 referralCode);
-    event ReferralBondBought(
-        address indexed to, uint256 id, uint256 amount, uint256 maxPrice, uint256 minPayout, bytes8 referralCode
-    );
+    event ReferralBondBought(address indexed user, uint256 payout, bytes8 referralCode);
+    event ReferralStakedIntoLST(address indexed user, uint256 amount, bytes8 referralCode);
     event RewardsClaimed(address indexed user, uint256 amount, bytes32 root);
 
     function setUp() public {
         // Setup base contracts
         setUpBaseTest();
 
+        // Deploy mock 4626 vault for bonds
+        mockBond4626 = new MockERC4626("Mock Bond Vault", "MBV", mockQuoteToken);
+
         // Setup referrals contract
         referrals = new AppReferrals();
         referrals.initialize(
-            address(bondDepository),
-            address(staking),
-            address(app),
-            address(treasury),
-            address(staking4626),
-            address(authority)
+            address(app),        // _rzr
+            address(mockQuoteToken), // _usdr (using mock token as USDR)
+            address(mockBond4626), // _bond4626
+            address(treasury),   // _usdtreasury
+            address(treasury),   // _appTreasury
+            address(staking),    // _staking
+            address(staking4626), // _staking4626
+            address(authority)   // _authority
         );
 
         // Set merkle server
         vm.startPrank(owner);
         referrals.setMerkleServer(MERKLE_SERVER);
-        referrals.whitelist(ALICE);
-        referrals.whitelist(BOB);
-        referrals.whitelist(CHARLIE);
         authority.addPolicy(MERKLE_SERVER);
         vm.stopPrank();
 
@@ -56,6 +59,7 @@ contract AppReferralsTest is BaseTest {
         vm.label(ALICE, "ALICE");
         vm.label(BOB, "BOB");
         vm.label(CHARLIE, "CHARLIE");
+        vm.label(address(mockBond4626), "MockBond4626");
     }
 
     function test_ReferralCodeGeneration() public {
@@ -69,8 +73,8 @@ contract AppReferralsTest is BaseTest {
         vm.stopPrank();
 
         // Verify code is registered
-        assertEq(referrals.referralCodes(aliceCode), ALICE);
-        assertEq(referrals.referrerCodes(ALICE), aliceCode);
+        assertEq(referrals.referralCodeToUser(aliceCode), ALICE);
+        assertEq(referrals.userToReferralCode(ALICE), aliceCode);
     }
 
     function test_ReferralCodeGeneration_InvalidCode() public {
@@ -125,7 +129,7 @@ contract AppReferralsTest is BaseTest {
         app.approve(address(referrals), stakeAmount);
 
         vm.expectEmit(true, true, false, true);
-        emit ReferralRegistered(CHARLIE, ALICE, aliceCode);
+        emit ReferralRegistered(CHARLIE, aliceCode);
         vm.expectEmit(true, true, false, true);
         emit ReferralStaked(CHARLIE, stakeAmount, stakeAmount, aliceCode);
         referrals.stakeWithReferral(stakeAmount, stakeAmount, aliceCode, CHARLIE);
@@ -135,7 +139,7 @@ contract AppReferralsTest is BaseTest {
         address[] memory aliceReferrals = referrals.getReferrals(ALICE);
         assertEq(aliceReferrals.length, 1);
         assertEq(aliceReferrals[0], CHARLIE);
-        assertEq(referrals.trackedReferrals(CHARLIE), ALICE);
+        assertEq(referrals.trackedReferrals(CHARLIE), aliceCode);
     }
 
     function test_ReferralTracking_InvalidReferralCode() public {
@@ -147,14 +151,18 @@ contract AppReferralsTest is BaseTest {
 
         bytes8 invalidCode = bytes8(bytes20(CHARLIE)); // Charlie hasn't registered this code
 
-        // Should not revert, but should not register referral
+        // Should not revert, and should still register referral even with invalid code
+        vm.expectEmit(true, true, false, true);
+        emit ReferralRegistered(CHARLIE, invalidCode);
+        vm.expectEmit(true, true, false, true);
+        emit ReferralStaked(CHARLIE, stakeAmount, stakeAmount, invalidCode);
         referrals.stakeWithReferral(stakeAmount, stakeAmount, invalidCode, CHARLIE);
         vm.stopPrank();
 
-        // Verify no referral is tracked
-        address[] memory aliceReferrals = referrals.getReferrals(ALICE);
-        assertEq(aliceReferrals.length, 0);
-        assertEq(referrals.trackedReferrals(CHARLIE), address(0));
+        // Verify referral is tracked even with invalid code
+        address[] memory charlieReferrals = referrals.getReferrals(CHARLIE);
+        assertEq(charlieReferrals.length, 0); // Charlie has no referrals since he hasn't registered a code
+        assertEq(referrals.trackedReferrals(CHARLIE), invalidCode); // But Charlie is tracked with the invalid code
     }
 
     function test_ReferralTracking_AlreadyTracked() public {
@@ -191,7 +199,7 @@ contract AppReferralsTest is BaseTest {
         assertEq(aliceReferrals.length, 1);
         assertEq(aliceReferrals[0], CHARLIE);
         assertEq(bobReferrals.length, 0);
-        assertEq(referrals.trackedReferrals(CHARLIE), ALICE);
+        assertEq(referrals.trackedReferrals(CHARLIE), aliceCode);
     }
 
     function test_ReferralTracking_OriginalReferrerAlwaysAccounted() public {
@@ -213,7 +221,7 @@ contract AppReferralsTest is BaseTest {
         deal(address(app), BOB, stakeAmount);
         app.approve(address(referrals), stakeAmount);
         vm.expectEmit(true, true, false, true);
-        emit ReferralRegistered(CHARLIE, ALICE, aliceCode);
+        emit ReferralRegistered(CHARLIE, aliceCode);
         vm.expectEmit(true, true, false, true);
         emit ReferralStaked(CHARLIE, stakeAmount, stakeAmount, aliceCode);
         referrals.stakeWithReferral(stakeAmount, stakeAmount, aliceCode, CHARLIE);
@@ -238,9 +246,9 @@ contract AppReferralsTest is BaseTest {
         assertEq(aliceReferrals.length, 1);
         assertEq(aliceReferrals[0], CHARLIE);
         assertEq(bobReferrals.length, 0);
-        assertEq(referrals.trackedReferrals(CHARLIE), ALICE);
+        assertEq(referrals.trackedReferrals(CHARLIE), aliceCode);
         // The referral code returned by a second attempt should be Alice's code
-        bytes8 returnedCode = referrals.referrerCodes(ALICE);
+        bytes8 returnedCode = referrals.userToReferralCode(ALICE);
         assertEq(returnedCode, aliceCode);
     }
 
@@ -277,7 +285,6 @@ contract AppReferralsTest is BaseTest {
         // Merkle server adds rewards
         vm.startPrank(MERKLE_SERVER);
         deal(address(app), address(referrals), aliceReward);
-        app.approve(address(referrals), aliceReward);
         referrals.setMerkleRoot(merkleRoot);
         vm.stopPrank();
 
@@ -305,8 +312,7 @@ contract AppReferralsTest is BaseTest {
 
         // Merkle server adds rewards
         vm.startPrank(MERKLE_SERVER);
-        deal(address(app), MERKLE_SERVER, aliceReward);
-        app.approve(address(referrals), aliceReward);
+        deal(address(app), address(referrals), aliceReward);
         referrals.setMerkleRoot(merkleRoot);
         vm.stopPrank();
 
@@ -338,7 +344,6 @@ contract AppReferralsTest is BaseTest {
 
         vm.startPrank(MERKLE_SERVER);
         deal(address(app), address(referrals), aliceReward);
-        app.approve(address(referrals), aliceReward);
         referrals.setMerkleRoot(merkleRoot);
         vm.stopPrank();
 
@@ -360,8 +365,6 @@ contract AppReferralsTest is BaseTest {
 
         // Non-merkle server tries to add root
         vm.startPrank(ALICE);
-        deal(address(app), ALICE, totalRewards);
-        app.approve(address(referrals), totalRewards);
         vm.expectRevert("Only merkle server can set merkle root");
         referrals.setMerkleRoot(merkleRoot);
         vm.stopPrank();
@@ -374,21 +377,6 @@ contract AppReferralsTest is BaseTest {
         referrals.registerReferralCode(aliceCode);
         vm.stopPrank();
 
-        // Create a bond
-        vm.startPrank(owner);
-        uint256 bondId = bondDepository.create(
-            mockQuoteToken,
-            1000e18, // capacity
-            2e18, // initial price
-            1e18, // final price
-            0, // min price
-            7 days, // duration
-            12 days, // vesting period
-            30 days, // staking lock period
-            false
-        );
-        vm.stopPrank();
-
         // Bob uses Alice's referral code to buy bond on behalf of Charlie
         vm.startPrank(BOB);
         uint256 bondAmount = 100e18;
@@ -396,15 +384,44 @@ contract AppReferralsTest is BaseTest {
         mockQuoteToken.approve(address(referrals), bondAmount);
 
         vm.expectEmit(true, true, false, true);
-        emit ReferralRegistered(CHARLIE, ALICE, aliceCode);
-        referrals.bondWithReferral(bondId, bondAmount, 2e18, 0, aliceCode, CHARLIE);
+        emit ReferralRegistered(CHARLIE, aliceCode);
+        vm.expectEmit(true, true, false, true);
+        emit ReferralBondBought(CHARLIE, bondAmount, aliceCode);
+        referrals.bondWithReferral(bondAmount, aliceCode, CHARLIE);
         vm.stopPrank();
 
         // Verify referral is tracked for Charlie (the person the bond was bought for)
         address[] memory aliceReferrals = referrals.getReferrals(ALICE);
         assertEq(aliceReferrals.length, 1);
         assertEq(aliceReferrals[0], CHARLIE);
-        assertEq(referrals.trackedReferrals(CHARLIE), ALICE);
+        assertEq(referrals.trackedReferrals(CHARLIE), aliceCode);
+    }
+
+    function test_StakeIntoLSTWithReferral() public {
+        // Alice generates a referral code
+        vm.startPrank(ALICE);
+        bytes8 aliceCode = bytes8(bytes20(ALICE));
+        referrals.registerReferralCode(aliceCode);
+        vm.stopPrank();
+
+        // Bob uses Alice's referral code to stake into LST on behalf of Charlie
+        vm.startPrank(BOB);
+        uint256 stakeAmount = 1000e18;
+        deal(address(app), BOB, stakeAmount);
+        app.approve(address(referrals), stakeAmount);
+
+        vm.expectEmit(true, true, false, true);
+        emit ReferralRegistered(CHARLIE, aliceCode);
+        vm.expectEmit(true, true, false, true);
+        emit ReferralStakedIntoLST(CHARLIE, stakeAmount, aliceCode);
+        referrals.stakeIntoLSTWithReferral(stakeAmount, aliceCode, CHARLIE);
+        vm.stopPrank();
+
+        // Verify referral is tracked for Charlie (the person being staked for)
+        address[] memory aliceReferrals = referrals.getReferrals(ALICE);
+        assertEq(aliceReferrals.length, 1);
+        assertEq(aliceReferrals[0], CHARLIE);
+        assertEq(referrals.trackedReferrals(CHARLIE), aliceCode);
     }
 
     function test_MultipleReferrals() public {
@@ -434,7 +451,7 @@ contract AppReferralsTest is BaseTest {
         assertEq(aliceReferrals.length, 3);
 
         for (uint256 i = 0; i < users.length; i++) {
-            assertEq(referrals.trackedReferrals(users[i]), ALICE);
+            assertEq(referrals.trackedReferrals(users[i]), aliceCode);
         }
     }
 }

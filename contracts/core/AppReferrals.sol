@@ -2,7 +2,7 @@
 pragma solidity 0.8.28;
 
 import "../interfaces/IApp.sol";
-import "../interfaces/IAppBondDepository.sol";
+import "../interfaces/IUSDTreasury.sol";
 import "../interfaces/IAppOracle.sol";
 import "../interfaces/IAppReferrals.sol";
 import "../interfaces/IAppStaking.sol";
@@ -26,61 +26,59 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
     using MerkleProof for bytes32[];
 
     // State variables
-    IAppBondDepository public bondDepository;
     IAppStaking public staking;
-    IApp public app;
-    IAppTreasury public treasury;
+    IApp public rzr;
+    IApp public usdr;
+    IERC4626 public bond4626;
+    IUSDTreasury public usdtreasury;
+    IAppTreasury public appTreasury;
     IStaking4626 public staking4626;
 
     bytes32 public merkleRoot;
-    bool public enableWhitelisting;
 
     // Track claimed rewards
     mapping(address user => uint256 claimed) public claimedRewards; // user => claimed
-    mapping(address user => bool whitelisted) public whitelisted; // user => whitelisted
 
     // Referral tracking
-    mapping(address user => address referrer) public trackedReferrals;
-    mapping(address referrer => EnumerableSet.AddressSet referrals) private _referrals;
-    mapping(address user => bytes8 code) public referrerCodes;
-    mapping(bytes8 code => address user) public referralCodes;
+    mapping(address user => bytes8 referralCode) public trackedReferrals;
+    mapping(bytes8 referrerCode => EnumerableSet.AddressSet referrals) private _referrals;
+
+    mapping(address user => bytes8 code) public userToReferralCode;
+    mapping(bytes8 code => address user) public referralCodeToUser;
 
     address public merkleServer;
     uint256 public totalClaimed;
 
     /// @inheritdoc IAppReferrals
     function initialize(
-        address _bondDepository,
+        address _rzr,
+        address _usdr,
+        address _bond4626,
+        address _usdtreasury,
+        address _appTreasury,
         address _staking,
-        address _app,
-        address _treasury,
         address _staking4626,
         address _authority
     ) external reinitializer(4) {
         __AppAccessControlled_init(_authority);
         __ReentrancyGuard_init();
 
-        bondDepository = IAppBondDepository(_bondDepository);
+        rzr = IApp(_rzr);
+        usdr = IApp(_usdr);
+        bond4626 = IERC4626(_bond4626);
+        usdtreasury = IUSDTreasury(_usdtreasury);
+        appTreasury = IAppTreasury(_appTreasury);
         staking = IAppStaking(_staking);
-        app = IApp(_app);
-        treasury = IAppTreasury(_treasury);
         staking4626 = IStaking4626(_staking4626);
-        app.approve(address(staking), type(uint256).max);
-        app.approve(address(staking4626), type(uint256).max);
-
-        enableWhitelisting = false;
+        rzr.approve(address(staking), type(uint256).max);
+        rzr.approve(address(staking4626), type(uint256).max);
+        usdr.approve(address(bond4626), type(uint256).max);
     }
 
     /// @inheritdoc IAppReferrals
     function setMerkleServer(address _merkleServer) external onlyGovernor {
         merkleServer = _merkleServer;
         emit MerkleServerSet(_merkleServer);
-    }
-
-    /// @inheritdoc IAppReferrals
-    function setEnableWhitelisting(bool _enableWhitelisting) external onlyGovernor {
-        enableWhitelisting = _enableWhitelisting;
-        emit EnableWhitelistingSet(_enableWhitelisting);
     }
 
     /// @inheritdoc IAppReferrals
@@ -103,30 +101,23 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
     }
 
     /// @inheritdoc IAppReferrals
-    function registerReferralCodeFor(bytes8 _code, address _referrer) external onlyExecutor {
+    function registerReferralCodeFor(bytes8 _code, address _referrer) external onlyGovernor {
         _registerReferralCode(_code, _referrer);
     }
 
-    /// @inheritdoc IAppReferrals
-    function whitelist(address _user) external onlyExecutor {
-        whitelisted[_user] = true;
-        emit Whitelisted(_user);
-    }
 
     /// @notice Gets the total number of referrals made by a referrer
     /// @param _referrer The referrer to get the total number of referrals for
     /// @return The total number of referrals made by the referrer
     function totalReferralsMade(address _referrer) external view returns (uint256) {
-        return _referrals[_referrer].length();
+        return _referrals[userToReferralCode[_referrer]].length();
     }
 
     /// @inheritdoc IAppReferrals
     function getReferrals(address _referrer) external view returns (address[] memory referrals) {
-        EnumerableSet.AddressSet storage refs = _referrals[_referrer];
+        EnumerableSet.AddressSet storage refs = _referrals[userToReferralCode[_referrer]];
         referrals = new address[](refs.length());
-        for (uint256 i = 0; i < refs.length(); i++) {
-            referrals[i] = refs.at(i);
-        }
+        for (uint256 i = 0; i < refs.length(); i++) referrals[i] = refs.at(i);
     }
 
     /// @inheritdoc IAppReferrals
@@ -135,7 +126,7 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         nonReentrant
         returns (uint256 tokenId, uint256 taxPaid)
     {
-        app.safeTransferFrom(msg.sender, address(this), amount);
+        rzr.safeTransferFrom(msg.sender, address(this), amount);
 
         // pay out any referral rewards if a referral code was set
         bytes8 _registeredReferralCode = _registerReferral(_referralCode, _to);
@@ -146,21 +137,6 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         emit ReferralStaked(_to, amount, declaredValue, _registeredReferralCode);
     }
 
-    function lendWithReferral(uint256 amount, bytes8 _referralCode, address _to)
-        external
-        nonReentrant
-        returns (uint256 tokenId, uint256 taxPaid)
-    {
-        // app.transferFrom(msg.sender, address(this), amount);
-
-        // // pay out any referral rewards if a referral code was set
-        // bytes8 _registeredReferralCode = _registerReferral(_referralCode, _to);
-
-        // // stake on behalf of the referrer
-        // (tokenId, taxPaid) = staking.createPosition(_to, amount, declaredValue, 0);
-
-        // emit ReferralStaked(_to, amount, declaredValue, _registeredReferralCode);
-    }
 
     /// @inheritdoc IAppReferrals
     function stakeIntoLSTWithReferral(uint256 amount, bytes8 _referralCode, address _to)
@@ -168,7 +144,7 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         nonReentrant
         returns (uint256 minted)
     {
-        app.safeTransferFrom(msg.sender, address(this), amount);
+        rzr.safeTransferFrom(msg.sender, address(this), amount);
         bytes8 _registeredReferralCode = _registerReferral(_referralCode, _to);
         minted = staking4626.deposit(amount, _to);
         emit ReferralStakedIntoLST(_to, amount, _registeredReferralCode);
@@ -176,61 +152,45 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
 
     /// @inheritdoc IAppReferrals
     function bondWithReferral(
-        uint256 _id,
         uint256 _amount,
-        uint256 _maxPrice,
-        uint256 _minPayout,
         bytes8 _referralCode,
         address _to
-    ) external nonReentrant returns (uint256 payout_, uint256 tokenId_) {
-        IAppBondDepository.Bond memory bond = bondDepository.getBond(_id);
-        IERC20 token = bond.quoteToken;
-
+    ) external nonReentrant returns (uint256 payout) {
         // register referral if not already registered for tracking purposes only
         bytes8 _registeredReferralCode = _registerReferral(_referralCode, _to);
 
-        // buy bond on behalf of the referrer
-        token.safeTransferFrom(msg.sender, address(this), _amount);
-        token.approve(address(bondDepository), _amount);
-        (payout_, tokenId_) = bondDepository.deposit(_id, _amount, _maxPrice, _minPayout, _to);
+        // mint bond on behalf of the referrer
+        usdr.safeTransferFrom(msg.sender, address(this), _amount);
+        payout = bond4626.deposit(_amount, _to);
 
-        emit ReferralBondBought(_to, payout_, _registeredReferralCode);
+        emit ReferralBondBought(_to, payout, _registeredReferralCode);
     }
 
     /// @dev Registers a referral for the given user
-    /// @param _referralCode The referral code to use
+    /// @param _code The referral code to use
     /// @param _user The user to register the referral for
-    function _registerReferral(bytes8 _referralCode, address _user) internal returns (bytes8 _registeredReferralCode) {
+    function _registerReferral(bytes8 _code, address _user) internal returns (bytes8 _registeredReferralCode) {
         // if the user is already tracked by someone, we skip and return the referrer's code
-        if (trackedReferrals[_user] != address(0)) return referrerCodes[trackedReferrals[_user]];
+        if (trackedReferrals[_user] != bytes8(0)) return trackedReferrals[_user];
 
-        // track the referral
-        address _referrer = referralCodes[_referralCode];
-        if (_referrer == address(0)) return bytes8(0);
-        trackedReferrals[_user] = _referrer;
+        // track the referral regardless of whether the code is registered
+        trackedReferrals[_user] = _code;
+        if (!_referrals[_code].contains(_user)) _referrals[_code].add(_user);
 
-        if (!_referrals[_referrer].contains(_user)) {
-            _referrals[_referrer].add(_user);
-        }
-
-        emit ReferralRegistered(_user, _referrer, _referralCode);
-        return _referralCode;
+        emit ReferralRegistered(_user, _code);
+        return _code;
     }
 
     /// @dev Registers a referral code for the given referrer
     /// @param _referralCode The referral code to register
     /// @param _referrer The referrer to register the referral code for
     function _registerReferralCode(bytes8 _referralCode, address _referrer) internal {
-        require(referralCodes[_referralCode] == address(0), "Code already exists");
-        require(referrerCodes[_referrer] == bytes8(0), "Referral code already registered");
+        require(referralCodeToUser[_referralCode] == address(0), "Code already exists");
+        require(userToReferralCode[_referrer] == bytes8(0), "Referral code already registered");
         require(_referralCode != bytes8(0), "Invalid code");
 
-        if (enableWhitelisting) {
-            require(whitelisted[_referrer], "Not whitelisted");
-        }
-
-        referralCodes[_referralCode] = _referrer;
-        referrerCodes[_referrer] = _referralCode;
+        referralCodeToUser[_referralCode] = _referrer;
+        userToReferralCode[_referrer] = _referralCode;
 
         emit ReferralCodeRegistered(_referrer, _referralCode);
     }
@@ -251,7 +211,7 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         totalClaimed += claimable;
 
         // Transfer rewards
-        app.safeTransfer(input.user, claimable);
+        rzr.safeTransfer(input.user, claimable);
 
         emit RewardsClaimed(input.user, input.amount, merkleRoot);
     }

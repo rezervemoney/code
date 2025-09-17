@@ -107,7 +107,8 @@ abstract contract AppUIHelperBase {
     IAppOracle public appOracle;
     IAppStaking public staking;
     IAppTreasury public treasury;
-    IERC20 public appToken;
+    IERC20 public rzr;
+    IERC20 public usdr;
     IERC20 public stakingToken;
     IOracleV2 public spotOracle;
     IOracleV2 public ethOracle;
@@ -127,7 +128,8 @@ abstract contract AppUIHelperBase {
         address staking;
         address convertibles;
         address treasury;
-        address appToken;
+        address rzr;
+        address usdr;
         address stakingToken;
         address rebaseController;
         address appOracle;
@@ -144,7 +146,7 @@ abstract contract AppUIHelperBase {
         staking = IAppStaking(params.staking);
         convertibles = IAppConvertibles(params.convertibles);
         treasury = IAppTreasury(params.treasury);
-        appToken = IERC20(params.appToken);
+        rzr = IERC20(params.rzr);
         stakingToken = IERC20(params.stakingToken);
         appOracle = IAppOracle(params.appOracle);
         spotOracle = IOracleV2(params.spotOracle);
@@ -157,12 +159,16 @@ abstract contract AppUIHelperBase {
         usdtreasury = IUSDTreasury(params.usdtreasury);
 
         if (address(staking) != address(0)) {
-            appToken.approve(address(staking), type(uint256).max);
+            rzr.approve(address(staking), type(uint256).max);
         }
 
-        // if (address(convertibles) != address(0)) {
-        //     loanTokenUnderlying = IERC20(convertibles.stakingPowerToken());
-        //     loanTokenUnderlying.approve(address(convertibles), type(uint256).max);
-        // }
+        if (address(staking4626) != address(0)) {
+            rzr.approve(address(staking4626), type(uint256).max);
+        }
+
+        if (address(referrals) != address(0)) {
+            rzr.approve(address(referrals), type(uint256).max);
+            usdr.approve(address(referrals), type(uint256).max);
+        }
     }
 }

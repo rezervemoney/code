@@ -108,7 +108,7 @@ contract AppUIHelperWrite is AppUIHelperBase {
     /// @param zapAsset The asset to zap into the bond
     /// @param bond The bond to deposit into
     /// @return payout The amount of payout tokens received
-    function zapIntoBond(OdosParams memory odosParams, IERC20 zapAsset, IERC4626 bond, uint256 minPayout)
+    function zapIntoBond(OdosParams memory odosParams, bytes8 referralCode, IERC20 zapAsset, IERC4626 bond, uint256 minPayout)
         external
         payable
         returns (uint256 payout)
@@ -116,11 +116,9 @@ contract AppUIHelperWrite is AppUIHelperBase {
         _performZap(odosParams);
 
         zapAsset.approve(address(usdtreasury), type(uint256).max);
-        usdtreasury.mint(zapAsset, address(this), zapAsset.balanceOf(address(this)));
+        uint256 minted = usdtreasury.mint(zapAsset, address(this), zapAsset.balanceOf(address(this)));
 
-        IERC20 underlying = IERC20(bond.asset());
-        underlying.approve(address(bond), type(uint256).max);
-        payout = bond.deposit(underlying.balanceOf(address(this)), msg.sender);
+        payout = referrals.bondWithReferral(minted, referralCode, msg.sender);
 
         require(payout >= minPayout, "Insufficient payout");
 
@@ -139,8 +137,8 @@ contract AppUIHelperWrite is AppUIHelperBase {
         returns (uint256 minted)
     {
         _performZap(odosParams);
-        appToken.approve(address(referrals), type(uint256).max);
-        minted = referrals.stakeIntoLSTWithReferral(appToken.balanceOf(address(this)), referralCode, destination);
+        rzr.approve(address(referrals), type(uint256).max);
+        minted = referrals.stakeIntoLSTWithReferral(rzr.balanceOf(address(this)), referralCode, destination);
         require(minted >= minMinted, "Insufficient minted");
         _purgeAll(odosParams);
     }
@@ -159,8 +157,8 @@ contract AppUIHelperWrite is AppUIHelperBase {
     {
         _performZap(odosParams);
 
-        amountStaked = appToken.balanceOf(address(this));
-        appToken.approve(address(referrals), type(uint256).max);
+        amountStaked = rzr.balanceOf(address(this));
+        rzr.approve(address(referrals), type(uint256).max);
         amountDeclared = stakeParams.amountDeclared;
         (tokenId, taxPaid) =
             referrals.stakeWithReferral(amountStaked, amountDeclared, stakeParams.referralCode, msg.sender);
@@ -184,9 +182,9 @@ contract AppUIHelperWrite is AppUIHelperBase {
     {
         _performZap(odosParams);
 
-        amountStaked = appToken.balanceOf(address(this));
+        amountStaked = rzr.balanceOf(address(this));
         amountDeclared = (amountStaked * stakeParams.amountDeclaredAsPercentage) / 1e18;
-        appToken.approve(address(referrals), amountStaked);
+        rzr.approve(address(referrals), amountStaked);
         (tokenId, taxPaid) =
             referrals.stakeWithReferral(amountStaked, amountDeclared, stakeParams.referralCode, msg.sender);
 
@@ -230,7 +228,7 @@ contract AppUIHelperWrite is AppUIHelperBase {
     function _purgeAll(OdosParams memory odosParams) internal {
         _purge(odosParams.tokenIn);
         _purge(odosParams.odosTokenIn);
-        _purge(address(appToken));
+        _purge(address(rzr));
     }
 
     /// @notice Purges the given token

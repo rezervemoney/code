@@ -27,7 +27,7 @@ contract ManualOracleE18 is IOracleV2, Ownable {
     /// @notice Constructor
     /// @param _priceUsd The initial price in USD
     /// @param _priceRzr The initial price in RZR
-    constructor(uint256 _priceUsd, uint256 _priceRzr, address _asset) Ownable(msg.sender) {
+    constructor(uint256 _priceRzr, uint256 _priceUsd, address _asset) Ownable(msg.sender) {
         priceUsd = _priceUsd;
         priceRzr = _priceRzr;
         asset = IERC20Metadata(_asset);
@@ -36,7 +36,7 @@ contract ManualOracleE18 is IOracleV2, Ownable {
     /// @notice Sets the price
     /// @param _priceUsd The price in USD
     /// @param _priceRzr The price in RZR
-    function setPrice(uint256 _priceUsd, uint256 _priceRzr) external onlyOwner {
+    function setPrice(uint256 _priceRzr,uint256 _priceUsd) external onlyOwner {
         require(_priceUsd > 0, "Invalid price");
         require(_priceRzr > 0, "Invalid price");
         priceUsd = _priceUsd;

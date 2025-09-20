@@ -3,12 +3,12 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_priceUsd",
+        "name": "_priceRzr",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "_priceRzr",
+        "name": "_priceUsd",
         "type": "uint256"
       },
       {
@@ -172,12 +172,12 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_priceUsd",
+        "name": "_priceRzr",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "_priceRzr",
+        "name": "_priceUsd",
         "type": "uint256"
       }
     ],

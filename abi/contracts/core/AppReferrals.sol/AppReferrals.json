@@ -42,19 +42,6 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
-        "internalType": "bool",
-        "name": "enableWhitelisting",
-        "type": "bool"
-      }
-    ],
-    "name": "EnableWhitelistingSet",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
         "indexed": false,
         "internalType": "uint64",
         "name": "version",
@@ -145,14 +132,8 @@
       },
       {
         "indexed": true,
-        "internalType": "address",
-        "name": "referrer",
-        "type": "address"
-      },
-      {
-        "indexed": false,
         "internalType": "bytes8",
-        "name": "code",
+        "name": "referrerCode",
         "type": "bytes8"
       }
     ],
@@ -241,24 +222,24 @@
     "type": "event"
   },
   {
-    "anonymous": false,
-    "inputs": [
+    "inputs": [],
+    "name": "allowReferralCodeRegistration",
+    "outputs": [
       {
-        "indexed": true,
-        "internalType": "address",
-        "name": "user",
-        "type": "address"
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
-    "name": "Whitelisted",
-    "type": "event"
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "inputs": [],
-    "name": "app",
+    "name": "appTreasury",
     "outputs": [
       {
-        "internalType": "contract IApp",
+        "internalType": "contract IAppTreasury",
         "name": "",
         "type": "address"
       }
@@ -281,10 +262,10 @@
   },
   {
     "inputs": [],
-    "name": "bondDepository",
+    "name": "bond4626",
     "outputs": [
       {
-        "internalType": "contract IAppBondDepository",
+        "internalType": "contract IERC4626",
         "name": "",
         "type": "address"
       }
@@ -296,22 +277,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_id",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
         "name": "_amount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_maxPrice",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_minPayout",
         "type": "uint256"
       },
       {
@@ -329,12 +295,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "payout_",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "tokenId_",
+        "name": "payout",
         "type": "uint256"
       }
     ],
@@ -391,19 +352,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "enableWhitelisting",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -426,22 +374,32 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_bondDepository",
+        "name": "_rzr",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_usdr",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_bond4626",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_usdtreasury",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_appTreasury",
         "type": "address"
       },
       {
         "internalType": "address",
         "name": "_staking",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_app",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_treasury",
         "type": "address"
       },
       {
@@ -453,44 +411,15 @@
         "internalType": "address",
         "name": "_authority",
         "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "_allowReferralCodeRegistration",
+        "type": "bool"
       }
     ],
     "name": "initialize",
     "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bytes8",
-        "name": "_referralCode",
-        "type": "bytes8"
-      },
-      {
-        "internalType": "address",
-        "name": "_to",
-        "type": "address"
-      }
-    ],
-    "name": "lendWithReferral",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "tokenId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "taxPaid",
-        "type": "uint256"
-      }
-    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -528,31 +457,12 @@
         "type": "bytes8"
       }
     ],
-    "name": "referralCodes",
+    "name": "referralCodeToUser",
     "outputs": [
       {
         "internalType": "address",
         "name": "user",
         "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "user",
-        "type": "address"
-      }
-    ],
-    "name": "referrerCodes",
-    "outputs": [
-      {
-        "internalType": "bytes8",
-        "name": "code",
-        "type": "bytes8"
       }
     ],
     "stateMutability": "view",
@@ -590,6 +500,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "rzr",
+    "outputs": [
+      {
+        "internalType": "contract IApp",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "contract IAppAuthority",
@@ -598,19 +521,6 @@
       }
     ],
     "name": "setAuthority",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bool",
-        "name": "_enableWhitelisting",
-        "type": "bool"
-      }
-    ],
-    "name": "setEnableWhitelisting",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -796,8 +706,21 @@
     "name": "trackedReferrals",
     "outputs": [
       {
-        "internalType": "address",
-        "name": "referrer",
+        "internalType": "bytes8",
+        "name": "referralCode",
+        "type": "bytes8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "usdr",
+    "outputs": [
+      {
+        "internalType": "contract IApp",
+        "name": "",
         "type": "address"
       }
     ],
@@ -806,10 +729,10 @@
   },
   {
     "inputs": [],
-    "name": "treasury",
+    "name": "usdtreasury",
     "outputs": [
       {
-        "internalType": "contract IAppTreasury",
+        "internalType": "contract IUSDTreasury",
         "name": "",
         "type": "address"
       }
@@ -821,29 +744,16 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_user",
-        "type": "address"
-      }
-    ],
-    "name": "whitelist",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
         "name": "user",
         "type": "address"
       }
     ],
-    "name": "whitelisted",
+    "name": "userToReferralCode",
     "outputs": [
       {
-        "internalType": "bool",
-        "name": "whitelisted",
-        "type": "bool"
+        "internalType": "bytes8",
+        "name": "code",
+        "type": "bytes8"
       }
     ],
     "stateMutability": "view",

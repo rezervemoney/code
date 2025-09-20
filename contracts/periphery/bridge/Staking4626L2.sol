@@ -28,6 +28,9 @@ contract Staking4626L2 is IStaking4626L2, OFTProxy, AppAccessControlled {
     /// @notice Total fees collected from deposits
     uint256 public totalFeesCollected;
 
+    /// @notice The last time the rate was updated
+    uint256 public lastRateUpdated;
+
     /// @inheritdoc IStaking4626L2
     function initialize(address _authority, address _lzEndpoint, address _delegate, address _underlying)
         external
@@ -58,6 +61,7 @@ contract Staking4626L2 is IStaking4626L2, OFTProxy, AppAccessControlled {
         rate = _rate;
         require(rate >= oldRate, "Rate must be greater than or equal to the old rate");
         emit RateUpdated(rate, oldRate);
+        lastRateUpdated = block.timestamp;
     }
 
     /// @inheritdoc IStaking4626L2
@@ -170,6 +174,8 @@ contract Staking4626L2 is IStaking4626L2, OFTProxy, AppAccessControlled {
     function _processDeposit(address caller, address receiver, uint256 assets, uint256 shares, uint256 feeAmount)
         internal
     {
+        require(block.timestamp - lastRateUpdated >= 1 days, "Rate update cooldown");
+
         // Transfer the full amount from user to the bridge
         underlying.safeTransferFrom(caller, authority.bridge(), assets);
 

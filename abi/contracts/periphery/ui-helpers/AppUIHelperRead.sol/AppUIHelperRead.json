@@ -20,7 +20,12 @@
           },
           {
             "internalType": "address",
-            "name": "appToken",
+            "name": "rzr",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "usdr",
             "type": "address"
           },
           {
@@ -107,19 +112,6 @@
     "outputs": [
       {
         "internalType": "contract IAppOracle",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "appToken",
-    "outputs": [
-      {
-        "internalType": "contract IERC20",
         "name": "",
         "type": "address"
       }
@@ -1173,32 +1165,6 @@
   },
   {
     "inputs": [],
-    "name": "loanToken",
-    "outputs": [
-      {
-        "internalType": "contract IERC4626",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "loanTokenUnderlying",
-    "outputs": [
-      {
-        "internalType": "contract IERC20",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "odos",
     "outputs": [
       {
@@ -1229,6 +1195,19 @@
     "outputs": [
       {
         "internalType": "contract IAppReferrals",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "rzr",
+    "outputs": [
+      {
+        "internalType": "contract IERC20",
         "name": "",
         "type": "address"
       }
@@ -1307,6 +1286,19 @@
     "outputs": [
       {
         "internalType": "contract IAppTreasury",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "usdr",
+    "outputs": [
+      {
+        "internalType": "contract IERC20",
         "name": "",
         "type": "address"
       }

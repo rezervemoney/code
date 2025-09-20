@@ -45,7 +45,8 @@ contract AppReferralsTest is BaseTest {
             address(treasury),   // _appTreasury
             address(staking),    // _staking
             address(staking4626), // _staking4626
-            address(authority)   // _authority
+            address(authority),   // _authority
+            true // _allowReferralCodeRegistration
         );
 
         // Set merkle server

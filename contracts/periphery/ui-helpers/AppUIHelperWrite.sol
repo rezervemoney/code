@@ -65,43 +65,6 @@ contract AppUIHelperWrite is AppUIHelperBase {
         // todo claim merkl rewards
     }
 
-    /// @notice Zaps and buys a bond
-    /// @param odosParams The parameters for the zap
-    /// @param convertibleParams The parameters for the convertible
-    /// @return tokenId The ID of the created convertible position NFT
-    /// @return conversionPrice The price of the convertible
-    /// @return conversionAmount The amount of RZR tokens convertible
-    /// @return fixedInterestRate The fixed interest rate per second
-    /// @return fixedInterestRateAmount The fixed interest rate amount
-    function zapAndBuyConvertible(OdosParams memory odosParams, ConvertibleParams memory convertibleParams)
-        external
-        payable
-        returns (
-            uint256 tokenId,
-            uint256 conversionPrice,
-            uint256 conversionAmount,
-            uint256 fixedInterestRate,
-            uint256 fixedInterestRateAmount,
-            uint256 stakingPower
-        )
-    {
-        _performZap(odosParams);
-
-        if (convertibleParams.stakeInto4626) {
-            loanTokenUnderlying.approve(address(loanToken), type(uint256).max);
-            loanToken.deposit(loanTokenUnderlying.balanceOf(address(this)), address(this));
-        }
-
-        (tokenId, conversionPrice, conversionAmount, fixedInterestRate, fixedInterestRateAmount, stakingPower) =
-        convertibles.stake(
-            loanTokenUnderlying,
-            loanTokenUnderlying.balanceOf(address(this)),
-            convertibleParams.lockDuration,
-            msg.sender
-        );
-
-        _purgeAll(odosParams);
-    }
 
     /// @notice Zaps and deposits into a bond
     /// @param odosParams The parameters for the zap

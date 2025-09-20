@@ -49,6 +49,8 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
     address public merkleServer;
     uint256 public totalClaimed;
 
+    bool public allowReferralCodeRegistration;
+
     /// @inheritdoc IAppReferrals
     function initialize(
         address _rzr,
@@ -58,7 +60,8 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         address _appTreasury,
         address _staking,
         address _staking4626,
-        address _authority
+        address _authority,
+        bool _allowReferralCodeRegistration
     ) external reinitializer(4) {
         __AppAccessControlled_init(_authority);
         __ReentrancyGuard_init();
@@ -70,9 +73,12 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         appTreasury = IAppTreasury(_appTreasury);
         staking = IAppStaking(_staking);
         staking4626 = IStaking4626(_staking4626);
-        rzr.approve(address(staking), type(uint256).max);
         rzr.approve(address(staking4626), type(uint256).max);
-        usdr.approve(address(bond4626), type(uint256).max);
+
+        allowReferralCodeRegistration = _allowReferralCodeRegistration;
+
+        if (address(staking) != address(0)) rzr.approve(address(staking), type(uint256).max);
+        if (address(usdr) != address(0)) usdr.approve(address(bond4626), type(uint256).max);
     }
 
     /// @inheritdoc IAppReferrals
@@ -101,7 +107,7 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
     }
 
     /// @inheritdoc IAppReferrals
-    function registerReferralCodeFor(bytes8 _code, address _referrer) external onlyGovernor {
+    function registerReferralCodeFor(bytes8 _code, address _referrer) external onlyExecutor {
         _registerReferralCode(_code, _referrer);
     }
 
@@ -185,6 +191,7 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
     /// @param _referralCode The referral code to register
     /// @param _referrer The referrer to register the referral code for
     function _registerReferralCode(bytes8 _referralCode, address _referrer) internal {
+        require(allowReferralCodeRegistration, "Referral code registration is not allowed");
         require(referralCodeToUser[_referralCode] == address(0), "Code already exists");
         require(userToReferralCode[_referrer] == bytes8(0), "Referral code already registered");
         require(_referralCode != bytes8(0), "Invalid code");

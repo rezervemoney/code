@@ -20,7 +20,12 @@
           },
           {
             "internalType": "address",
-            "name": "appToken",
+            "name": "rzr",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "usdr",
             "type": "address"
           },
           {
@@ -118,19 +123,6 @@
     "outputs": [
       {
         "internalType": "contract IAppOracle",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "appToken",
-    "outputs": [
-      {
-        "internalType": "contract IERC20",
         "name": "",
         "type": "address"
       }
@@ -294,32 +286,6 @@
   },
   {
     "inputs": [],
-    "name": "loanToken",
-    "outputs": [
-      {
-        "internalType": "contract IERC4626",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "loanTokenUnderlying",
-    "outputs": [
-      {
-        "internalType": "contract IERC20",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "odos",
     "outputs": [
       {
@@ -350,6 +316,19 @@
     "outputs": [
       {
         "internalType": "contract IAppReferrals",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "rzr",
+    "outputs": [
+      {
+        "internalType": "contract IERC20",
         "name": "",
         "type": "address"
       }
@@ -437,6 +416,19 @@
   },
   {
     "inputs": [],
+    "name": "usdr",
+    "outputs": [
+      {
+        "internalType": "contract IERC20",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "usdtreasury",
     "outputs": [
       {
@@ -446,99 +438,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "components": [
-          {
-            "internalType": "address",
-            "name": "tokenIn",
-            "type": "address"
-          },
-          {
-            "internalType": "uint256",
-            "name": "tokenAmountIn",
-            "type": "uint256"
-          },
-          {
-            "internalType": "address",
-            "name": "odosTokenIn",
-            "type": "address"
-          },
-          {
-            "internalType": "uint256",
-            "name": "odosTokenAmountIn",
-            "type": "uint256"
-          },
-          {
-            "internalType": "bytes",
-            "name": "odosData",
-            "type": "bytes"
-          }
-        ],
-        "internalType": "struct AppUIHelperWrite.OdosParams",
-        "name": "odosParams",
-        "type": "tuple"
-      },
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "amount",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "lockDuration",
-            "type": "uint256"
-          },
-          {
-            "internalType": "bool",
-            "name": "stakeInto4626",
-            "type": "bool"
-          }
-        ],
-        "internalType": "struct AppUIHelperWrite.ConvertibleParams",
-        "name": "convertibleParams",
-        "type": "tuple"
-      }
-    ],
-    "name": "zapAndBuyConvertible",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "tokenId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "conversionPrice",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "conversionAmount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "fixedInterestRate",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "fixedInterestRateAmount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "stakingPower",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "payable",
     "type": "function"
   },
   {
@@ -750,6 +649,11 @@
         "internalType": "struct AppUIHelperWrite.OdosParams",
         "name": "odosParams",
         "type": "tuple"
+      },
+      {
+        "internalType": "bytes8",
+        "name": "referralCode",
+        "type": "bytes8"
       },
       {
         "internalType": "contract IERC20",

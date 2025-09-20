@@ -4,19 +4,6 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "bool",
-        "name": "enableWhitelisting",
-        "type": "bool"
-      }
-    ],
-    "name": "EnableWhitelistingSet",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
         "internalType": "bytes32",
         "name": "merkleRoot",
         "type": "bytes32"
@@ -93,14 +80,8 @@
       },
       {
         "indexed": true,
-        "internalType": "address",
-        "name": "referrer",
-        "type": "address"
-      },
-      {
-        "indexed": false,
         "internalType": "bytes8",
-        "name": "code",
+        "name": "referrerCode",
         "type": "bytes8"
       }
     ],
@@ -189,38 +170,10 @@
     "type": "event"
   },
   {
-    "anonymous": false,
     "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "user",
-        "type": "address"
-      }
-    ],
-    "name": "Whitelisted",
-    "type": "event"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_id",
-        "type": "uint256"
-      },
       {
         "internalType": "uint256",
         "name": "_amount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_maxPrice",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_minPayout",
         "type": "uint256"
       },
       {
@@ -238,12 +191,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "payout_",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "tokenId_",
+        "name": "payout",
         "type": "uint256"
       }
     ],
@@ -303,22 +251,32 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_bondDepository",
+        "name": "_rzr",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_usdr",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_bond4626",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_usdtreasury",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_appTreasury",
         "type": "address"
       },
       {
         "internalType": "address",
         "name": "_staking",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_app",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_treasury",
         "type": "address"
       },
       {
@@ -330,6 +288,11 @@
         "internalType": "address",
         "name": "_authority",
         "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "_allowReferralCodeRegistration",
+        "type": "bool"
       }
     ],
     "name": "initialize",
@@ -340,17 +303,17 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_user",
-        "type": "address"
+        "internalType": "bytes8",
+        "name": "_code",
+        "type": "bytes8"
       }
     ],
-    "name": "referrerCodes",
+    "name": "referralCodeToUser",
     "outputs": [
       {
-        "internalType": "bytes8",
-        "name": "referrerCode",
-        "type": "bytes8"
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -383,19 +346,6 @@
       }
     ],
     "name": "registerReferralCodeFor",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bool",
-        "name": "_enableWhitelisting",
-        "type": "bool"
-      }
-    ],
-    "name": "setEnableWhitelisting",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -502,9 +452,15 @@
         "type": "address"
       }
     ],
-    "name": "whitelist",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "name": "userToReferralCode",
+    "outputs": [
+      {
+        "internalType": "bytes8",
+        "name": "referrerCode",
+        "type": "bytes8"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   }
 ]

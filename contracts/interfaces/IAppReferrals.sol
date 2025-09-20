@@ -30,6 +30,7 @@ interface IAppReferrals {
     /// @param _staking The address of the staking contract
     /// @param _staking4626 The address of the staking4626 contract
     /// @param _authority The address of the authority
+    /// @param _allowReferralCodeRegistration The flag to allow referral code registration
     function initialize(
         address _rzr,
         address _usdr,
@@ -38,7 +39,8 @@ interface IAppReferrals {
         address _appTreasury,
         address _staking,
         address _staking4626,
-        address _authority
+        address _authority,
+        bool _allowReferralCodeRegistration
     ) external;
 
     /// @notice Gets the referral code for a user

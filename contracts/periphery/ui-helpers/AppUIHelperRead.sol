@@ -5,6 +5,21 @@ pragma abicoder v2;
 import "./AppUIHelperBase.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+interface IAppConvertiblesOldV2 {
+    struct Position {
+        uint256 amountStaked;
+        uint256 amountConvertible;
+        uint256 fixedInterestRate;
+        uint256 fixedInterestClaimed;
+        uint256 lockDuration;
+        uint256 lockStartTime;
+        uint256 priceConversion;
+        uint256 priceEntry;
+    }
+
+    function positions(uint256 tokenId) external view returns (Position memory);
+}
+
 /// @title RZR UI Helper
 /// @author RZR Protocol
 contract AppUIHelperRead is AppUIHelperBase {
@@ -217,7 +232,7 @@ contract AppUIHelperRead is AppUIHelperBase {
         if (address(convertibles) == address(0)) return convertiblePosition;
         uint256 twapPrice = getTwapPrice();
 
-        IAppConvertibles.Position memory position = convertibles.positions(tokenId);
+        IAppConvertiblesOldV2.Position memory position = IAppConvertiblesOldV2(address(convertibles)).positions(tokenId);
         (uint256 interestClaimable, uint256 totalInterestClaimed) = convertibles.claimableInterest(tokenId);
 
         convertiblePosition = ConvertiblePositionInfo({

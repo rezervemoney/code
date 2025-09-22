@@ -6,6 +6,18 @@ import "./AppUIHelperBase.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/interfaces/IERC4626.sol";
 
+interface IAppConvertiblesOld {
+    function stake(uint256 amount, uint256 lockDuration, address receiver)
+        external
+        returns (
+            uint256 tokenId,
+            uint256 conversionPrice,
+            uint256 conversionAmount,
+            uint256 fixedInterestRate,
+            uint256 fixedInterestRateAmount
+        );
+}
+
 /// @title RZR UI Helper
 /// @author RZR Protocol
 contract AppUIHelperWrite is AppUIHelperBase {
@@ -65,17 +77,18 @@ contract AppUIHelperWrite is AppUIHelperBase {
         // todo claim merkl rewards
     }
 
-
     /// @notice Zaps and deposits into a bond
     /// @param odosParams The parameters for the zap
     /// @param zapAsset The asset to zap into the bond
     /// @param bond The bond to deposit into
     /// @return payout The amount of payout tokens received
-    function zapIntoBond(OdosParams memory odosParams, bytes8 referralCode, IERC20 zapAsset, IERC4626 bond, uint256 minPayout)
-        external
-        payable
-        returns (uint256 payout)
-    {
+    function zapIntoBond(
+        OdosParams memory odosParams,
+        bytes8 referralCode,
+        IERC20 zapAsset,
+        IERC4626 bond,
+        uint256 minPayout
+    ) external payable returns (uint256 payout) {
         _performZap(odosParams);
 
         zapAsset.approve(address(usdtreasury), type(uint256).max);
@@ -84,6 +97,35 @@ contract AppUIHelperWrite is AppUIHelperBase {
         payout = referrals.bondWithReferral(minted, referralCode, msg.sender);
 
         require(payout >= minPayout, "Insufficient payout");
+
+        _purgeAll(odosParams);
+    }
+
+    function zapAndBuyConvertible(OdosParams memory odosParams, ConvertibleParams memory convertibleParams)
+        external
+        payable
+        returns (
+            uint256 tokenId,
+            uint256 conversionPrice,
+            uint256 conversionAmount,
+            uint256 fixedInterestRate,
+            uint256 fixedInterestRateAmount
+        )
+    {
+        _performZap(odosParams);
+
+        IERC20 loanTokenUnderlying = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
+        IERC4626 loanToken = IERC4626(0xC42d337861878baa4dC820D9E6B6C667C2b57e8A);
+
+        if (convertibleParams.stakeInto4626) {
+            loanTokenUnderlying.approve(address(loanToken), type(uint256).max);
+            loanToken.deposit(loanTokenUnderlying.balanceOf(address(this)), address(this));
+        }
+
+        loanToken.approve(address(0x614699757fb3bFaCd8a0D10D3B3205f1089993be), type(uint256).max);
+        (tokenId, conversionPrice, conversionAmount, fixedInterestRate, fixedInterestRateAmount) = IAppConvertiblesOld(
+            address(0x614699757fb3bFaCd8a0D10D3B3205f1089993be)
+        ).stake(loanToken.balanceOf(address(this)), convertibleParams.lockDuration, msg.sender);
 
         _purgeAll(odosParams);
     }

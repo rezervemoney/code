@@ -478,6 +478,94 @@
         "components": [
           {
             "internalType": "uint256",
+            "name": "amount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "lockDuration",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "stakeInto4626",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct AppUIHelperWrite.ConvertibleParams",
+        "name": "convertibleParams",
+        "type": "tuple"
+      }
+    ],
+    "name": "zapAndBuyConvertible",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "conversionPrice",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "conversionAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "fixedInterestRate",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "fixedInterestRateAmount",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "tokenIn",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tokenAmountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "odosTokenIn",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "odosTokenAmountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes",
+            "name": "odosData",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct AppUIHelperWrite.OdosParams",
+        "name": "odosParams",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
             "name": "amountDeclared",
             "type": "uint256"
           },

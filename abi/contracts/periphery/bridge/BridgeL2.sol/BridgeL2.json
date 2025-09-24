@@ -35,6 +35,16 @@
         "internalType": "address",
         "name": "_rzr",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_usdc",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_usdcOft",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -270,6 +280,19 @@
   },
   {
     "inputs": [],
+    "name": "BOND_TOKEN_MAINNET",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "BRIDGE_MAINNET",
     "outputs": [
       {
@@ -486,7 +509,14 @@
   },
   {
     "inputs": [],
-    "name": "flushToL1",
+    "name": "flushRzrToL1",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "flushUsdcToL1",
     "outputs": [],
     "stateMutability": "payable",
     "type": "function"
@@ -902,6 +932,32 @@
     "outputs": [
       {
         "internalType": "contract IAppTreasury",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "usdc",
+    "outputs": [
+      {
+        "internalType": "contract IERC20",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "usdcOft",
+    "outputs": [
+      {
+        "internalType": "contract IOFT",
         "name": "",
         "type": "address"
       }

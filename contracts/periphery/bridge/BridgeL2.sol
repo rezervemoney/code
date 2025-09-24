@@ -23,7 +23,7 @@ contract BridgeL2 is AppAccessControlled, OAppRead, OAppOptionsType3, IBridgeL2 
 
     /// @inheritdoc IBridgeL2
     address public immutable LIQUID_STAKING_MAINNET = 0xB33f4B9C6f0624EdeAE8881c97381837760D52CB;
-
+    address public immutable BOND_TOKEN_MAINNET = 0x3839A0DD920463eB5d8231eFe4d8c5edC44145eC;
     address public immutable BRIDGE_MAINNET = 0x507427Db12766d70445C85e683eFD30143Bf99DF;
 
     /// @inheritdoc IBridgeL2
@@ -34,6 +34,11 @@ contract BridgeL2 is AppAccessControlled, OAppRead, OAppOptionsType3, IBridgeL2 
     IAppTreasury public treasury;
 
     IOFT public immutable rzr;
+
+    /// @dev stargate usdc oft
+    IOFT public immutable usdcOft;
+
+    IERC20 public immutable usdc;
 
     /// @notice Initialize the contract
     /// @param _eid The EID of the L2 chain
@@ -49,7 +54,9 @@ contract BridgeL2 is AppAccessControlled, OAppRead, OAppOptionsType3, IBridgeL2 
         address _authority,
         address _liquidStaking,
         address _treasury,
-        address _rzr
+        address _rzr,
+        address _usdc,
+        address _usdcOft
     ) OAppRead(_endpoint, msg.sender) Ownable(msg.sender) {
         _setPeer(READ_CHANNEL, AddressCast.toBytes32(address(this)));
         __AppAccessControlled_init(_authority);
@@ -59,6 +66,9 @@ contract BridgeL2 is AppAccessControlled, OAppRead, OAppOptionsType3, IBridgeL2 
         liquidStaking = IStaking4626L2(_liquidStaking);
         treasury = IAppTreasury(_treasury);
         rzr = IOFT(_rzr);
+        usdc = IERC20(_usdc);
+        usdcOft = IOFT(_usdcOft);
+        usdc.approve(address(usdcOft), type(uint256).max);
     }
 
     receive() external payable {}
@@ -69,9 +79,26 @@ contract BridgeL2 is AppAccessControlled, OAppRead, OAppOptionsType3, IBridgeL2 
         }
     }
 
-    function flushToL1() external payable onlyExecutor {
+    function flushRzrToL1() external payable onlyExecutor {
         uint256 balance = IERC20(address(rzr)).balanceOf(address(this));
         rzr.send{value: msg.value}(
+            SendParam({
+                dstEid: MAINNET_EID,
+                to: bytes32(uint256(uint160(BRIDGE_MAINNET))),
+                amountLD: balance,
+                minAmountLD: balance * 999 / 1000,
+                extraOptions: "",
+                composeMsg: "",
+                oftCmd: ""
+            }),
+            MessagingFee({nativeFee: msg.value, lzTokenFee: 0}),
+            address(this)
+        );
+    }
+
+    function flushUsdcToL1() external payable onlyExecutor {
+        uint256 balance = usdc.balanceOf(address(this));
+        usdcOft.send{value: msg.value}(
             SendParam({
                 dstEid: MAINNET_EID,
                 to: bytes32(uint256(uint160(BRIDGE_MAINNET))),

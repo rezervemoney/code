@@ -78,6 +78,31 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
+        "internalType": "address",
+        "name": "asset",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "rateProvider",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "rateSnapshot",
+        "type": "uint256"
+      }
+    ],
+    "name": "RateProviderRegistered",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": false,
         "internalType": "uint256",
         "name": "newFee",
@@ -110,6 +135,50 @@
       }
     ],
     "name": "ReservesAudited",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "asset",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "revenue",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "revenueToProtocol",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "revenueToTreasury",
+        "type": "uint256"
+      }
+    ],
+    "name": "RevenueCollected",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "revenueDestination",
+        "type": "address"
+      }
+    ],
+    "name": "RevenueDestinationSet",
     "type": "event"
   },
   {
@@ -204,6 +273,32 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_asset",
+        "type": "address"
+      }
+    ],
+    "name": "collectRevenue",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "_assets",
+        "type": "address[]"
+      }
+    ],
+    "name": "collectRevenueMultiple",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -328,6 +423,62 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_asset",
+        "type": "address"
+      }
+    ],
+    "name": "rateProviders",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "rateProvider_",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_asset",
+        "type": "address"
+      }
+    ],
+    "name": "rateSnapshots",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "rateSnapshot_",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_asset",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_rateProvider",
+        "type": "address"
+      }
+    ],
+    "name": "registerRateProvider",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "reserveFee",
     "outputs": [
@@ -335,6 +486,19 @@
         "internalType": "uint256",
         "name": "reserveFee_",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "revenueDestination",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "revenueDestination_",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -349,6 +513,19 @@
       }
     ],
     "name": "setReserveFee",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_revenueDestination",
+        "type": "address"
+      }
+    ],
+    "name": "setRevenueDestination",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

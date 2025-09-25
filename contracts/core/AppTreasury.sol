@@ -29,7 +29,12 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, ReentrancyGuardUpgrad
     /// @inheritdoc IAppTreasury
     uint256 public reserveFee;
 
-    function initialize(address _app, address _appOracle, address _authority) public reinitializer(13) {
+    /// used for revenue calculations
+    address public revenueDestination;
+    mapping(address asset => address rateProvider) public rateProviders;
+    mapping(address asset => uint256 rateSnapshot) public rateSnapshots;
+
+    function initialize(address _app, address _appOracle, address _authority) public reinitializer(14) {
         require(_app != address(0), "Zero address: app");
         require(_appOracle != address(0), "Zero address: appOracle");
         app = IApp(_app);
@@ -80,6 +85,18 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, ReentrancyGuardUpgrad
     }
 
     /// @inheritdoc IAppTreasury
+    function registerRateProvider(address _asset, address _rateProvider) external onlyGovernor {
+        rateProviders[_asset] = _rateProvider;
+        rateSnapshots[_asset] = IRateProvider(_rateProvider).getRate();
+        emit RateProviderRegistered(_asset, _rateProvider, rateSnapshots[_asset]);
+    }
+
+    function setRevenueDestination(address _revenueDestination) external onlyGovernor {
+        revenueDestination = _revenueDestination;
+        emit RevenueDestinationSet(_revenueDestination);
+    }
+
+    /// @inheritdoc IAppTreasury
     function manage(address _token, uint256 _amount, address _recipient)
         external
         override
@@ -104,6 +121,18 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, ReentrancyGuardUpgrad
     function syncReserves() external onlyBridge returns (uint256 usdReserves, uint256 rzrReserves) {
         _updateReserves();
         return (_totalReservesUsd, _totalReservesRzr);
+    }
+
+    /// @inheritdoc IAppTreasury
+    function collectRevenue(address _asset) external onlyExecutor {
+        _collectRevenue(_asset);
+    }
+
+    /// @inheritdoc IAppTreasury
+    function collectRevenueMultiple(address[] calldata _assets) external onlyExecutor {
+        for (uint256 i = 0; i < _assets.length; i++) {
+            _collectRevenue(_assets[i]);
+        }
     }
 
     /// @inheritdoc IAppTreasury
@@ -186,6 +215,24 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, ReentrancyGuardUpgrad
         _totalReservesUsd = usdReserves;
         _totalReservesRzr = rzrReserves;
         emit ReservesAudited(usdReserves, rzrReserves);
+    }
+
+    function _collectRevenue(address _asset) internal {
+        IRateProvider rateProvider = IRateProvider(rateProviders[_asset]);
+        uint256 newRate = rateProvider.getRate();
+        uint256 yield = newRate - rateSnapshots[_asset];
+
+        uint256 balance = IERC20(_asset).balanceOf(address(this));
+        uint256 revenue = yield * balance / 1e18;
+
+        uint256 revenueToProtocol = revenue * (100 - reserveFee) / 100;
+        uint256 revenueToTreasury = revenue - revenueToProtocol;
+
+        rateSnapshots[_asset] = newRate;
+        emit RevenueCollected(_asset, revenue, revenueToProtocol, revenueToTreasury);
+
+        IERC20(_asset).safeTransfer(revenueDestination, revenueToProtocol);
+        IERC20(_asset).safeTransfer(authority.operationsTreasury(), revenueToTreasury);
     }
 
     function execute(address _to, uint256 _value, bytes calldata _data) external onlyGovernor {

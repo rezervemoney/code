@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.28;
+
+
 interface IFarmingPoolsUI {
     /**
      * @dev Thrown when a zero address is provided where it's not allowed

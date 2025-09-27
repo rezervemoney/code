@@ -110,6 +110,20 @@ contract UserRoleChecker {
     }
 
     /**
+     * @notice Get the RZR value of a user's holdings
+     * @param user The address of the user to check
+     * @param data The data to decode
+     * @return totalRzrValue The total RZR value of the user's holdings
+     */
+    function getRzrValue(address user, bytes memory data) public view returns (uint256 totalRzrValue) {
+        CheckIfHoldingMultipleParams memory params = abi.decode(data, (CheckIfHoldingMultipleParams));
+        for (uint256 i = 0; i < params.params.length; i++) {
+            (, , uint256 _rzrAmount) = checkIfHolding(user, params.params[i].token, params.params[i].forwarders);
+            totalRzrValue += _rzrAmount;
+        }
+    }
+
+    /**
      * @notice Get the spot price
      * @return spotPrice The spot price
      */

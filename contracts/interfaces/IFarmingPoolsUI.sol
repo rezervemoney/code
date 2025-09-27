@@ -5,12 +5,12 @@ interface IFarmingPoolsUI {
      * @dev Thrown when a zero address is provided where it's not allowed
      */
     error ZeroAddress();
-    
+
     /**
      * @dev Thrown when an invalid pool address is provided
      */
     error InvalidPoolAddress();
-    
+
     /**
      * @dev Emitted when a pool configuration is set
      * @param pool The address of the pool
@@ -62,16 +62,16 @@ interface IFarmingPoolsUI {
      * @notice Each pool type represents a different DeFi protocol or farming mechanism
      */
     enum PoolType {
-        PENDLE,      // Pendle protocol pools
-        SPECTRA,     // Spectra protocol pools
-        BEETS,       // Beethoven X (Beets) pools
-        SHADOW,      // Shadow protocol pools
-        EQUALIZER,   // Equalizer protocol pools
-        EULER,       // Euler protocol pools
-        REZERVE,     // Rezerve protocol pools
-        BALANCER,    // Balancer protocol pools
-        CURVE,       // Curve protocol pools
-        UNISWAP      // Uniswap protocol pools
+        PENDLE, // Pendle protocol pools
+        SPECTRA, // Spectra protocol pools
+        BEETS, // Beethoven X (Beets) pools
+        SHADOW, // Shadow protocol pools
+        EQUALIZER, // Equalizer protocol pools
+        EULER, // Euler protocol pools
+        REZERVE, // Rezerve protocol pools
+        BALANCER, // Balancer protocol pools
+        CURVE, // Curve protocol pools
+        UNISWAP // Uniswap protocol pools
     }
 
     /**
@@ -137,4 +137,24 @@ interface IFarmingPoolsUI {
      * @return PoolConfig struct with pool configuration
      */
     function poolConfigs(address pool) external view returns (PoolConfig memory);
+
+    /**
+     * @dev Get the total number of configured pools
+     * @return The length of the markets array
+     */
+    function length() external view returns (uint256);
+
+    /**
+     * @dev Get paginated pool data for all configured pools for a specific user
+     * @param user User address to get data for
+     * @param startingIndex Starting index
+     * @param endingIndex Ending index
+     * @return Array of PoolData structs for the requested page
+     * @notice Similar to getAllStakingPositions in AppUIHelperRead with pagination
+     */
+    function getAllPoolsDataPaginated(
+        address user,
+        uint256 startingIndex,
+        uint256 endingIndex
+    ) external view returns (PoolData[] memory);
 }

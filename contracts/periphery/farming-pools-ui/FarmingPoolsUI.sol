@@ -13,8 +13,9 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  */
 contract FarmingPoolsUI is AccessControl, IFarmingPoolsUI {
     mapping(address => PoolConfig) private _poolConfigs;
+    address[] public markets;
     address public rzrOracle;
-    
+
     constructor(address _rzrOracle) {
         rzrOracle = _rzrOracle;
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -35,36 +36,39 @@ contract FarmingPoolsUI is AccessControl, IFarmingPoolsUI {
 
         return results;
     }
-    
+
     /// @inheritdoc IFarmingPoolsUI
     function setRzrOracle(address _rzrOracle) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (_rzrOracle == address(0)) revert ZeroAddress();
-        
+
         address oldOracle = rzrOracle;
         rzrOracle = _rzrOracle;
-        
+
         emit RzrOracleUpdated(oldOracle, _rzrOracle);
     }
 
     /// @inheritdoc IFarmingPoolsUI
     function setPoolConfig(PoolConfig calldata poolConfig) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (poolConfig.poolAddress == address(0)) revert InvalidPoolAddress();
-        
+
+        if (_poolConfigs[poolConfig.poolAddress].poolAddress == address(0)) {
+            markets.push(poolConfig.poolAddress);
+        }
+
         _poolConfigs[poolConfig.poolAddress] = poolConfig;
-        
-        emit PoolConfigSet(
-            poolConfig.poolAddress,
-            poolConfig.poolType,
-            poolConfig.gauge,
-            poolConfig.oracle
-        );
+
+        emit PoolConfigSet(poolConfig.poolAddress, poolConfig.poolType, poolConfig.gauge, poolConfig.oracle);
     }
 
     /// @inheritdoc IFarmingPoolsUI
     function batchSetPoolConfigs(PoolConfig[] calldata poolsConfigs) external onlyRole(DEFAULT_ADMIN_ROLE) {
         for (uint256 i = 0; i < poolsConfigs.length; i++) {
+            if (_poolConfigs[poolsConfigs[i].poolAddress].poolAddress == address(0)) {
+                markets.push(poolsConfigs[i].poolAddress);
+            }
+
             _poolConfigs[poolsConfigs[i].poolAddress] = poolsConfigs[i];
-            
+
             emit PoolConfigSet(
                 poolsConfigs[i].poolAddress,
                 poolsConfigs[i].poolType,
@@ -87,6 +91,29 @@ contract FarmingPoolsUI is AccessControl, IFarmingPoolsUI {
     /// @inheritdoc IFarmingPoolsUI
     function poolConfigs(address pool) external view returns (PoolConfig memory) {
         return _poolConfigs[pool];
+    }
+
+    /// @inheritdoc IFarmingPoolsUI
+    function length() external view returns (uint256) {
+        return markets.length;
+    }
+
+    /// @inheritdoc IFarmingPoolsUI
+    function getAllPoolsDataPaginated(
+        address user,
+        uint256 startingIndex,
+        uint256 endingIndex
+    ) external view returns (PoolData[] memory) {
+        if (startingIndex >= markets.length) return new PoolData[](0);
+        if (endingIndex > markets.length) endingIndex = markets.length;
+
+        PoolData[] memory results = new PoolData[](endingIndex - startingIndex);
+
+        for (uint256 i = startingIndex; i < endingIndex; i++) {
+            results[i - startingIndex] = _getPoolData(user, markets[i]);
+        }
+
+        return results;
     }
 
     /// @dev Core function to get protocol data

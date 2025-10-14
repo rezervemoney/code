@@ -27,6 +27,10 @@ interface IAppOptions is IERC721Enumerable {
         uint256 rzrAmountRedeemed;
         /// @notice Amount of RZR tokens that have been exercised
         uint256 rzrAmountExercised;
+        /// @notice Timestamp when the position can be withdrawn
+        uint256 withdrawalTimestamp;
+        /// @notice Percentage of the position that has been redeemed
+        uint256 withdrawalPercentage;
     }
 
     /// @notice Represents an option offering campaign
@@ -46,6 +50,8 @@ interface IAppOptions is IERC721Enumerable {
         uint256 filled;
         /// @notice Price in quote tokens to redeem the option (without exercising)
         uint256 redemptionPrice;
+        /// @notice Delay before the offering can be withdrawn
+        uint256 withdrawalDelay;
     }
 
     /// @notice Emitted when a new option offering is created
@@ -102,6 +108,22 @@ interface IAppOptions is IERC721Enumerable {
     /// @param offeringId The ID of the offering being canceled
     event OfferingCanceled(uint256 indexed offeringId);
 
+    /// @notice Emitted when a redemption is requested
+    /// @param positionId The ID of the position requesting redemption
+    /// @param delay The withdrawal delay in seconds
+    /// @param percentage The percentage of the position to redeem
+    event RedemptionRequested(uint256 indexed positionId, uint256 delay, uint256 percentage);
+
+    /// @notice Emitted when a redemption is cancelled
+    /// @param positionId The ID of the position cancelling redemption
+    event RedemptionCancelled(uint256 indexed positionId);
+
+    /// @notice Emitted when an asset is managed
+    /// @param asset The address of the asset
+    /// @param amount The amount of the asset
+    /// @param recipient The address receiving the asset
+    event AssetManaged(address indexed asset, uint256 amount, address indexed recipient);
+
     /// @notice Returns the RZR token contract
     /// @return The IApp interface for the RZR token
     function rzr() external view returns (IApp);
@@ -124,14 +146,31 @@ interface IAppOptions is IERC721Enumerable {
     /// @param dateStart Timestamp when the offering starts
     /// @param maxQuoteToken Maximum amount of quote tokens that can be collected
     /// @param redemptionPrice Price in quote tokens to redeem the option
+    /// @param withdrawalDelay Delay in seconds before redemption can be executed
     /// @return offeringId The unique identifier for the newly created offering
     function createOffering(
         IERC20 quoteToken,
         uint256 dateEnd,
         uint256 dateStart,
         uint256 maxQuoteToken,
-        uint256 redemptionPrice
+        uint256 redemptionPrice,
+        uint256 withdrawalDelay
     ) external returns (uint256 offeringId);
+
+    /// @notice Manages an asset
+    /// @param asset The address of the asset to manage
+    /// @param amount The amount of the asset to manage
+    /// @param recipient The address receiving the asset
+    function manage(address asset, uint256 amount, address recipient) external;
+
+    /// @notice Requests redemption of an option position
+    /// @param positionId The ID of the position to request redemption
+    /// @param percentageE18 Percentage of the position to redeem (in 18 decimal fixed point, where 1e18 = 100%)
+    function requestRedemption(uint256 positionId, uint256 percentageE18) external;
+
+    /// @notice Cancels redemption of an option position
+    /// @param positionId The ID of the position to cancel redemption
+    function cancelRedemption(uint256 positionId) external;
 
     /// @notice Cancels an existing offering
     /// @param offeringId The ID of the offering to cancel
@@ -144,9 +183,9 @@ interface IAppOptions is IERC721Enumerable {
     function buy(uint256 offeringId, uint256 quoteAmount, address receiver) external;
 
     /// @notice Redeems an option position to recover quote tokens without exercising
+    /// @dev Redemption must be requested first via requestRedemption and the withdrawal delay must have passed
     /// @param positionId The ID of the position to redeem
-    /// @param percentageE18 Percentage of the position to redeem (in 18 decimal fixed point, where 1e18 = 100%)
-    function redeem(uint256 positionId, uint256 percentageE18) external;
+    function redeem(uint256 positionId) external;
 
     /// @notice Exercises an option position to receive RZR tokens
     /// @param positionId The ID of the position to exercise

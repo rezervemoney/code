@@ -17,6 +17,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 /// @dev This contract handles options positions as NFTs
 contract AppOptions is IAppOptions, AppAccessControlled, ERC721Enumerable, ReentrancyGuard {
     using SafeERC20 for IERC20;
+    using SafeERC20 for IApp;
 
     /// @inheritdoc IAppOptions
     IApp public rzr;
@@ -51,9 +52,11 @@ contract AppOptions is IAppOptions, AppAccessControlled, ERC721Enumerable, Reent
         uint256 dateEnd,
         uint256 dateStart,
         uint256 maxQuoteToken,
-        uint256 redemptionPrice
+        uint256 redemptionPrice,
+        uint256 withdrawalDelay
     ) external onlyGovernor returns (uint256 offeringId) {
         offeringId = ++lastOfferingId;
+
         _offerings[offeringId] = Offering({
             quoteToken: quoteToken,
             enabled: true,
@@ -61,8 +64,13 @@ contract AppOptions is IAppOptions, AppAccessControlled, ERC721Enumerable, Reent
             dateStart: dateStart,
             maxQuoteToken: maxQuoteToken,
             filled: 0,
-            redemptionPrice: redemptionPrice
+            redemptionPrice: redemptionPrice,
+            withdrawalDelay: withdrawalDelay
         });
+
+        // Transfer RZR tokens to the offering
+        uint256 expectedRzr = maxQuoteToken * redemptionPrice / 1e18;
+        rzr.safeTransferFrom(msg.sender, address(this), expectedRzr);
 
         emit OfferingCreated(offeringId, quoteToken, dateEnd, dateStart, maxQuoteToken, redemptionPrice);
     }
@@ -75,7 +83,7 @@ contract AppOptions is IAppOptions, AppAccessControlled, ERC721Enumerable, Reent
 
     /// @inheritdoc IAppOptions
     function buy(uint256 offeringId, uint256 quoteAmount, address receiver) external nonReentrant {
-        Offering memory offering = _offerings[offeringId];
+        Offering storage offering = _offerings[offeringId];
         require(offering.enabled, "Offering not enabled");
         require(offering.dateStart <= block.timestamp, "Offering not started");
         require(offering.dateEnd >= block.timestamp, "Offering ended");
@@ -93,7 +101,9 @@ contract AppOptions is IAppOptions, AppAccessControlled, ERC721Enumerable, Reent
             quoteAmountExercised: 0,
             rzrAmountAllocated: rzrAmountAllocated,
             rzrAmountRedeemed: 0,
-            rzrAmountExercised: 0
+            rzrAmountExercised: 0,
+            withdrawalTimestamp: 0,
+            withdrawalPercentage: 0
         });
 
         _mint(receiver, lastPositionId);
@@ -104,16 +114,31 @@ contract AppOptions is IAppOptions, AppAccessControlled, ERC721Enumerable, Reent
     }
 
     /// @inheritdoc IAppOptions
-    function redeem(uint256 positionId, uint256 percentageE18)
-        external
-        nonReentrant
-        onlyOwnerOrAuthorized(positionId)
-    {
+    function requestRedemption(uint256 positionId, uint256 percentageE18) external onlyOwnerOrAuthorized(positionId) {
+        _checkPercentage(percentageE18);
+
+        Offering memory offering = _offerings[_positions[positionId].offeringId];
+        _positions[positionId].withdrawalPercentage = percentageE18;
+        _positions[positionId].withdrawalTimestamp = block.timestamp + offering.withdrawalDelay;
+        emit RedemptionRequested(positionId, offering.withdrawalDelay, percentageE18);
+    }
+
+    /// @inheritdoc IAppOptions
+    function cancelRedemption(uint256 positionId) external onlyOwnerOrAuthorized(positionId) {
+        _positions[positionId].withdrawalTimestamp = 0;
+        _positions[positionId].withdrawalPercentage = 0;
+        emit RedemptionCancelled(positionId);
+    }
+
+    /// @inheritdoc IAppOptions
+    function redeem(uint256 positionId) external nonReentrant onlyOwnerOrAuthorized(positionId) {
         Position storage position = _positions[positionId];
         Offering memory offering = _offerings[position.offeringId];
 
-        uint256 quoteAmountToRedeem = position.quoteAmountFilled * percentageE18 / 1e18;
-        uint256 rzrAmountToBurn = position.rzrAmountAllocated * percentageE18 / 1e18;
+        require(position.withdrawalTimestamp <= block.timestamp, "Redemption not allowed yet");
+
+        uint256 quoteAmountToRedeem = position.quoteAmountFilled * position.withdrawalPercentage / 1e18;
+        uint256 rzrAmountToBurn = position.rzrAmountAllocated * position.withdrawalPercentage / 1e18;
 
         position.quoteAmountRedeemed += quoteAmountToRedeem;
         position.rzrAmountRedeemed += rzrAmountToBurn;
@@ -133,6 +158,8 @@ contract AppOptions is IAppOptions, AppAccessControlled, ERC721Enumerable, Reent
         nonReentrant
         onlyOwnerOrAuthorized(positionId)
     {
+        _checkPercentage(percentageE18);
+
         Position storage position = _positions[positionId];
         Offering memory offering = _offerings[position.offeringId];
 
@@ -146,9 +173,15 @@ contract AppOptions is IAppOptions, AppAccessControlled, ERC721Enumerable, Reent
 
         // claim the underlying and transfer the RZR
         offering.quoteToken.safeTransfer(_treasury(), quoteAmountToExercise);
-        rzr.mint(msg.sender, rzrAmountToExercise);
+        rzr.safeTransfer(msg.sender, rzrAmountToExercise);
 
         emit OptionExercised(positionId, msg.sender, quoteAmountToExercise, rzrAmountToExercise);
+    }
+
+    /// @inheritdoc IAppOptions
+    function manage(address asset, uint256 amount, address recipient) external onlyReserveManager {
+        IERC20(asset).safeTransfer(recipient, amount);
+        emit AssetManaged(asset, amount, recipient);
     }
 
     /// @inheritdoc IAppOptions
@@ -177,6 +210,13 @@ contract AppOptions is IAppOptions, AppAccessControlled, ERC721Enumerable, Reent
         // the total amount of quote tokens actioned must be equal to the total amount of
         // RZR tokens actioned by the redemption price
         require(quoteActioned * o.redemptionPrice / 1e18 == rzrActioned, "invariant violated: I3");
+    }
+
+    function _checkPercentage(uint256 percentageE18) internal pure {
+        require(
+            percentageE18 > 0 && percentageE18 <= 1e18,
+            "percentage must be greater than 0 and less than or equal to 100%"
+        );
     }
 
     function _treasury() internal view returns (address) {

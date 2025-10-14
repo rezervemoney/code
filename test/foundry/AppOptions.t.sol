@@ -13,6 +13,7 @@ contract AppOptionsTest is BaseTest {
     uint256 public constant OFFERING_DURATION = 30 days;
     uint256 public constant REDEMPTION_PRICE = 2e18; // 2:1 ratio (2 RZR per 1 quote token)
     uint256 public constant MAX_QUOTE_AMOUNT = 1000e18;
+    uint256 public constant WITHDRAWAL_DELAY = 7 days;
 
     event OfferingCreated(
         uint256 indexed offeringId,
@@ -53,8 +54,12 @@ contract AppOptionsTest is BaseTest {
         // Deploy options contract
         options = new AppOptions(address(authority), address(app), address(factory));
 
-        // Add options as policy to allow minting/burning
-        authority.addPolicy(address(options));
+        // Mint RZR tokens to owner for creating offerings
+        // Each offering with MAX_QUOTE_AMOUNT and REDEMPTION_PRICE needs 2000e18 RZR
+        app.mint(owner, 100000e18);
+
+        // Approve options contract to spend owner's RZR for creating offerings
+        app.approve(address(options), type(uint256).max);
 
         // Mint quote tokens to users
         mockQuoteToken.mint(user1, 10000e18);
@@ -98,8 +103,9 @@ contract AppOptionsTest is BaseTest {
         vm.expectEmit(true, false, false, true);
         emit OfferingCreated(1, mockQuoteToken, dateEnd, dateStart, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE);
 
-        uint256 offeringId =
-            options.createOffering(mockQuoteToken, dateEnd, dateStart, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE);
+        uint256 offeringId = options.createOffering(
+            mockQuoteToken, dateEnd, dateStart, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE, WITHDRAWAL_DELAY
+        );
 
         assertEq(offeringId, 1);
         assertEq(options.lastOfferingId(), 1);
@@ -122,11 +128,17 @@ contract AppOptionsTest is BaseTest {
         uint256 dateStart = block.timestamp;
         uint256 dateEnd = block.timestamp + OFFERING_DURATION;
 
-        uint256 offering1 =
-            options.createOffering(mockQuoteToken, dateEnd, dateStart, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE);
+        uint256 offering1 = options.createOffering(
+            mockQuoteToken, dateEnd, dateStart, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE, WITHDRAWAL_DELAY
+        );
 
         uint256 offering2 = options.createOffering(
-            mockQuoteToken2, dateEnd + 1 days, dateStart + 1 days, MAX_QUOTE_AMOUNT * 2, REDEMPTION_PRICE * 2
+            mockQuoteToken2,
+            dateEnd + 1 days,
+            dateStart + 1 days,
+            MAX_QUOTE_AMOUNT * 2,
+            REDEMPTION_PRICE * 2,
+            WITHDRAWAL_DELAY
         );
 
         assertEq(offering1, 1);
@@ -141,7 +153,12 @@ contract AppOptionsTest is BaseTest {
 
         vm.expectRevert();
         options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         vm.stopPrank();
@@ -155,7 +172,12 @@ contract AppOptionsTest is BaseTest {
         vm.startPrank(owner);
 
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         vm.expectEmit(true, false, false, false);
@@ -173,7 +195,12 @@ contract AppOptionsTest is BaseTest {
         vm.startPrank(owner);
 
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         vm.stopPrank();
@@ -194,7 +221,12 @@ contract AppOptionsTest is BaseTest {
         // Create offering
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         // User1 buys option
@@ -225,14 +257,20 @@ contract AppOptionsTest is BaseTest {
         assertEq(position.rzrAmountRedeemed, 0);
         assertEq(position.rzrAmountExercised, 0);
 
-        // Note: There is a bug in AppOptions.sol where offering.filled is not updated
-        // because it's modified in memory but never written back to storage
+        // Verify offering.filled is correctly updated
+        IAppOptions.Offering memory offering = options.getOffering(offeringId);
+        assertEq(offering.filled, quoteAmount);
     }
 
     function test_BuyOption_DifferentReceiver() public {
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         uint256 quoteAmount = 100e18;
@@ -250,7 +288,12 @@ contract AppOptionsTest is BaseTest {
     function test_BuyOption_MultiplePurchases() public {
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         uint256 quoteAmount = 100e18;
@@ -275,7 +318,12 @@ contract AppOptionsTest is BaseTest {
     function test_RevertWhen_BuyDisabledOffering() public {
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         vm.prank(owner);
@@ -299,7 +347,8 @@ contract AppOptionsTest is BaseTest {
             block.timestamp + OFFERING_DURATION + 1 days,
             block.timestamp + 1 days, // starts tomorrow
             MAX_QUOTE_AMOUNT,
-            REDEMPTION_PRICE
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         uint256 quoteAmount = 100e18;
@@ -316,7 +365,12 @@ contract AppOptionsTest is BaseTest {
     function test_RevertWhen_BuyAfterEnd() public {
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + 1 days, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + 1 days,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         // Warp past end date
@@ -336,7 +390,12 @@ contract AppOptionsTest is BaseTest {
     function test_RevertWhen_BuyExceedsMax() public {
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         uint256 quoteAmount = MAX_QUOTE_AMOUNT + 1;
@@ -358,7 +417,12 @@ contract AppOptionsTest is BaseTest {
         // Setup: Create offering and buy option
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         uint256 quoteAmount = 100e18;
@@ -375,14 +439,20 @@ contract AppOptionsTest is BaseTest {
         vm.prank(owner);
         app.mint(address(options), expectedRzrAmount);
 
-        // Redeem full position (100%)
+        // Request redemption of full position (100%)
         vm.startPrank(user1);
+        options.requestRedemption(positionId, 1e18); // 100%
+
+        // Warp past withdrawal delay
+        vm.warp(block.timestamp + WITHDRAWAL_DELAY + 1);
+
+        // Execute redemption
         uint256 balanceBefore = mockQuoteToken.balanceOf(user1);
 
         vm.expectEmit(true, true, false, true);
         emit OptionRedeemed(positionId, user1, quoteAmount, expectedRzrAmount);
 
-        options.redeem(positionId, 1e18); // 100%
+        options.redeem(positionId);
 
         uint256 balanceAfter = mockQuoteToken.balanceOf(user1);
 
@@ -401,7 +471,12 @@ contract AppOptionsTest is BaseTest {
         // Setup: Create offering and buy option
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         uint256 quoteAmount = 100e18;
@@ -417,11 +492,17 @@ contract AppOptionsTest is BaseTest {
         vm.prank(owner);
         app.mint(address(options), expectedRzrAmount);
 
-        // Redeem 50% of position
+        // Request redemption of 50% of position
         vm.startPrank(user1);
+        options.requestRedemption(positionId, 0.5e18); // 50%
+
+        // Warp past withdrawal delay
+        vm.warp(block.timestamp + WITHDRAWAL_DELAY + 1);
+
+        // Execute redemption
         uint256 balanceBefore = mockQuoteToken.balanceOf(user1);
 
-        options.redeem(positionId, 0.5e18); // 50%
+        options.redeem(positionId);
 
         uint256 balanceAfter = mockQuoteToken.balanceOf(user1);
 
@@ -440,7 +521,12 @@ contract AppOptionsTest is BaseTest {
         // Setup: Create offering and buy option
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         uint256 quoteAmount = 100e18;
@@ -458,14 +544,20 @@ contract AppOptionsTest is BaseTest {
 
         // First redemption: 30%
         vm.prank(user1);
-        options.redeem(positionId, 0.3e18);
+        options.requestRedemption(positionId, 0.3e18);
+        vm.warp(block.timestamp + WITHDRAWAL_DELAY + 1);
+        vm.prank(user1);
+        options.redeem(positionId);
 
         IAppOptions.Position memory position1 = options.getPosition(positionId);
         assertEq(position1.quoteAmountRedeemed, quoteAmount * 30 / 100);
 
         // Second redemption: 20%
         vm.prank(user1);
-        options.redeem(positionId, 0.2e18);
+        options.requestRedemption(positionId, 0.2e18);
+        vm.warp(block.timestamp + WITHDRAWAL_DELAY + 1);
+        vm.prank(user1);
+        options.redeem(positionId);
 
         IAppOptions.Position memory position2 = options.getPosition(positionId);
         assertEq(position2.quoteAmountRedeemed, quoteAmount * 50 / 100);
@@ -475,7 +567,12 @@ contract AppOptionsTest is BaseTest {
         // Setup: Create offering and buy option
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         uint256 quoteAmount = 100e18;
@@ -491,7 +588,7 @@ contract AppOptionsTest is BaseTest {
         vm.startPrank(user2);
 
         vm.expectRevert("Not owner or approved");
-        options.redeem(positionId, 1e18);
+        options.requestRedemption(positionId, 1e18);
 
         vm.stopPrank();
     }
@@ -500,7 +597,12 @@ contract AppOptionsTest is BaseTest {
         // Setup: Create offering and buy option
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         uint256 quoteAmount = 100e18;
@@ -519,8 +621,8 @@ contract AppOptionsTest is BaseTest {
         // Try to redeem 101%
         vm.startPrank(user1);
 
-        vm.expectRevert("invariant violated: I1");
-        options.redeem(positionId, 1.01e18);
+        vm.expectRevert("percentage must be greater than 0 and less than or equal to 100%");
+        options.requestRedemption(positionId, 1.01e18);
 
         vm.stopPrank();
     }
@@ -533,7 +635,12 @@ contract AppOptionsTest is BaseTest {
         // Setup: Create offering and buy option
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         uint256 quoteAmount = 100e18;
@@ -573,7 +680,12 @@ contract AppOptionsTest is BaseTest {
         // Setup: Create offering and buy option
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         uint256 quoteAmount = 100e18;
@@ -607,7 +719,12 @@ contract AppOptionsTest is BaseTest {
         // Setup: Create offering and buy option
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         uint256 quoteAmount = 100e18;
@@ -637,7 +754,12 @@ contract AppOptionsTest is BaseTest {
         // Setup: Create offering and buy option
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         uint256 quoteAmount = 100e18;
@@ -662,7 +784,12 @@ contract AppOptionsTest is BaseTest {
         // Setup: Create offering and buy option
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         uint256 quoteAmount = 100e18;
@@ -688,7 +815,12 @@ contract AppOptionsTest is BaseTest {
         // Setup: Create offering and buy option
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         uint256 quoteAmount = 100e18;
@@ -704,9 +836,12 @@ contract AppOptionsTest is BaseTest {
         vm.prank(owner);
         app.mint(address(options), expectedRzrAmount);
 
-        // Redeem 30%
+        // Request and execute redemption of 30%
         vm.prank(user1);
-        options.redeem(positionId, 0.3e18);
+        options.requestRedemption(positionId, 0.3e18);
+        vm.warp(block.timestamp + WITHDRAWAL_DELAY + 1);
+        vm.prank(user1);
+        options.redeem(positionId);
 
         // Exercise 50%
         vm.prank(user1);
@@ -724,7 +859,12 @@ contract AppOptionsTest is BaseTest {
         // Setup: Create offering and buy option
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         uint256 quoteAmount = 100e18;
@@ -740,9 +880,12 @@ contract AppOptionsTest is BaseTest {
         vm.prank(owner);
         app.mint(address(options), expectedRzrAmount);
 
-        // Redeem 60%
+        // Request and execute redemption of 60%
         vm.prank(user1);
-        options.redeem(positionId, 0.6e18);
+        options.requestRedemption(positionId, 0.6e18);
+        vm.warp(block.timestamp + WITHDRAWAL_DELAY + 1);
+        vm.prank(user1);
+        options.redeem(positionId);
 
         // Try to exercise 50% (total would be 110%)
         vm.prank(user1);
@@ -757,7 +900,12 @@ contract AppOptionsTest is BaseTest {
     function test_NFTOwnership() public {
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         uint256 quoteAmount = 100e18;
@@ -777,7 +925,12 @@ contract AppOptionsTest is BaseTest {
     function test_NFTTransfer() public {
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         uint256 quoteAmount = 100e18;
@@ -801,7 +954,12 @@ contract AppOptionsTest is BaseTest {
     function test_ApprovedCanRedeem() public {
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         uint256 quoteAmount = 100e18;
@@ -821,15 +979,23 @@ contract AppOptionsTest is BaseTest {
         vm.prank(owner);
         app.mint(address(options), expectedRzrAmount);
 
-        // User2 can redeem
+        // User2 can request and execute redemption
         vm.prank(user2);
-        options.redeem(positionId, 0.5e18);
+        options.requestRedemption(positionId, 0.5e18);
+        vm.warp(block.timestamp + WITHDRAWAL_DELAY + 1);
+        vm.prank(user2);
+        options.redeem(positionId);
     }
 
     function test_ApprovedCanExercise() public {
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         uint256 quoteAmount = 100e18;
@@ -857,7 +1023,12 @@ contract AppOptionsTest is BaseTest {
     function test_TokenEnumeration() public {
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         uint256 quoteAmount = 50e18;
@@ -884,7 +1055,12 @@ contract AppOptionsTest is BaseTest {
     function test_InvariantI1_QuoteActionedLessThanFilled() public {
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         uint256 quoteAmount = 100e18;
@@ -895,9 +1071,9 @@ contract AppOptionsTest is BaseTest {
 
         uint256 positionId = options.lastPositionId();
 
-        // This should violate I1 if it doesn't revert
-        vm.expectRevert("invariant violated: I1");
-        options.redeem(positionId, 1.1e18);
+        // This should violate percentage check
+        vm.expectRevert("percentage must be greater than 0 and less than or equal to 100%");
+        options.requestRedemption(positionId, 1.1e18);
 
         vm.stopPrank();
     }
@@ -905,7 +1081,12 @@ contract AppOptionsTest is BaseTest {
     function test_InvariantI2_RzrActionedLessThanAllocated() public {
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         uint256 quoteAmount = 100e18;
@@ -924,16 +1105,20 @@ contract AppOptionsTest is BaseTest {
     }
 
     /*//////////////////////////////////////////////////////////////
-                            BUG TESTS
+                        OFFERING FILLED TRACKING TESTS
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice Documents a bug where offering.filled is not persisted to storage
-    /// @dev In AppOptions.buy(), the filled amount is updated in memory but never written back
-    /// This test demonstrates the bug and should be updated when fixed
-    function test_BUG_OfferingFilledNotPersisted() public {
+    /// @notice Verifies that offering.filled is correctly persisted to storage
+    /// @dev Tests that multiple purchases correctly track the filled amount
+    function test_OfferingFilledTracking() public {
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         uint256 quoteAmount = 100e18;
@@ -944,19 +1129,28 @@ contract AppOptionsTest is BaseTest {
         options.buy(offeringId, quoteAmount, user1);
         vm.stopPrank();
 
-        // BUG: filled should be 100e18 but it's still 0
+        // Verify filled is correctly updated
         IAppOptions.Offering memory offering = options.getOffering(offeringId);
-        assertEq(offering.filled, 0); // Should be 100e18 when bug is fixed
+        assertEq(offering.filled, quoteAmount);
 
-        // This means we can exceed maxQuoteToken without revert
-        // User2 can buy even though we should be near the limit
+        // User2 buys more
+        uint256 quoteAmount2 = 200e18;
         vm.startPrank(user2);
-        mockQuoteToken.approve(address(options), MAX_QUOTE_AMOUNT);
-        options.buy(offeringId, MAX_QUOTE_AMOUNT, user2); // Should revert if filled was tracked
+        mockQuoteToken.approve(address(options), quoteAmount2);
+        options.buy(offeringId, quoteAmount2, user2);
         vm.stopPrank();
 
-        // Both purchases succeeded even though total exceeds MAX_QUOTE_AMOUNT
-        assertEq(options.lastPositionId(), 2);
+        // Verify filled is cumulative
+        offering = options.getOffering(offeringId);
+        assertEq(offering.filled, quoteAmount + quoteAmount2);
+
+        // Verify we can't exceed maxQuoteToken
+        uint256 remaining = MAX_QUOTE_AMOUNT - (quoteAmount + quoteAmount2);
+        vm.startPrank(user3);
+        mockQuoteToken.approve(address(options), remaining + 1);
+        vm.expectRevert("Offering sold out");
+        options.buy(offeringId, remaining + 1, user3);
+        vm.stopPrank();
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -966,7 +1160,12 @@ contract AppOptionsTest is BaseTest {
     function test_ZeroAmountBuy() public {
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         vm.startPrank(user1);
@@ -984,7 +1183,12 @@ contract AppOptionsTest is BaseTest {
         vm.startPrank(owner);
 
         uint256 offering1 = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         uint256 offering2 = options.createOffering(
@@ -992,7 +1196,8 @@ contract AppOptionsTest is BaseTest {
             block.timestamp + OFFERING_DURATION,
             block.timestamp,
             MAX_QUOTE_AMOUNT,
-            REDEMPTION_PRICE * 2
+            REDEMPTION_PRICE * 2,
+            WITHDRAWAL_DELAY
         );
 
         vm.stopPrank();
@@ -1022,8 +1227,9 @@ contract AppOptionsTest is BaseTest {
         uint256 exactTime = block.timestamp;
 
         vm.prank(owner);
-        uint256 offeringId =
-            options.createOffering(mockQuoteToken, exactTime + 1, exactTime, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE);
+        uint256 offeringId = options.createOffering(
+            mockQuoteToken, exactTime + 1, exactTime, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE, WITHDRAWAL_DELAY
+        );
 
         uint256 quoteAmount = 100e18;
 
@@ -1054,7 +1260,12 @@ contract AppOptionsTest is BaseTest {
     function test_ExactMaxQuoteAmountFill() public {
         vm.prank(owner);
         uint256 offeringId = options.createOffering(
-            mockQuoteToken, block.timestamp + OFFERING_DURATION, block.timestamp, MAX_QUOTE_AMOUNT, REDEMPTION_PRICE
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
         );
 
         // Fill exactly to the max
@@ -1063,18 +1274,60 @@ contract AppOptionsTest is BaseTest {
         options.buy(offeringId, MAX_QUOTE_AMOUNT, user1);
         vm.stopPrank();
 
-        // Note: Due to the bug where filled is not persisted, we can't verify it here
-        // but we can verify the position was created
+        // Verify the position was created and offering is filled
         assertEq(options.lastPositionId(), 1);
         IAppOptions.Position memory pos = options.getPosition(1);
         assertEq(pos.quoteAmountFilled, MAX_QUOTE_AMOUNT);
 
-        // Note: This should fail but doesn't due to the bug where filled isn't tracked
-        // Commenting out for now until bug is fixed
-        // vm.startPrank(user2);
-        // mockQuoteToken.approve(address(options), 1);
-        // vm.expectRevert("Offering sold out");
-        // options.buy(offeringId, 1, user2);
-        // vm.stopPrank();
+        IAppOptions.Offering memory offering = options.getOffering(offeringId);
+        assertEq(offering.filled, MAX_QUOTE_AMOUNT);
+
+        // Verify that any additional purchase reverts
+        vm.startPrank(user2);
+        mockQuoteToken.approve(address(options), 1);
+        vm.expectRevert("Offering sold out");
+        options.buy(offeringId, 1, user2);
+        vm.stopPrank();
+    }
+
+    function test_MultiplePurchasesFillToMax() public {
+        vm.prank(owner);
+        uint256 offeringId = options.createOffering(
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
+        );
+
+        // User1 buys 400e18
+        vm.startPrank(user1);
+        mockQuoteToken.approve(address(options), 400e18);
+        options.buy(offeringId, 400e18, user1);
+        vm.stopPrank();
+
+        // User2 buys 300e18
+        vm.startPrank(user2);
+        mockQuoteToken.approve(address(options), 300e18);
+        options.buy(offeringId, 300e18, user2);
+        vm.stopPrank();
+
+        // User3 buys exactly remaining 300e18 (total = 1000e18)
+        vm.startPrank(user3);
+        mockQuoteToken.approve(address(options), 300e18);
+        options.buy(offeringId, 300e18, user3);
+        vm.stopPrank();
+
+        // Verify offering is exactly filled
+        IAppOptions.Offering memory offering = options.getOffering(offeringId);
+        assertEq(offering.filled, MAX_QUOTE_AMOUNT);
+
+        // Verify any additional purchase fails
+        vm.startPrank(user1);
+        mockQuoteToken.approve(address(options), 1);
+        vm.expectRevert("Offering sold out");
+        options.buy(offeringId, 1, user1);
+        vm.stopPrank();
     }
 }

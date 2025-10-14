@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.28;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
+import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import "../interfaces/IPermissionedERC20.sol";
 
-contract PermissionedERC20 is ERC20, IPermissionedERC20 {
+contract PermissionedERC20 is ERC20Votes, IPermissionedERC20 {
     uint8 private immutable __decimals;
 
     /// @notice Event emitted when the permissioned contract is updated
@@ -27,6 +28,7 @@ contract PermissionedERC20 is ERC20, IPermissionedERC20 {
     /// @param _symbol The symbol of the token
     constructor(string memory _name, string memory _symbol, uint8 _decimals, address _permissionedContract)
         ERC20(_name, _symbol)
+        EIP712(_name, "1")
     {
         _mint(msg.sender, 1e18);
         _burn(msg.sender, 1e18);

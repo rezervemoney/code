@@ -213,10 +213,7 @@ contract AppOptions is IAppOptions, AppAccessControlled, ERC721Enumerable, Reent
     }
 
     function _checkPercentage(uint256 percentageE18) internal pure {
-        require(
-            percentageE18 > 0 && percentageE18 <= 1e18,
-            "percentage must be greater than 0 and less than or equal to 100%"
-        );
+        require(percentageE18 > 0 && percentageE18 <= 1e18, "invariant violated: I4");
     }
 
     function _treasury() internal view returns (address) {

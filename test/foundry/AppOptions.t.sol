@@ -621,10 +621,57 @@ contract AppOptionsTest is BaseTest {
         // Try to redeem 101%
         vm.startPrank(user1);
 
-        vm.expectRevert("percentage must be greater than 0 and less than or equal to 100%");
+        vm.expectRevert("invariant violated: I4");
         options.requestRedemption(positionId, 1.01e18);
 
         vm.stopPrank();
+    }
+
+    function test_RevertWhen_Redeem75PercentTwice() public {
+        // Setup: Create offering and buy option
+        vm.prank(owner);
+        uint256 offeringId = options.createOffering(
+            mockQuoteToken,
+            block.timestamp + OFFERING_DURATION,
+            block.timestamp,
+            MAX_QUOTE_AMOUNT,
+            REDEMPTION_PRICE,
+            WITHDRAWAL_DELAY
+        );
+
+        uint256 quoteAmount = 100e18;
+        uint256 expectedRzrAmount = quoteAmount * REDEMPTION_PRICE / 1e18;
+
+        vm.startPrank(user1);
+        mockQuoteToken.approve(address(options), quoteAmount);
+        options.buy(offeringId, quoteAmount, user1);
+
+        uint256 positionId = options.lastPositionId();
+
+        vm.stopPrank();
+        vm.prank(owner);
+        app.mint(address(options), expectedRzrAmount);
+
+        // First redemption: 75%
+        vm.prank(user1);
+        options.requestRedemption(positionId, 0.75e18);
+        vm.warp(block.timestamp + WITHDRAWAL_DELAY + 1);
+        vm.prank(user1);
+        options.redeem(positionId);
+
+        // Verify first redemption succeeded
+        IAppOptions.Position memory position1 = options.getPosition(positionId);
+        assertEq(position1.quoteAmountRedeemed, quoteAmount * 75 / 100);
+        assertEq(position1.rzrAmountRedeemed, expectedRzrAmount * 75 / 100);
+
+        // Try to redeem another 75% (total would be 150%)
+        vm.prank(user1);
+        options.requestRedemption(positionId, 0.75e18);
+        vm.warp(block.timestamp + WITHDRAWAL_DELAY + 1);
+
+        vm.prank(user1);
+        vm.expectRevert("invariant violated: I1");
+        options.redeem(positionId);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -801,7 +848,7 @@ contract AppOptionsTest is BaseTest {
         uint256 positionId = options.lastPositionId();
 
         // Try to exercise 150%
-        vm.expectRevert("invariant violated: I1");
+        vm.expectRevert("invariant violated: I4");
         options.excercise(positionId, 1.5e18);
 
         vm.stopPrank();
@@ -1072,7 +1119,7 @@ contract AppOptionsTest is BaseTest {
         uint256 positionId = options.lastPositionId();
 
         // This should violate percentage check
-        vm.expectRevert("percentage must be greater than 0 and less than or equal to 100%");
+        vm.expectRevert("invariant violated: I4");
         options.requestRedemption(positionId, 1.1e18);
 
         vm.stopPrank();
@@ -1098,7 +1145,7 @@ contract AppOptionsTest is BaseTest {
         uint256 positionId = options.lastPositionId();
 
         // This should violate I2 if it doesn't revert
-        vm.expectRevert("invariant violated: I1");
+        vm.expectRevert("invariant violated: I4");
         options.excercise(positionId, 1.1e18);
 
         vm.stopPrank();

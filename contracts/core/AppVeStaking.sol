@@ -55,7 +55,7 @@ contract AppVeStaking is IAppVeStaking, AppAccessControlled, ERC721EnumerableUpg
         rzr = IERC20(_rzr);
         if (address(votingPowerToken) == address(0)) {
             IPermissionedERC20Factory factory = IPermissionedERC20Factory(_tokenFactory);
-            votingPowerToken = factory.createPermissionedERC20("RZR Voting Power", "vRZRp", 18);
+            votingPowerToken = factory.createPermissionedERC20("RZR Voting Power", "RZRvp", 18);
         }
     }
 

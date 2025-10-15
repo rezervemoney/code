@@ -31,8 +31,9 @@ contract AppOptions is IAppOptions, AppAccessControlled, ERC721Enumerable, Reent
     /// @inheritdoc IAppOptions
     uint256 public lastOfferingId;
 
-    mapping(uint256 => Position) private _positions;
-    mapping(uint256 => Offering) private _offerings;
+    mapping(uint256 tokenId => Position position) private _positions;
+    mapping(uint256 tokenId => Offering offering) private _offerings;
+    mapping(uint256 tokenId => bool blacklisted) public blacklisted;
 
     constructor(address _authority, address _rzr, address _factory) ERC721("RZR Options", "oRZR") ReentrancyGuard() {
         __AppAccessControlled_init(_authority);
@@ -107,6 +108,7 @@ contract AppOptions is IAppOptions, AppAccessControlled, ERC721Enumerable, Reent
         });
 
         _mint(receiver, lastPositionId);
+        _updateTrackingTokens(receiver, rzrAmountAllocated, 0);
 
         emit OptionBought(
             offeringId, lastPositionId, receiver, quoteAmount, rzrAmountAllocated, offering.redemptionPrice
@@ -117,14 +119,28 @@ contract AppOptions is IAppOptions, AppAccessControlled, ERC721Enumerable, Reent
     function requestRedemption(uint256 positionId, uint256 percentageE18) external onlyOwnerOrAuthorized(positionId) {
         _checkPercentage(percentageE18);
 
-        Offering memory offering = _offerings[_positions[positionId].offeringId];
-        _positions[positionId].withdrawalPercentage = percentageE18;
-        _positions[positionId].withdrawalTimestamp = block.timestamp + offering.withdrawalDelay;
+        Position storage position = _positions[positionId];
+        Offering memory offering = _offerings[position.offeringId];
+        address owner = ownerOf(positionId);
+
+        require(position.withdrawalTimestamp == 0, "Redemption already requested");
+
+        // remove the tracking tokens
+        uint256 withdrawalAmt = percentageE18 * _rzrAmount(position) / 1e18;
+        _updateTrackingTokens(owner, 0, withdrawalAmt);
+
+        position.withdrawalPercentage = percentageE18;
+        position.withdrawalTimestamp = block.timestamp + offering.withdrawalDelay;
         emit RedemptionRequested(positionId, offering.withdrawalDelay, percentageE18);
     }
 
     /// @inheritdoc IAppOptions
     function cancelRedemption(uint256 positionId) external onlyOwnerOrAuthorized(positionId) {
+        // add back the tracking tokens
+        address owner = ownerOf(positionId);
+        uint256 withdrawalAmt = _positions[positionId].withdrawalPercentage * _rzrAmount(_positions[positionId]) / 1e18;
+        _updateTrackingTokens(owner, withdrawalAmt, 0);
+
         _positions[positionId].withdrawalTimestamp = 0;
         _positions[positionId].withdrawalPercentage = 0;
         emit RedemptionCancelled(positionId);
@@ -132,8 +148,11 @@ contract AppOptions is IAppOptions, AppAccessControlled, ERC721Enumerable, Reent
 
     /// @inheritdoc IAppOptions
     function redeem(uint256 positionId) external nonReentrant onlyOwnerOrAuthorized(positionId) {
+        _onlyNotBlacklisted(positionId);
+
         Position storage position = _positions[positionId];
         Offering memory offering = _offerings[position.offeringId];
+        address owner = ownerOf(positionId);
 
         require(position.withdrawalTimestamp <= block.timestamp, "Redemption not allowed yet");
 
@@ -145,11 +164,15 @@ contract AppOptions is IAppOptions, AppAccessControlled, ERC721Enumerable, Reent
 
         _checkPositionInvariants(position, offering);
 
+        // Reset withdrawal state to allow future operations
+        position.withdrawalTimestamp = 0;
+        position.withdrawalPercentage = 0;
+
         // refund and burn the RZR
-        offering.quoteToken.safeTransfer(msg.sender, quoteAmountToRedeem);
+        offering.quoteToken.safeTransfer(owner, quoteAmountToRedeem);
         rzr.burn(rzrAmountToBurn);
 
-        emit OptionRedeemed(positionId, msg.sender, quoteAmountToRedeem, rzrAmountToBurn);
+        emit OptionRedeemed(positionId, owner, quoteAmountToRedeem, rzrAmountToBurn);
     }
 
     /// @inheritdoc IAppOptions
@@ -158,10 +181,13 @@ contract AppOptions is IAppOptions, AppAccessControlled, ERC721Enumerable, Reent
         nonReentrant
         onlyOwnerOrAuthorized(positionId)
     {
+        _onlyNotBlacklisted(positionId);
+        _notUnderWithdrawalDelay(positionId);
         _checkPercentage(percentageE18);
 
         Position storage position = _positions[positionId];
         Offering memory offering = _offerings[position.offeringId];
+        address owner = ownerOf(positionId);
 
         uint256 quoteAmountToExercise = position.quoteAmountFilled * percentageE18 / 1e18;
         uint256 rzrAmountToExercise = position.rzrAmountAllocated * percentageE18 / 1e18;
@@ -170,12 +196,13 @@ contract AppOptions is IAppOptions, AppAccessControlled, ERC721Enumerable, Reent
         position.quoteAmountExercised += quoteAmountToExercise;
 
         _checkPositionInvariants(position, offering);
+        _updateTrackingTokens(owner, 0, rzrAmountToExercise);
 
         // claim the underlying and transfer the RZR
         offering.quoteToken.safeTransfer(_treasury(), quoteAmountToExercise);
-        rzr.safeTransfer(msg.sender, rzrAmountToExercise);
+        rzr.safeTransfer(owner, rzrAmountToExercise);
 
-        emit OptionExercised(positionId, msg.sender, quoteAmountToExercise, rzrAmountToExercise);
+        emit OptionExercised(positionId, owner, quoteAmountToExercise, rzrAmountToExercise);
     }
 
     /// @inheritdoc IAppOptions
@@ -192,6 +219,11 @@ contract AppOptions is IAppOptions, AppAccessControlled, ERC721Enumerable, Reent
     /// @inheritdoc IAppOptions
     function getOffering(uint256 offeringId) external view returns (Offering memory) {
         return _offerings[offeringId];
+    }
+
+    function blacklist(uint256 tokenId) external onlyGuardianOrGovernor {
+        blacklisted[tokenId] = true;
+        emit PositionBlacklisted(tokenId);
     }
 
     /// @dev Check that the position invariants are satisfied
@@ -224,5 +256,38 @@ contract AppOptions is IAppOptions, AppAccessControlled, ERC721Enumerable, Reent
         require(
             ownerOf(tokenId) == msg.sender || isApprovedForAll(ownerOf(tokenId), msg.sender), "Not owner or approved"
         );
+    }
+
+    function _onlyNotBlacklisted(uint256 tokenId) internal view {
+        require(!blacklisted[tokenId], "Blacklisted");
+    }
+
+    function _notUnderWithdrawalDelay(uint256 positionId) internal view {
+        Position memory p = _positions[positionId];
+        require(p.withdrawalTimestamp == 0 && p.withdrawalPercentage == 0, "Under withdrawal delay");
+    }
+
+    function _update(address to, uint256 tokenId, address auth) internal override returns (address from) {
+        _onlyNotBlacklisted(tokenId);
+
+        // Call parent which performs the actual state update and returns the previous owner (or zero address on mint).
+        from = super._update(to, tokenId, auth);
+
+        // Skip for mint (from == 0) and burn (to == 0). Only handle transfers between non-zero addresses.
+        if (from != address(0) && to != address(0)) {
+            // Burn tracking tokens from the sender and mint to the receiver.
+            uint256 rzrAmountAllocated = _rzrAmount(_positions[tokenId]);
+            if (rzrAmountAllocated > 0) rzrTrackingToken.transferPermissioned(from, to, rzrAmountAllocated);
+            emit PositionTransferred(from, to, tokenId, rzrAmountAllocated);
+        }
+    }
+
+    function _updateTrackingTokens(address receiver, uint256 added, uint256 removed) internal {
+        if (added > 0) rzrTrackingToken.mint(receiver, added);
+        if (removed > 0) rzrTrackingToken.burn(receiver, removed);
+    }
+
+    function _rzrAmount(Position memory p) internal pure returns (uint256) {
+        return p.rzrAmountAllocated - p.rzrAmountRedeemed - p.rzrAmountExercised;
     }
 }

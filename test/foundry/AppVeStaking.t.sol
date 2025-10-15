@@ -3,6 +3,7 @@ pragma solidity 0.8.28;
 
 import "./BaseTest.sol";
 import "../../contracts/core/AppVeStaking.sol";
+import "../../contracts/interfaces/IAppVeStaking.sol";
 import "../../contracts/libraries/PermissionedERC20Factory.sol";
 import "../../contracts/mocks/MockERC20.sol";
 
@@ -20,6 +21,15 @@ contract AppVeStakingTest is BaseTest {
     event LockAmountIncreased(address indexed user, uint256 tokenId, uint256 amount);
     event PositionTransferred(address indexed from, address indexed to, uint256 tokenId, uint256 amount);
     event PositionBlacklisted(uint256 tokenId);
+    event Split(
+        uint256 tokenId,
+        uint256 newTokenId,
+        address indexed owner,
+        address indexed to,
+        uint256 amount,
+        uint256 votingPower
+    );
+    event Merged(uint256 tokenId1, uint256 tokenId2, uint256 amount, uint256 votingPower);
 
     function setUp() public {
         setUpBaseTest();
@@ -87,14 +97,12 @@ contract AppVeStakingTest is BaseTest {
         assertEq(veStaking.balanceOf(user1), 1);
 
         // Verify lock data
-        (uint256 lockedAmount, uint256 lockedDuration, uint256 votingPower, uint256 lockStartDate, uint256 lockEndDate)
-        = veStaking.locks(2);
+        IAppVeStaking.Lock memory lockData = veStaking.locks(2);
 
-        assertEq(lockedAmount, amount);
-        assertEq(lockedDuration, duration);
-        assertEq(votingPower, expectedVotingPower);
-        assertEq(lockStartDate, block.timestamp);
-        assertEq(lockEndDate, block.timestamp + duration);
+        assertEq(lockData.amount, amount);
+        assertEq(lockData.duration, duration);
+        assertEq(lockData.votingPower, expectedVotingPower);
+        assertEq(lockData.lockStartDate, block.timestamp);
 
         // Verify total locked
         assertEq(veStaking.totalLocked(), amount);
@@ -252,8 +260,8 @@ contract AppVeStakingTest is BaseTest {
         assertEq(veStaking.totalLocked(), 0);
 
         // Verify lock data deleted
-        (uint256 lockedAmount,,,,) = veStaking.locks(tokenId);
-        assertEq(lockedAmount, 0);
+        IAppVeStaking.Lock memory deletedLock = veStaking.locks(tokenId);
+        assertEq(deletedLock.amount, 0);
     }
 
     function test_Unlock_AtExactEndTime() public {
@@ -336,17 +344,15 @@ contract AppVeStakingTest is BaseTest {
         vm.stopPrank();
 
         // Verify lock updated
-        (uint256 lockedAmount, uint256 lockedDuration, uint256 votingPower, uint256 lockStartDate, uint256 lockEndDate)
-        = veStaking.locks(tokenId);
+        IAppVeStaking.Lock memory lockData = veStaking.locks(tokenId);
 
-        assertEq(lockedAmount, amount);
-        assertEq(lockedDuration, initialDuration + additionalDuration);
-        assertEq(lockEndDate, lockStartDate + initialDuration + additionalDuration);
+        assertEq(lockData.amount, amount);
+        assertEq(lockData.duration, initialDuration + additionalDuration);
 
         // Verify voting power increased
         uint256 votingPowerAfter = veStaking.votingPowerToken().balanceOf(user1);
         assertGt(votingPowerAfter, votingPowerBefore);
-        assertEq(votingPowerAfter, votingPower);
+        assertEq(votingPowerAfter, lockData.votingPower);
 
         uint256 expectedVotingPower = amount * (initialDuration + additionalDuration) / MAX_LOCK_DURATION;
         assertEq(votingPowerAfter, expectedVotingPower);
@@ -447,15 +453,15 @@ contract AppVeStakingTest is BaseTest {
         vm.stopPrank();
 
         // Verify lock updated
-        (uint256 lockedAmount, uint256 lockedDuration, uint256 votingPower,,) = veStaking.locks(tokenId);
+        IAppVeStaking.Lock memory lockData = veStaking.locks(tokenId);
 
-        assertEq(lockedAmount, initialAmount + additionalAmount);
-        assertEq(lockedDuration, duration);
+        assertEq(lockData.amount, initialAmount + additionalAmount);
+        assertEq(lockData.duration, duration);
 
         // Verify voting power increased
         uint256 votingPowerAfter = veStaking.votingPowerToken().balanceOf(user1);
         assertGt(votingPowerAfter, votingPowerBefore);
-        assertEq(votingPowerAfter, votingPower);
+        assertEq(votingPowerAfter, lockData.votingPower);
 
         uint256 expectedVotingPower = (initialAmount + additionalAmount) * duration / MAX_LOCK_DURATION;
         assertEq(votingPowerAfter, expectedVotingPower);
@@ -483,8 +489,8 @@ contract AppVeStakingTest is BaseTest {
         vm.stopPrank();
 
         // Verify lock updated and voting power goes to user1
-        (uint256 lockedAmount,,,,) = veStaking.locks(tokenId);
-        assertEq(lockedAmount, initialAmount + additionalAmount);
+        IAppVeStaking.Lock memory lockData = veStaking.locks(tokenId);
+        assertEq(lockData.amount, initialAmount + additionalAmount);
 
         uint256 expectedVotingPower = (initialAmount + additionalAmount) * duration / MAX_LOCK_DURATION;
         assertEq(veStaking.votingPowerToken().balanceOf(user1), expectedVotingPower);
@@ -508,8 +514,8 @@ contract AppVeStakingTest is BaseTest {
         vm.stopPrank();
 
         // Verify final amount
-        (uint256 lockedAmount,,,,) = veStaking.locks(tokenId);
-        assertEq(lockedAmount, initialAmount + 500e18);
+        IAppVeStaking.Lock memory lockData = veStaking.locks(tokenId);
+        assertEq(lockData.amount, initialAmount + 500e18);
 
         uint256 expectedVotingPower = (initialAmount + 500e18) * duration / MAX_LOCK_DURATION;
         assertEq(veStaking.votingPowerToken().balanceOf(user1), expectedVotingPower);
@@ -588,8 +594,8 @@ contract AppVeStakingTest is BaseTest {
         vm.prank(user2);
         veStaking.increaseLockDuration(tokenId, 10 days);
 
-        (, uint256 lockedDuration,,,) = veStaking.locks(tokenId);
-        assertEq(lockedDuration, duration + 10 days);
+        IAppVeStaking.Lock memory lockData = veStaking.locks(tokenId);
+        assertEq(lockData.duration, duration + 10 days);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -758,8 +764,8 @@ contract AppVeStakingTest is BaseTest {
         vm.stopPrank();
 
         // Verify increased
-        (uint256 lockedAmount,,,,) = veStaking.locks(tokenId);
-        assertEq(lockedAmount, amount * 2);
+        IAppVeStaking.Lock memory lockData = veStaking.locks(tokenId);
+        assertEq(lockData.amount, amount * 2);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -872,7 +878,7 @@ contract AppVeStakingTest is BaseTest {
         vm.stopPrank();
     }
 
-    function test_BlacklistDoesNotAffectIncreaseLockAmount() public {
+    function test_RevertWhen_BlacklistedIncreaseLockAmount() public {
         uint256 amount = LOCK_AMOUNT;
         uint256 duration = LOCK_DURATION;
 
@@ -887,15 +893,12 @@ contract AppVeStakingTest is BaseTest {
         vm.prank(owner);
         veStaking.blacklist(tokenId);
 
-        // Anyone can still increase lock amount (no blacklist check)
+        // Try to increase lock amount (should now fail due to blacklist check in _validAndActiveLock)
         vm.startPrank(user2);
         app.approve(address(veStaking), amount);
+        vm.expectRevert("Blacklisted");
         veStaking.increaseLockAmount(tokenId, amount);
         vm.stopPrank();
-
-        // Verify increased
-        (uint256 lockedAmount,,,,) = veStaking.locks(tokenId);
-        assertEq(lockedAmount, amount * 2);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -960,5 +963,323 @@ contract AppVeStakingTest is BaseTest {
 
         // RZR goes to user2 (current owner)
         assertGt(app.balanceOf(user2), 0);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                        SPLIT TESTS
+    //////////////////////////////////////////////////////////////*/
+
+    function test_Split() public {
+        uint256 amount = LOCK_AMOUNT;
+        uint256 duration = LOCK_DURATION;
+
+        // Create lock
+        vm.startPrank(user1);
+        app.approve(address(veStaking), amount);
+        veStaking.lock(amount, duration, user1);
+        uint256 tokenId = veStaking.lastId();
+
+        uint256 initialVotingPower = veStaking.votingPowerToken().balanceOf(user1);
+
+        // Split 40% to user2
+        uint256 splitPercentage = 0.4e18;
+        uint256 expectedSplitAmount = amount * splitPercentage / 1e18;
+        uint256 expectedSplitVotingPower = initialVotingPower * splitPercentage / 1e18;
+
+        vm.expectEmit(false, true, true, true);
+        emit Split(tokenId, tokenId + 1, user1, user2, expectedSplitAmount, expectedSplitVotingPower);
+
+        veStaking.split(tokenId, splitPercentage, user2);
+
+        vm.stopPrank();
+
+        // Verify original lock reduced
+        IAppVeStaking.Lock memory lockData1 = veStaking.locks(tokenId);
+        assertEq(lockData1.amount, amount * 60 / 100);
+
+        // Verify new lock created
+        assertEq(veStaking.ownerOf(tokenId + 1), user2);
+        IAppVeStaking.Lock memory lockData2 = veStaking.locks(tokenId + 1);
+        assertEq(lockData2.amount, expectedSplitAmount);
+        assertEq(lockData2.duration, duration);
+
+        // Verify voting power transferred
+        assertEq(veStaking.votingPowerToken().balanceOf(user1), initialVotingPower - expectedSplitVotingPower);
+        assertEq(veStaking.votingPowerToken().balanceOf(user2), expectedSplitVotingPower);
+
+        // Total locked should remain the same
+        assertEq(veStaking.totalLocked(), amount);
+    }
+
+    function test_Split_50Percent() public {
+        uint256 amount = LOCK_AMOUNT;
+        uint256 duration = LOCK_DURATION;
+
+        vm.startPrank(user1);
+        app.approve(address(veStaking), amount);
+        veStaking.lock(amount, duration, user1);
+        uint256 tokenId = veStaking.lastId();
+
+        // Split 50% to self
+        veStaking.split(tokenId, 0.5e18, user1);
+
+        vm.stopPrank();
+
+        // Both positions should have equal amounts
+        IAppVeStaking.Lock memory lockData1 = veStaking.locks(tokenId);
+        IAppVeStaking.Lock memory lockData2 = veStaking.locks(tokenId + 1);
+        assertEq(lockData1.amount, amount / 2);
+        assertEq(lockData2.amount, amount / 2);
+
+        // User1 should own both
+        assertEq(veStaking.ownerOf(tokenId), user1);
+        assertEq(veStaking.ownerOf(tokenId + 1), user1);
+        assertEq(veStaking.balanceOf(user1), 2);
+    }
+
+    function test_RevertWhen_SplitZeroPercentage() public {
+        uint256 amount = LOCK_AMOUNT;
+        uint256 duration = LOCK_DURATION;
+
+        vm.startPrank(user1);
+        app.approve(address(veStaking), amount);
+        veStaking.lock(amount, duration, user1);
+        uint256 tokenId = veStaking.lastId();
+
+        vm.expectRevert("Invalid percentage");
+        veStaking.split(tokenId, 0, user2);
+
+        vm.stopPrank();
+    }
+
+    function test_RevertWhen_SplitOver100Percent() public {
+        uint256 amount = LOCK_AMOUNT;
+        uint256 duration = LOCK_DURATION;
+
+        vm.startPrank(user1);
+        app.approve(address(veStaking), amount);
+        veStaking.lock(amount, duration, user1);
+        uint256 tokenId = veStaking.lastId();
+
+        vm.expectRevert("Invalid percentage");
+        veStaking.split(tokenId, 1.1e18, user2);
+
+        vm.stopPrank();
+    }
+
+    function test_RevertWhen_SplitExpiredLock() public {
+        uint256 amount = LOCK_AMOUNT;
+        uint256 duration = LOCK_DURATION;
+
+        vm.startPrank(user1);
+        app.approve(address(veStaking), amount);
+        veStaking.lock(amount, duration, user1);
+        uint256 tokenId = veStaking.lastId();
+        vm.stopPrank();
+
+        // Warp past lock end
+        vm.warp(block.timestamp + duration + 1);
+
+        vm.startPrank(user1);
+        vm.expectRevert("Lock ended");
+        veStaking.split(tokenId, 0.5e18, user2);
+        vm.stopPrank();
+    }
+
+    function test_RevertWhen_SplitBlacklisted() public {
+        uint256 amount = LOCK_AMOUNT;
+        uint256 duration = LOCK_DURATION;
+
+        vm.startPrank(user1);
+        app.approve(address(veStaking), amount);
+        veStaking.lock(amount, duration, user1);
+        uint256 tokenId = veStaking.lastId();
+        vm.stopPrank();
+
+        // Blacklist
+        vm.prank(owner);
+        veStaking.blacklist(tokenId);
+
+        vm.startPrank(user1);
+        vm.expectRevert("Blacklisted");
+        veStaking.split(tokenId, 0.5e18, user2);
+        vm.stopPrank();
+    }
+
+    function test_RevertWhen_SplitNotOwner() public {
+        uint256 amount = LOCK_AMOUNT;
+        uint256 duration = LOCK_DURATION;
+
+        vm.startPrank(user1);
+        app.approve(address(veStaking), amount);
+        veStaking.lock(amount, duration, user1);
+        uint256 tokenId = veStaking.lastId();
+        vm.stopPrank();
+
+        vm.startPrank(user2);
+        vm.expectRevert("Not owner or approved");
+        veStaking.split(tokenId, 0.5e18, user3);
+        vm.stopPrank();
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                        MERGE TESTS
+    //////////////////////////////////////////////////////////////*/
+
+    function test_Merge() public {
+        uint256 amount = LOCK_AMOUNT;
+        uint256 duration = LOCK_DURATION;
+
+        // Create two locks
+        vm.startPrank(user1);
+        app.approve(address(veStaking), amount * 2);
+        veStaking.lock(amount, duration, user1);
+        uint256 tokenId1 = veStaking.lastId();
+        veStaking.lock(amount, duration, user1);
+        uint256 tokenId2 = veStaking.lastId();
+
+        uint256 totalVotingPower = veStaking.votingPowerToken().balanceOf(user1);
+
+        // Merge token2 into token1
+        veStaking.merge(tokenId1, tokenId2);
+
+        vm.stopPrank();
+
+        // Verify token1 has combined amount
+        IAppVeStaking.Lock memory mergedLock = veStaking.locks(tokenId1);
+        assertEq(mergedLock.amount, amount * 2);
+
+        // Verify token2 is burned
+        vm.expectRevert();
+        veStaking.ownerOf(tokenId2);
+
+        // Verify voting power approximately unchanged (within 1 wei due to rounding)
+        assertApproxEqAbs(veStaking.votingPowerToken().balanceOf(user1), totalVotingPower, 1);
+
+        // Verify NFT count reduced
+        assertEq(veStaking.balanceOf(user1), 1);
+
+        // Total locked unchanged
+        assertEq(veStaking.totalLocked(), amount * 2);
+    }
+
+    function test_Merge_DifferentDurations() public {
+        uint256 amount = LOCK_AMOUNT;
+        uint256 duration1 = 30 days;
+        uint256 duration2 = 60 days;
+
+        // Create two locks with different durations
+        vm.startPrank(user1);
+        app.approve(address(veStaking), amount * 2);
+        veStaking.lock(amount, duration1, user1);
+        uint256 tokenId1 = veStaking.lastId();
+        veStaking.lock(amount, duration2, user1);
+        uint256 tokenId2 = veStaking.lastId();
+
+        // Merge
+        veStaking.merge(tokenId1, tokenId2);
+
+        vm.stopPrank();
+
+        // Verify merged lock has max duration
+        IAppVeStaking.Lock memory mergedLock = veStaking.locks(tokenId1);
+        assertEq(mergedLock.duration, duration2);
+    }
+
+    function test_Merge_DifferentStartDates() public {
+        uint256 amount = LOCK_AMOUNT;
+        uint256 duration = LOCK_DURATION;
+
+        // Create first lock
+        vm.startPrank(user1);
+        app.approve(address(veStaking), amount * 2);
+        veStaking.lock(amount, duration, user1);
+        uint256 tokenId1 = veStaking.lastId();
+
+        // Warp forward 10 days
+        vm.warp(block.timestamp + 10 days);
+
+        // Create second lock
+        veStaking.lock(amount, duration, user1);
+        uint256 tokenId2 = veStaking.lastId();
+
+        IAppVeStaking.Lock memory lockData2Before = veStaking.locks(tokenId2);
+
+        // Merge
+        veStaking.merge(tokenId1, tokenId2);
+
+        vm.stopPrank();
+
+        // Verify merged lock has max (later) start date
+        IAppVeStaking.Lock memory mergedLock = veStaking.locks(tokenId1);
+        assertEq(mergedLock.lockStartDate, lockData2Before.lockStartDate);
+    }
+
+    function test_RevertWhen_MergeExpiredLock() public {
+        uint256 amount = LOCK_AMOUNT;
+        uint256 duration = LOCK_DURATION;
+
+        vm.startPrank(user1);
+        app.approve(address(veStaking), amount * 2);
+        veStaking.lock(amount, duration, user1);
+        uint256 tokenId1 = veStaking.lastId();
+        veStaking.lock(amount, duration, user1);
+        uint256 tokenId2 = veStaking.lastId();
+        vm.stopPrank();
+
+        // Warp past lock end
+        vm.warp(block.timestamp + duration + 1);
+
+        vm.startPrank(user1);
+        vm.expectRevert("Lock ended");
+        veStaking.merge(tokenId1, tokenId2);
+        vm.stopPrank();
+    }
+
+    function test_RevertWhen_MergeBlacklistedLock() public {
+        uint256 amount = LOCK_AMOUNT;
+        uint256 duration = LOCK_DURATION;
+
+        vm.startPrank(user1);
+        app.approve(address(veStaking), amount * 2);
+        veStaking.lock(amount, duration, user1);
+        uint256 tokenId1 = veStaking.lastId();
+        veStaking.lock(amount, duration, user1);
+        uint256 tokenId2 = veStaking.lastId();
+        vm.stopPrank();
+
+        // Blacklist token1
+        vm.prank(owner);
+        veStaking.blacklist(tokenId1);
+
+        vm.startPrank(user1);
+        vm.expectRevert("Blacklisted");
+        veStaking.merge(tokenId1, tokenId2);
+        vm.stopPrank();
+    }
+
+    function test_RevertWhen_MergeNotOwnerOfBoth() public {
+        uint256 amount = LOCK_AMOUNT;
+        uint256 duration = LOCK_DURATION;
+
+        // User1 creates lock
+        vm.startPrank(user1);
+        app.approve(address(veStaking), amount);
+        veStaking.lock(amount, duration, user1);
+        uint256 tokenId1 = veStaking.lastId();
+        vm.stopPrank();
+
+        // User2 creates lock
+        vm.startPrank(user2);
+        app.approve(address(veStaking), amount);
+        veStaking.lock(amount, duration, user2);
+        uint256 tokenId2 = veStaking.lastId();
+        vm.stopPrank();
+
+        // User1 tries to merge user2's lock
+        vm.startPrank(user1);
+        vm.expectRevert("Not owner or approved");
+        veStaking.merge(tokenId1, tokenId2);
+        vm.stopPrank();
     }
 }

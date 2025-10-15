@@ -124,6 +124,17 @@ interface IAppOptions is IERC721Enumerable {
     /// @param recipient The address receiving the asset
     event AssetManaged(address indexed asset, uint256 amount, address indexed recipient);
 
+    /// @notice Emitted when a position is blacklisted
+    /// @param positionId The ID of the position blacklisted
+    event PositionBlacklisted(uint256 indexed positionId);
+
+    /// @notice Emitted when a position is transferred
+    /// @param from The address of the sender
+    /// @param to The address of the receiver
+    /// @param tokenId The ID of the position
+    /// @param amount The amount of the position
+    event PositionTransferred(address indexed from, address indexed to, uint256 tokenId, uint256 amount);
+
     /// @notice Returns the RZR token contract
     /// @return The IApp interface for the RZR token
     function rzr() external view returns (IApp);
@@ -191,6 +202,10 @@ interface IAppOptions is IERC721Enumerable {
     /// @param positionId The ID of the position to exercise
     /// @param percentageE18 Percentage of the position to exercise (in 18 decimal fixed point, where 1e18 = 100%)
     function excercise(uint256 positionId, uint256 percentageE18) external;
+
+    /// @notice Blacklists a position
+    /// @param positionId The ID of the position to blacklist
+    function blacklist(uint256 positionId) external;
 
     /// @notice Retrieves the details of a specific position
     /// @param positionId The ID of the position to query

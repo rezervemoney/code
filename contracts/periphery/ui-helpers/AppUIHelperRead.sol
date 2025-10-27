@@ -114,18 +114,32 @@ contract AppUIHelperRead is AppUIHelperBase {
             oraclePriceUsd: getSpotPrice()
         });
 
-        // Add staking token info
-        tokenInfos[1] = TokenInfo({
-            token: address(stakingToken),
-            name: "Staked RZR",
-            symbol: "sRZR",
-            balance: stakingToken.balanceOf(user),
-            allowance: stakingToken.allowance(user, allowanceTarget),
-            totalSupply: stakingToken.totalSupply(),
-            treasuryBalance: 0,
-            decimals: 18,
-            oraclePriceUsd: getSpotPrice()
-        });
+        if (address(stakingToken) != address(0)) {
+            // Add staking token info
+            tokenInfos[1] = TokenInfo({
+                token: address(stakingToken),
+                name: "Staked RZR",
+                symbol: "sRZR",
+                balance: stakingToken.balanceOf(user),
+                allowance: stakingToken.allowance(user, allowanceTarget),
+                totalSupply: stakingToken.totalSupply(),
+                treasuryBalance: 0,
+                decimals: 18,
+                oraclePriceUsd: getSpotPrice()
+            });
+        } else {
+            tokenInfos[1] = TokenInfo({
+                token: address(0x1),
+                name: "Staked RZR",
+                symbol: "sRZR",
+                balance: 0,
+                allowance: 0,
+                totalSupply: 0,
+                treasuryBalance: 0,
+                decimals: 18,
+                oraclePriceUsd: 0
+            });
+        }
 
         // Add lstRZR token info
         tokenInfos[2] = TokenInfo({
@@ -279,8 +293,9 @@ contract AppUIHelperRead is AppUIHelperBase {
         if (address(rebaseController) == address(0)) return projectedEpochRate;
         (uint256 apr, uint256 epochRate, uint256 toStakers, uint256 toOps, uint256 toBurner) =
             rebaseController.projectedEpochRate();
-        projectedEpochRate =
-            ProjectedEpochRate({apr: apr, epochRate: epochRate, toStakers: toStakers, toOps: toOps, toBurner: toBurner});
+        projectedEpochRate = ProjectedEpochRate({
+            apr: apr, epochRate: epochRate, toStakers: toStakers, toOps: toOps, toBurner: toBurner
+        });
     }
 
     /// @notice Calculate the current APR
@@ -332,11 +347,7 @@ contract AppUIHelperRead is AppUIHelperBase {
         return positions;
     }
 
-    function getConvertibleProtocolInfo()
-        public
-        view
-        returns (ConvertibleProtocolInfo memory convertibleProtocolInfo)
-    {
+    function getConvertibleProtocolInfo() public view returns (ConvertibleProtocolInfo memory convertibleProtocolInfo) {
         if (address(convertibles) == address(0)) return convertibleProtocolInfo;
         // IAppConvertibles.Variables memory vars = convertibles.variables();
         // uint256 totalStaked = convertibles.totalStaked();

@@ -34,7 +34,7 @@ contract Staking4626L2 is IStaking4626L2, OFTProxy, AppAccessControlled {
     /// @inheritdoc IStaking4626L2
     function initialize(address _authority, address _lzEndpoint, address _delegate, address _underlying)
         external
-        reinitializer(10)
+        reinitializer(11)
     {
         __AppAccessControlled_init(_authority);
         __OFTProxy_init("Liquid Staked Rezerve.money", "lstRZR", _lzEndpoint, _delegate);
@@ -174,7 +174,7 @@ contract Staking4626L2 is IStaking4626L2, OFTProxy, AppAccessControlled {
     function _processDeposit(address caller, address receiver, uint256 assets, uint256 shares, uint256 feeAmount)
         internal
     {
-        require(block.timestamp - lastRateUpdated >= 1 days, "Rate update cooldown");
+        require(block.timestamp - lastRateUpdated <= 1 days, "Rate update cooldown");
 
         // Transfer the full amount from user to the bridge
         underlying.safeTransferFrom(caller, authority.bridge(), assets);
@@ -216,7 +216,11 @@ contract Staking4626L2 is IStaking4626L2, OFTProxy, AppAccessControlled {
         _burn(_from, amountSentLD);
     }
 
-    function _credit(address _to, uint256 _amountLD, uint32 /*_srcEid*/ )
+    function _credit(
+        address _to,
+        uint256 _amountLD,
+        uint32 /*_srcEid*/
+    )
         internal
         virtual
         override
